@@ -11,6 +11,7 @@ from datetime import date, datetime, timedelta
 from statistics import median
 from typing import Any
 
+from . import views
 from .analytics.battery import (
     BatteryState,
     autonomy_hours,
@@ -291,6 +292,8 @@ def build_snapshot(
                 "threshold_mv": DEFAULT_THRESHOLD_MV,
                 "days_to_threshold": _r(days_to_threshold(spreads), 1),
             }
+        if cell_info is not None:
+            cell_info.update(views.cells_detail(history, b, today))
         state = "charging" if (b.power_kw or 0) > 0.05 else "discharging" if (b.power_kw or 0) < -0.05 else "idle"
         if (b.soc or 0) >= 99.5 and state == "idle":
             state = "full"
@@ -312,6 +315,12 @@ def build_snapshot(
                 "rte": _r(round_trip_efficiency(in_30, out_30), 3),
                 "temperature": _r(b.temperature, 1),
                 "hours_to_full": _r(hours_to_full(states[-1]), 2),
+                "autonomy_h": _r(autonomy_hours([states[-1]], (reading.load_kw or 0.0) if reading else 0.0), 1),
+                "coupling": views.coupling(src.platform if src else ""),
+                "soc_today": views.soc_today(buckets, b.key),
+                "soc_projection": views.soc_projection(now, b.soc, b.power_kw, cap, reserve),
+                "soh_trend": views.soh_trend(history, b.key, today),
+                "modules": b.modules,
                 "cells": cell_info,
             }
         )
@@ -320,6 +329,9 @@ def build_snapshot(
 
     # ---- finances
     def gain(d: dict[str, Any]) -> float:
+        # Self-consumption valued at the price of its half hour when the contract's prices were known that day.
+        if "self_eur" in d:
+            return d["self_eur"] + d["export"] * cfg.export_price
         return savings(max(d["pv"] - d["export"], 0), d["export"], cfg.import_price, cfg.export_price).total
 
     gains_by_day = {k: gain(d) for k, d in history.days.items()}
@@ -407,7 +419,20 @@ def build_snapshot(
     if fl and fl.exchange_kw > 0.1:
         alerts.append({"kind": "battery_exchange", "severity": "info", "kw": _r(fl.exchange_kw, 2)})
     if reading and reading.stale:
-        alerts.append({"kind": "stale", "severity": "error", "entities": reading.stale})
+        alerts.append(
+            {"kind": "stale", "severity": "error" if reading.offline else "warning", "entities": reading.stale}
+        )
+    cell_alerts = [a for a in alerts if a["kind"] == "cell_drift"]
+    loss_events = views.events(
+        history,
+        today,
+        clipping_kwh=CLIPPING_ALERT_KWH,
+        strings=strings,
+        shading=shading,
+        soiling_loss=soiling.loss if soiling else None,
+        soiling_alert=SOILING_ALERT,
+        cell_alerts=[{k: v for k, v in a.items() if k != "severity"} for a in cell_alerts],
+    )
 
     return {
         "demo": demo,
@@ -447,6 +472,7 @@ def build_snapshot(
             "self_sufficiency": _r(self_sufficiency(ybal), 3),
         },
         "curve": curve,
+        "periods": views.periods(history, today),
         "production": {
             "strings": strings,
             "units": units,
@@ -475,6 +501,7 @@ def build_snapshot(
             "availability": _r(availability, 4),
             "heatmap": heatmap,
             "clipping_periods": clip.periods,
+            "events": loss_events,
         },
         "trends": {
             "soiling": (
@@ -528,8 +555,11 @@ def build_snapshot(
                 "export": _r(exported * cfg.export_price, 2),
             },
             "monthly": [{"m": k, "eur": _r(v, 2)} for k, v in sorted(monthly_gains.items())[-12:]],
-            "import_price": cfg.import_price,
+            "calendar": views.gains_calendar(gains_by_day, today),
+            "bill": views.bill(history, today, cfg.import_price, cfg.export_price),
+            "import_price": _r(reading.import_price, 4) if reading and reading.import_price else cfg.import_price,
             "export_price": cfg.export_price,
+            "comparator": views.cached_comparator(history, cfg, inst, today),
             "inverter_replacement_cost": cfg.inverter_replacement_cost,
             "inverter_lifetime_years": cfg.inverter_lifetime_years,
         },
@@ -538,4 +568,19 @@ def build_snapshot(
         "roles": inst.roles,
         "excluded": inst.excluded,
         "ages": ages or {},
+        "quality": views.quality(history.buckets + buckets[-1:], inst, now),
+        "suggestions": views.suggestions(inst, kwp_estimated, items, history.buckets),
+        "layout": {
+            "strings": [s.name for s in inst.strings],
+            "units": len(inst.units),
+            "inverter": next((s.name for s in inst.sources if s.role == "pv"), None),
+            "meter": next((s.name for s in inst.sources if s.role == "meter"), None),
+            "forecast": next((s.name for s in inst.sources if s.role == "forecast"), None),
+        },
+        "reference": {
+            "source": reading.reference if reading else None,
+            "irradiance": inst.roles.get("irradiance"),
+            "weather": inst.roles.get("weather"),
+            "forecast": inst.roles.get("forecast_power"),
+        },
     }

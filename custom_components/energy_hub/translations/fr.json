@@ -29,18 +29,65 @@
   },
   "entity": {
     "sensor": {
-      "self_consumption": { "name": "Autoconsommation" },
-      "self_sufficiency": { "name": "Autoproduction" },
-      "pv_energy_today": { "name": "Production solaire du jour" },
-      "specific_yield": { "name": "Rendement du jour" },
-      "performance_index": { "name": "Indice de performance" },
-      "losses_today": { "name": "Pertes de production du jour" },
-      "clipping_today": { "name": "Écrêtage du jour" },
-      "battery_soc": { "name": "Charge du parc de batteries" },
-      "battery_power": { "name": "Puissance du parc de batteries" },
-      "battery_autonomy": { "name": "Autonomie des batteries" },
-      "savings_today": { "name": "Économies du jour" },
-      "alerts": { "name": "Alertes" }
+      "self_consumption": {
+        "name": "Autoconsommation"
+      },
+      "self_sufficiency": {
+        "name": "Autoproduction"
+      },
+      "pv_energy_today": {
+        "name": "Production solaire du jour"
+      },
+      "specific_yield": {
+        "name": "Rendement du jour"
+      },
+      "performance_index": {
+        "name": "Indice de performance"
+      },
+      "losses_today": {
+        "name": "Pertes de production du jour"
+      },
+      "clipping_today": {
+        "name": "Écrêtage du jour"
+      },
+      "battery_soc": {
+        "name": "Charge du parc de batteries"
+      },
+      "battery_power": {
+        "name": "Puissance du parc de batteries"
+      },
+      "battery_autonomy": {
+        "name": "Autonomie des batteries"
+      },
+      "savings_today": {
+        "name": "Économies du jour"
+      },
+      "alerts": {
+        "name": "Alertes"
+      }
+    }
+  },
+  "exceptions": {
+    "alert_clipping": {
+      "message": "Écrêtage de l'onduleur aujourd'hui : {kwh} kWh perdus."
+    },
+    "alert_string_lagging": {
+      "message": "{name} produit {pct} % de moins que ses voisines."
+    },
+    "alert_shading": {
+      "message": "Ombrage récurrent {unit} de {start} à {end}."
+    },
+    "alert_soiling": {
+      "message": "Perte par encrassement {loss} % : un nettoyage peut être rentable."
+    },
+    "alert_cell_drift": {
+      "message": "{battery} : la cellule {cell} atteint le seuil d'écart dans {days} jours."
+    },
+    "alert_battery_exchange": {
+      "message": "Une batterie en charge une autre ({kw} kW) : de l'énergie perdue en aller-retour."
+    },
+    "alert_stale": {
+      "message": "Une source d'Energy Hub ne se met plus à jour : {entities}"
     }
   }
 }

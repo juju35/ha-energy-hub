@@ -1,0 +1,93 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Energy Hub",
+        "description": "Energy Hub сам знаходить ваші інтеграції сонячних панелей, батарей і лічильника. Увімкніть демо, щоб спробувати панель з імітацією установки.",
+        "data": {
+          "demo": "Демо-режим (імітація установки)",
+          "show_panel": "Показувати панель на бічній панелі"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Energy Hub уже налаштовано.",
+      "single_instance_allowed": "Energy Hub уже налаштовано."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Параметри Energy Hub",
+        "description": "Блок `energy_hub:` у configuration.yaml має пріоритет над цими параметрами.",
+        "data": {
+          "demo": "Демо-режим (імітація установки)",
+          "show_panel": "Показувати панель на бічній панелі"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "self_consumption": {
+        "name": "Власне споживання"
+      },
+      "self_sufficiency": {
+        "name": "Самозабезпечення"
+      },
+      "pv_energy_today": {
+        "name": "Сонячна енергія сьогодні"
+      },
+      "specific_yield": {
+        "name": "Питома генерація сьогодні"
+      },
+      "performance_index": {
+        "name": "Індекс ефективності"
+      },
+      "losses_today": {
+        "name": "Втрати генерації сьогодні"
+      },
+      "clipping_today": {
+        "name": "Обмеження сьогодні"
+      },
+      "battery_soc": {
+        "name": "Заряд парку батарей"
+      },
+      "battery_power": {
+        "name": "Потужність парку батарей"
+      },
+      "battery_autonomy": {
+        "name": "Автономність батарей"
+      },
+      "savings_today": {
+        "name": "Економія сьогодні"
+      },
+      "alerts": {
+        "name": "Сповіщення"
+      }
+    }
+  },
+  "exceptions": {
+    "alert_clipping": {
+      "message": "Обмеження інвертора сьогодні: втрачено {kwh} kWh."
+    },
+    "alert_string_lagging": {
+      "message": "{name} генерує на {pct} % менше за інших."
+    },
+    "alert_shading": {
+      "message": "Повторюване затінення {unit} з {start} до {end}."
+    },
+    "alert_soiling": {
+      "message": "Втрати від забруднення {loss} %: очищення може окупитися."
+    },
+    "alert_cell_drift": {
+      "message": "{battery}: комірка {cell} досягне порогу розкиду через {days} дн."
+    },
+    "alert_battery_exchange": {
+      "message": "Одна батарея заряджає іншу ({kw} kW): енергія втрачається на перекачуванні."
+    },
+    "alert_stale": {
+      "message": "Джерело Energy Hub перестало оновлюватися: {entities}"
+    }
+  }
+}

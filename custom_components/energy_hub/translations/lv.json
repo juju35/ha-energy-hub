@@ -1,0 +1,93 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Energy Hub",
+        "description": "Energy Hub pats atrod jūsu saules, akumulatoru un skaitītāja integrācijas. Ieslēdziet demo, lai izmēģinātu paneli ar simulētu iekārtu.",
+        "data": {
+          "demo": "Demo režīms (simulēta iekārta)",
+          "show_panel": "Rādīt paneli sānjoslā"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Energy Hub jau ir iestatīts.",
+      "single_instance_allowed": "Energy Hub jau ir iestatīts."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Energy Hub opcijas",
+        "description": "Bloks `energy_hub:` failā configuration.yaml ir prioritārs pār šīm opcijām.",
+        "data": {
+          "demo": "Demo režīms (simulēta iekārta)",
+          "show_panel": "Rādīt paneli sānjoslā"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "self_consumption": {
+        "name": "Pašpatēriņš"
+      },
+      "self_sufficiency": {
+        "name": "Pašpietiekamība"
+      },
+      "pv_energy_today": {
+        "name": "Saules enerģija šodien"
+      },
+      "specific_yield": {
+        "name": "Īpatnējā ražība šodien"
+      },
+      "performance_index": {
+        "name": "Veiktspējas indekss"
+      },
+      "losses_today": {
+        "name": "Ražošanas zudumi šodien"
+      },
+      "clipping_today": {
+        "name": "Ierobežošana šodien"
+      },
+      "battery_soc": {
+        "name": "Akumulatoru parka uzlāde"
+      },
+      "battery_power": {
+        "name": "Akumulatoru parka jauda"
+      },
+      "battery_autonomy": {
+        "name": "Akumulatoru autonomija"
+      },
+      "savings_today": {
+        "name": "Ietaupījums šodien"
+      },
+      "alerts": {
+        "name": "Brīdinājumi"
+      }
+    }
+  },
+  "exceptions": {
+    "alert_clipping": {
+      "message": "Invertora ierobežošana šodien: zaudētas {kwh} kWh."
+    },
+    "alert_string_lagging": {
+      "message": "{name} saražo par {pct} % mazāk nekā pārējie."
+    },
+    "alert_shading": {
+      "message": "Atkārtots noēnojums {unit} no {start} līdz {end}."
+    },
+    "alert_soiling": {
+      "message": "Zudumi netīrumu dēļ {loss} %: tīrīšana var atmaksāties."
+    },
+    "alert_cell_drift": {
+      "message": "{battery}: šūna {cell} sasniegs izkliedes slieksni pēc {days} dienām."
+    },
+    "alert_battery_exchange": {
+      "message": "Viens akumulators uzlādē otru ({kw} kW): enerģija zūd riņķojot."
+    },
+    "alert_stale": {
+      "message": "Energy Hub avots vairs netiek atjaunināts: {entities}"
+    }
+  }
+}

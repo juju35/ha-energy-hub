@@ -1,0 +1,93 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Energy Hub",
+        "description": "Energy Hub sam znajduje integracje fotowoltaiki, baterii i licznika. Włącz demo, aby wypróbować panel z symulowaną instalacją.",
+        "data": {
+          "demo": "Tryb demo (symulowana instalacja)",
+          "show_panel": "Pokaż panel na pasku bocznym"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Energy Hub jest już skonfigurowany.",
+      "single_instance_allowed": "Energy Hub jest już skonfigurowany."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opcje Energy Hub",
+        "description": "Blok `energy_hub:` w configuration.yaml ma pierwszeństwo przed tymi opcjami.",
+        "data": {
+          "demo": "Tryb demo (symulowana instalacja)",
+          "show_panel": "Pokaż panel na pasku bocznym"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "self_consumption": {
+        "name": "Autokonsumpcja"
+      },
+      "self_sufficiency": {
+        "name": "Samowystarczalność"
+      },
+      "pv_energy_today": {
+        "name": "Energia PV dziś"
+      },
+      "specific_yield": {
+        "name": "Uzysk jednostkowy dziś"
+      },
+      "performance_index": {
+        "name": "Wskaźnik wydajności"
+      },
+      "losses_today": {
+        "name": "Straty produkcji dziś"
+      },
+      "clipping_today": {
+        "name": "Obcinanie dziś"
+      },
+      "battery_soc": {
+        "name": "Naładowanie parku baterii"
+      },
+      "battery_power": {
+        "name": "Moc parku baterii"
+      },
+      "battery_autonomy": {
+        "name": "Autonomia baterii"
+      },
+      "savings_today": {
+        "name": "Oszczędności dziś"
+      },
+      "alerts": {
+        "name": "Alerty"
+      }
+    }
+  },
+  "exceptions": {
+    "alert_clipping": {
+      "message": "Obcinanie falownika dziś: utracono {kwh} kWh."
+    },
+    "alert_string_lagging": {
+      "message": "{name} produkuje o {pct} % mniej niż pozostałe."
+    },
+    "alert_shading": {
+      "message": "Powtarzające się zacienienie {unit} od {start} do {end}."
+    },
+    "alert_soiling": {
+      "message": "Strata przez zabrudzenie {loss} %: czyszczenie może się opłacić."
+    },
+    "alert_cell_drift": {
+      "message": "{battery}: ogniwo {cell} osiągnie próg rozrzutu za {days} dni."
+    },
+    "alert_battery_exchange": {
+      "message": "Jedna bateria ładuje drugą ({kw} kW): energia tracona w obiegu."
+    },
+    "alert_stale": {
+      "message": "Źródło Energy Hub przestało się aktualizować: {entities}"
+    }
+  }
+}

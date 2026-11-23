@@ -169,37 +169,49 @@ def ws_settings(hass: HomeAssistant, connection: websocket_api.ActiveConnection,
     if coordinator is None:
         connection.send_error(msg["id"], "not_loaded", "Energy Hub is not loaded")
         return
-    cfg = coordinator.cfg
-    inst = coordinator.installation
     connection.send_result(
         msg["id"],
-        {
-            "yaml_configured": DATA_YAML in hass.data,
-            "demo": cfg.demo,
-            "show_panel": coordinator.config_entry.options.get(CONF_SHOW_PANEL, True),
-            "yaml": settings_yaml(cfg, inst),
-            "planes": [{"kwp": p.kwp, "tilt": p.tilt, "azimuth": p.azimuth} for p in cfg.planes],
-            "batteries": [
-                {
-                    "key": b.key,
-                    "name": b.name,
-                    "soc": b.soc,
-                    "power": b.power,
-                    "capacity_kwh": b.capacity_kwh,
-                    "reserve": b.reserve,
-                    "cells": len(b.cells),
-                }
-                for b in inst.batteries
-            ],
-            "tariff": {"import": cfg.import_price, "export": cfg.export_price, "currency": cfg.currency},
-            "installation": {
-                "cost": cfg.cost,
-                "subsidy": cfg.subsidy,
-                "commissioned": cfg.commissioned.isoformat() if cfg.commissioned else None,
-            },
-            "notify": cfg.notify,
-        },
+        settings_payload(
+            coordinator.cfg,
+            coordinator.installation,
+            yaml_configured=DATA_YAML in hass.data,
+            show_panel=coordinator.config_entry.options.get(CONF_SHOW_PANEL, True),
+            notify=coordinator.notify_target,
+        ),
     )
+
+
+def settings_payload(
+    cfg, inst, *, yaml_configured: bool, show_panel: bool, notify: str | None = None
+) -> dict[str, Any]:
+    """What the Settings tab shows: the YAML in use (rebuilt from the configuration) and the values behind it."""
+    return {
+        "yaml_configured": yaml_configured,
+        "demo": cfg.demo,
+        "show_panel": show_panel,
+        "yaml": settings_yaml(cfg, inst),
+        "planes": [{"kwp": p.kwp, "tilt": p.tilt, "azimuth": p.azimuth} for p in cfg.planes],
+        "batteries": [
+            {
+                "key": b.key,
+                "name": b.name,
+                "soc": b.soc,
+                "power": b.power,
+                "capacity_kwh": b.capacity_kwh,
+                "reserve": b.reserve,
+                "cells": len(b.cells),
+            }
+            for b in inst.batteries
+        ],
+        "tariff": {"import": cfg.import_price, "export": cfg.export_price, "currency": cfg.currency},
+        "installation": {
+            "cost": cfg.cost,
+            "subsidy": cfg.subsidy,
+            "commissioned": cfg.commissioned.isoformat() if cfg.commissioned else None,
+        },
+        "notify": notify or cfg.notify,
+        "notify_auto": bool(notify) and not cfg.notify,
+    }
 
 
 def settings_yaml(cfg, inst) -> str:
@@ -213,7 +225,7 @@ def settings_yaml(cfg, inst) -> str:
         lines.append(f"  inverter_max_kw: {cfg.inverter_max_kw:g}")
     if cfg.export_limit_kw:
         lines.append(f"  export_limit_kw: {cfg.export_limit_kw:g}")
-    roles = {k: v for k, v in inst.roles.items() if not k.startswith("forecast")}
+    roles = {k: v for k, v in inst.roles.items() if not k.startswith("forecast") and k != "weather"}
     if roles:
         lines.append("  entities:")
         lines += [f"    {role}: {entity_id}" for role, entity_id in sorted(roles.items())]
@@ -231,10 +243,22 @@ def settings_yaml(cfg, inst) -> str:
             if b.cells and not b.cells_attribute:
                 prefix = b.cells[0].rstrip("0123456789")
                 lines.append(f"      cells: {prefix}*")
+            if b.cell_temperatures:
+                lines.append(f"      cell_temperatures: {b.cell_temperatures[0].rstrip('0123456789')}*")
+            if b.cells_per_module:
+                lines.append(f"      cells_per_module: {b.cells_per_module}")
     if inst.excluded:
         lines.append("  ignore:")
         lines += [f"    - {e}" for e in sorted(inst.excluded)]
     lines += ["  tariff:", f"    import: {cfg.import_price:g}", f"    export: {cfg.export_price:g}"]
+    if contract := cfg.contract or inst.tariff.get("contract"):
+        lines.append(f"    contract: {contract}")
+    if kva := cfg.kva or inst.tariff.get("kva"):
+        lines.append(f"    kva: {kva}")
+    if cfg.offpeak:
+        lines.append(f'    offpeak: "{cfg.offpeak}"')
+    if inst.roles.get("weather"):
+        lines.append(f"  weather: {inst.roles['weather']}")
     if cfg.cost:
         lines += ["  installation:", f"    cost: {cfg.cost:g}", f"    subsidy: {cfg.subsidy:g}"]
         if cfg.commissioned:

@@ -118,3 +118,85 @@ async def test_badge_script_is_added(hass: HomeAssistant, stub_frontend) -> None
     await _setup_demo(hass)
     urls = [call.args[1] for call in stub_frontend.call_args_list]
     assert any("/energy_hub_static/energy-hub-badge.js?v=" in url for url in urls)
+
+
+async def test_alerts_go_to_notify_hub_in_the_user_language(hass: HomeAssistant) -> None:
+    from homeassistant.core import ServiceCall
+
+    entry = await _setup_demo(hass)
+    coordinator = entry.runtime_data
+    calls: list[ServiceCall] = []
+    hass.services.async_register("notify", "send_message", calls.append)
+    assert coordinator.notify_target is None
+    hass.states.async_set("notify.notify_hub", "unknown")
+    assert coordinator.notify_target == "notify.notify_hub"
+
+    hass.config.language = "fr"
+    text = await coordinator._async_alert_text({"kind": "clipping", "kwh": 2.3})
+    assert text == "Écrêtage de l'onduleur aujourd'hui : 2.3 kWh perdus."
+    hass.config.language = "pt-BR"
+    text = await coordinator._async_alert_text({"kind": "string_lagging", "name": "String 2", "relative": 0.84})
+    assert text == "String 2 produz 16 % menos do que os outros."
+
+    await coordinator._async_notify("notify.notify_hub", text)
+    await hass.async_block_till_done()
+    assert calls[0].data == {"entity_id": "notify.notify_hub", "title": "Energy Hub", "message": text}
+
+
+async def test_legacy_notify_action(hass: HomeAssistant) -> None:
+    from homeassistant.core import ServiceCall
+
+    entry = await _setup_demo(hass)
+    calls: list[ServiceCall] = []
+    hass.services.async_register("notify", "mobile_app_phone", calls.append)
+    await entry.runtime_data._async_notify("notify.mobile_app_phone", "hello")
+    await hass.async_block_till_done()
+    assert calls[0].data == {"title": "Energy Hub", "message": "hello"}
+
+
+async def test_tarif_edf_irradiance_and_weather_are_detected(hass: HomeAssistant) -> None:
+    """A real installation: price and contract from Tarif EDF, an irradiance sensor, a weather entity."""
+    from datetime import datetime, timedelta, timezone
+
+    from homeassistant.helpers import entity_registry as er
+
+    hass.config.latitude, hass.config.longitude = 48.11, -1.68
+    reg = er.async_get(hass)
+    reg.async_get_or_create("sensor", "tarif_edf", "price", suggested_object_id="tarif_actuel_tempo_9kva_ttc")
+    reg.async_get_or_create("sensor", "tarif_edf", "color", suggested_object_id="tarif_tempo_couleur")
+    reg.async_get_or_create(
+        "sensor", "ecowitt", "rad", suggested_object_id="solar_radiation", original_device_class="irradiance"
+    )
+    hass.states.async_set("sensor.tarif_actuel_tempo_9kva_ttc", "0.1654")
+    hass.states.async_set("sensor.tarif_tempo_couleur", "bleu")
+    hass.states.async_set("sensor.solar_radiation", "400", {"unit_of_measurement": "W/m²"})
+    hass.states.async_set("weather.home", "cloudy", {"cloud_coverage": 80})
+    hass.states.async_set("sensor.pv", "2000", {"unit_of_measurement": "W"})
+    entry = MockConfigEntry(domain=DOMAIN, unique_id=DOMAIN, options={"demo": False, "show_panel": False})
+    entry.add_to_hass(hass)
+    config = {"planes": [{"kwp": 6}], "entities": {"pv_power": "sensor.pv"}}
+    assert await async_setup_component(hass, DOMAIN, {DOMAIN: config})
+    await hass.async_block_till_done()
+    coordinator = entry.runtime_data
+    inst = coordinator.installation
+    assert inst.roles["irradiance"] == "sensor.solar_radiation"
+    assert inst.roles["weather"] == "weather.home"
+    assert inst.tariff == {"contract": "tempo", "kva": 9}
+    assert {s.role for s in inst.sources} >= {"tariff", "weather"}
+
+    noon = datetime(2026, 6, 21, 13, 50, tzinfo=timezone(timedelta(hours=2)))
+    clear = coordinator._clearsky(noon)
+    expected, ref = coordinator._expected(noon, clear, None)
+    assert ref == "measured" and 0.35 * clear < expected < 0.5 * clear
+    hass.states.async_set("sensor.solar_radiation", "unavailable")
+    expected, ref = coordinator._expected(noon, clear, 1.2)
+    assert (expected, ref) == (1.2, "forecast")
+    expected, ref = coordinator._expected(noon, clear, None)
+    assert ref == "weather" and abs(expected - clear * (1 - 0.75 * 0.8**3.4)) < 1e-9
+    assert coordinator._price(noon, "blue") == 0.1654
+    hass.states.async_set("sensor.tarif_actuel_tempo_9kva_ttc", "unavailable")
+    assert coordinator._price(noon, "red") == 0.7295  # the embedded grid, a red peak hour
+
+    snap = coordinator.data
+    assert snap["finances"]["comparator"]["contract"] == "tempo"
+    assert snap["reference"]["irradiance"] == "sensor.solar_radiation"

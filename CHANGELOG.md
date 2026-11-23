@@ -1,5 +1,40 @@
 # Changelog
 
+## 1.4.0 - 2026-11-23
+
+### Features
+- Finances: an offer comparator replays the last 12 months of grid draw, half hour by half hour, under each EDF offer (Tarif Bleu Base, Heures Creuses, Tempo; Zen Week-End, Zen Week-End Heures Creuses, Zen Flex), subscription included, and says what switching would save. The grid is EDF's, embedded and updated by release; `tariff: offers:` overrides it or adds an offer of your own.
+- Tariff: the contract and power are read from Tarif EDF, the price of the kWh now from its price entity, the day's Tempo colour from Tarif EDF or RTE Tempo and the Zen Flex day from EDF Zen Flex; YAML `tariff: contract:`, `kva:`, `offpeak:`, `price:`, `color:`.
+- Savings and the bill value each half hour at its price (Tempo colours, off-peak hours) instead of a flat price.
+- Expected production from the best reference found: a measured irradiance sensor (W/m², weather stations such as Ecowitt or WeatherFlow), then the solar forecast, then a weather entity's cloud cover (Kasten-Czeplak), then the clear sky; Settings shows which one is used. YAML `weather:` and `entities: irradiance:`.
+- Profiles: Tarif EDF, RTE Tempo, EDF Zen Flex.
+
+## 1.3.0 - 2026-11-23
+
+### Features
+- Alerts go to Notify Hub (`notify.notify_hub`) when it is installed and no `notify:` is set; the Settings tab shows the target as detected.
+- `notify:` accepts a notify entity (sent with `notify.send_message`) as well as a legacy notify action.
+- Notifications are written in Home Assistant's language (22 languages; regional variants use their base language).
+
+## 1.2.0 - 2026-11-23
+
+### Features
+- 20 more languages for the integration and the panel: German, Spanish, Italian, Dutch, Portuguese, Polish, Serbian (Cyrillic and Latin), Romanian, Danish, Swedish, Bulgarian, Russian, Ukrainian, Hungarian, Slovak, Czech, Slovenian, Latvian and Greek. The panel ships English and fetches the other languages from `frontend/i18n/` when Home Assistant uses one (regional variants such as `pt-BR` use their base language).
+
+### Fixes
+- Panel: the trend unit, the 30-day axis label and the last hour label of the charge chart are translated and no longer clipped.
+
+## 1.1.0 - 2026-11-23
+
+### Features
+- Banner: alert bell with its count; the collapsed bar keeps a condensed status pill; on narrow screens Refresh moves to Settings.
+- Overview: period selector (Today, 7 days, 30 days, 12 months) and clipping drawn hatched.
+- Batteries: the selected battery drawn with its level and reserve, autonomy and capacity tiles, charge of the day with its projection, state of health over 3 years with its projection, modules, cells as a modules × cells heat map (deviation, voltage, temperature) with balancing dots and drifting cells outlined, cell detail with its 30-day curve and drift diagnosis, spread trend projected to the threshold.
+- Losses: events with their status (recurring, to watch, resolved), dates, days and energy.
+- Finances: gains calendar over 6 weeks and the bill with and without solar.
+- Settings: sub-tabs Sources, Installation, Tariffs, Alerts and YAML; clickable DC/AC layout with each element's capabilities and entities; attachment suggestions (a BMS to its battery, with how well their charges match); data quality of the last 24 hours; configuration checks with an action each.
+- YAML: `cell_temperatures` and `cells_per_module` for a battery.
+
 ## 1.0.0 - 2026-11-23
 
 ### Features

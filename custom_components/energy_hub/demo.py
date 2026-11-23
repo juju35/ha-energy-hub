@@ -2,7 +2,8 @@
 
 Two strings of 3 kWp on a south roof, an inverter clipping at 4.6 kW, string 2 lagging, panel P15 shaded
 every afternoon by a chimney, soiling that builds up between rains, 0.5 %/year of degradation, three batteries of
-three brands (one with a 16-cell BMS whose cell 8 drifts) and a Linky meter. Every value is deterministic for a given
+three brands (one of 3 modules of 16 cells read by a BMS, whose cell 8 of module 2 drifts) and a Linky meter that
+drops out for a quarter of an hour at night. Every value is deterministic for a given
 time, so screenshots and tests are reproducible. Names are neutral.
 """
 
@@ -13,6 +14,7 @@ import random
 from datetime import date, datetime, timedelta
 from functools import lru_cache
 
+from .analytics import tariffs
 from .analytics.clearsky import Plane, clearsky_power
 from .history import BatteryReading, History, Reading
 from .sources import BatterySource, Installation, SourceInfo, UnitSource
@@ -30,6 +32,14 @@ BATTERIES = (
     ("balcon", "Balcon", "marstek_local_api", 5.12),
 )
 PANELS = 16
+MODULES = 3
+CELLS_PER_MODULE = 16
+DRIFTING_CELL = CELLS_PER_MODULE + 7
+# The Linky meter's quarter of an hour without value, every night (data quality of the Settings tab).
+METER_GAP = (3 * 60 + 10, 3 * 60 + 25)
+METER = "sensor.demo_zlinky_apparent_power"
+# State of health lost per year since commissioning (the house battery is the oldest and the most cycled).
+SOH_PER_YEAR = {"maison": 1.25, "garage": 0.3, "balcon": 0.6}
 
 
 def installation() -> Installation:
@@ -42,7 +52,11 @@ def installation() -> Installation:
         "grid_import_energy": "sensor.demo_zlinky_summation_delivered",
         "grid_export_energy": "sensor.demo_zlinky_summation_received",
         "forecast_power": "sensor.demo_solcast_power_now",
+        "tariff_price": "sensor.demo_tarif_actuel_tempo_9kva_ttc",
+        "tariff_color": "sensor.demo_tarif_tempo_couleur",
+        "weather": "weather.demo_meteo_france",
     }
+    inst.tariff = {"contract": "tempo", "kva": 9}
     inst.strings = [
         UnitSource("String 1", "sensor.demo_pv_01_power"),
         UnitSource("String 2", "sensor.demo_pv_02_power"),
@@ -57,9 +71,28 @@ def installation() -> Installation:
                 soc=f"sensor.demo_{key}_soc",
                 power=f"sensor.demo_{key}_power",
                 capacity_kwh=cap,
-                cells=[f"sensor.demo_jk_bms_cell_{i}" for i in range(1, 17)] if key == "maison" else [],
+                cells=[f"sensor.demo_jk_bms_cell_{i}" for i in range(1, MODULES * CELLS_PER_MODULE + 1)]
+                if key == "maison"
+                else [],
+                cell_temperatures=[
+                    f"sensor.demo_jk_bms_temperature_{i}" for i in range(1, MODULES * CELLS_PER_MODULE + 1)
+                ]
+                if key == "maison"
+                else [],
+                cells_per_module=CELLS_PER_MODULE if key == "maison" else None,
             )
         )
+    inst.suggestions = [
+        {
+            "kind": "attach_bms",
+            "bms": "Balcon BMS",
+            "bms_key": "balcon_bms",
+            "battery": "Balcon",
+            "battery_key": "balcon",
+            "correlation": 0.97,
+            "yaml": "energy_hub:\n  batteries:\n    balcon:\n      cells: sensor.demo_balcon_bms_cell_*\n",
+        }
+    ]
     inst.sources = [
         SourceInfo(
             "huawei_solar",
@@ -131,6 +164,26 @@ def installation() -> Installation:
             {"forecast": "provided"},
             ["sensor.demo_solcast_power_now"],
         ),
+        SourceInfo(
+            "tarif_edf",
+            "Tarif EDF",
+            "tarif_edf",
+            "beta",
+            "",
+            "tariff",
+            {"tariff": "provided"},
+            ["sensor.demo_tarif_actuel_tempo_9kva_ttc", "sensor.demo_tarif_tempo_couleur"],
+        ),
+        SourceInfo(
+            "weather",
+            "Météo-France",
+            "meteo_france",
+            "core",
+            "",
+            "weather",
+            {"clouds": "provided"},
+            ["weather.demo_meteo_france"],
+        ),
     ]
     inst.excluded = {"sensor.demo_zendure_ac_input": "double_count"}
     return inst
@@ -138,6 +191,25 @@ def installation() -> Installation:
 
 def _rng(day: date, salt: int = 0) -> random.Random:
     return random.Random(day.toordinal() * 7919 + salt)
+
+
+TEMPO = tariffs.offers(9)[2]
+
+
+@lru_cache(maxsize=1024)
+def tempo_color(day: date) -> str:
+    """The demo's Tempo colour of a day, drawn from the season's mix."""
+    r = _rng(day, 5).random()
+    for color, share in tariffs.expected_mix(day, "tempo").items():
+        if r < share:
+            return color
+        r -= share
+    return "blue"
+
+
+def tempo_price(local: datetime) -> float:
+    days = (local.date(), local.date() - timedelta(days=1))
+    return TEMPO.slot_price(local.date(), local.hour * 60 + local.minute, {d.isoformat(): tempo_color(d) for d in days})
 
 
 @lru_cache(maxsize=1024)
@@ -204,9 +276,12 @@ def units_now(
 
 
 def load_now(local: datetime) -> float:
-    """Home consumption, kW: a base of 0.31 kW and peaks at breakfast, lunch and dinner."""
+    """Home consumption, kW: a base of 0.31 kW, peaks at breakfast, lunch and dinner, and electric heating from
+    November to March (mornings and evenings most)."""
     h = local.hour + local.minute / 60
-    return (
+    cold = max(0.0, math.cos(2 * math.pi * (local.timetuple().tm_yday - 15) / 365) - 0.25) / 0.75
+    heating = 1.5 * cold * (1.0 if 6 <= h < 9 or 17 <= h < 23 else 0.45)
+    return heating + (
         0.31
         + 1.2 * math.exp(-(((h - 7.6) / 0.5) ** 2))
         + 0.9 * math.exp(-(((h - 12.6) / 0.4) ** 2))
@@ -220,9 +295,31 @@ CHARGE_KW = {"maison": 2.5, "garage": 0.6, "balcon": 0.8}
 
 
 def cells_at(day: date) -> list[float]:
-    """Cell voltages of the house battery: cell 8 drifts 0.9 mV a day, over cycles of 40 days."""
+    """Cell voltages of the house battery: cell 8 of module 2 drifts 0.9 mV a day, over cycles of 40 days."""
     k = (day - DEMO_EPOCH).days % 40
-    return [round(3.333 + (((i * 31) % 11) - 5) * 0.0012 - (0.0009 * k if i == 7 else 0), 4) for i in range(16)]
+    return [
+        round(3.333 + (((i * 31) % 11) - 5) * 0.0012 - (0.0009 * k if i == DRIFTING_CELL else 0), 4)
+        for i in range(MODULES * CELLS_PER_MODULE)
+    ]
+
+
+def cell_temps_at(local: datetime, power_kw: float) -> list[float]:
+    """Cell temperatures: warmer in the middle of each module and while the battery works."""
+    work = min(abs(power_kw), 3.0)
+    return [
+        round(
+            20.5
+            + 1.6 * math.sin(math.pi * (i % CELLS_PER_MODULE) / (CELLS_PER_MODULE - 1))
+            + 0.8 * work
+            + 0.3 * (i // CELLS_PER_MODULE),
+            1,
+        )
+        for i in range(MODULES * CELLS_PER_MODULE)
+    ]
+
+
+def soh_at(key: str, day: date) -> float:
+    return round(100 - SOH_PER_YEAR[key] * (day - COMMISSIONED).days / 365, 1)
 
 
 class DemoPlant:
@@ -259,19 +356,35 @@ class DemoPlant:
         for key, p in power.items():
             eff = 0.97 if p > 0 else 1 / 0.97
             self.soc[key] = max(0.0, min(100.0, self.soc[key] + p * eff * seconds / 3600 / caps[key] * 100))
-        batteries = [
-            BatteryReading(
+        batteries = []
+        for key in self.soc:
+            reading = BatteryReading(
                 key,
                 round(self.soc[key], 1),
                 round(power[key], 3),
-                soh={"maison": 96.0, "garage": 99.0, "balcon": 98.0}[key],
+                soh=soh_at(key, local.date()),
                 cycles={"maison": 380.0, "garage": 120.0, "balcon": 210.0}[key],
                 temperature={"maison": 21.0, "garage": 24.0, "balcon": 19.0}[key],
                 capacity_kwh=caps[key],
-                cells=cells_at(local.date()) if key == "maison" else [],
             )
-            for key in self.soc
-        ]
+            if key == "maison":
+                cells = cells_at(local.date())
+                mean = sum(cells) / len(cells)
+                reading.cells = cells
+                reading.cell_temps = cell_temps_at(local, power[key])
+                reading.cells_per_module = CELLS_PER_MODULE
+                # The BMS balances the highest cells near the top of the charge.
+                reading.balancing = [i for i, v in enumerate(cells) if self.soc[key] > 90 and v > mean + 0.0055]
+                reading.modules = [
+                    {
+                        "name": f"Module {m + 1}",
+                        "soc": round(min(100.0, self.soc[key] + (m - 1) * 0.6), 1),
+                        "voltage": round(sum(cells[m * CELLS_PER_MODULE : (m + 1) * CELLS_PER_MODULE]), 2),
+                        "temperature": round(21.0 + 0.4 * m + 0.8 * min(abs(power[key]), 3.0), 1),
+                    }
+                    for m in range(MODULES)
+                ]
+            batteries.append(reading)
         batt = sum(power.values())
         export = pv - load - batt
         if export > EXPORT_LIMIT_KW:
@@ -280,16 +393,22 @@ class DemoPlant:
             pv *= 1 - cut
             strings = {k: v * (1 - cut) for k, v in strings.items()}
             panels = {k: v * (1 - cut) for k, v in panels.items()}
+        minute = local.hour * 60 + local.minute
+        meter_out = METER_GAP[0] <= minute < METER_GAP[1]
         return Reading(
             t=local.timestamp(),
             pv_kw=round(pv, 3),
             load_kw=round(load, 3),
-            grid_kw=round(load + batt - pv, 3),
+            grid_kw=None if meter_out else round(load + batt - pv, 3),
+            stale=[METER] if meter_out else [],
             expected_kw=round(cs * min(weather(local.date()) + 0.04, 1.0), 3),
             clearsky_kw=round(cs, 3),
             units={k: round(v, 4) for k, v in panels.items()},
             strings={k: round(v, 4) for k, v in strings.items()},
             batteries=batteries,
+            import_price=tempo_price(local),
+            day_color=tempo_color(local.date()) if local.hour >= 6 else None,
+            reference="forecast",
         )
 
 
@@ -312,6 +431,9 @@ def backfill(history: History, now: datetime, lat: float, lon: float, days: int 
                 clip_h = record.setdefault("clip_h", [0.0] * 24)
                 clip_h[t.hour] += lost
         t += step
+    # An inverter outage twelve days ago, back since: a resolved event of the Losses tab.
+    outage = history.day((now - timedelta(days=12)).date())
+    outage["unavailable"] = outage.get("unavailable", 0.0) + 1.6
     # The old days were integrated at 15 minutes: keep only the recent days' buckets.
     history.buckets = [b for b in history.buckets if b["t"] >= recent.timestamp()]
     return plant

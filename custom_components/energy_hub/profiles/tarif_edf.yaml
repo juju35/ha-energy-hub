@@ -1,0 +1,10 @@
+name: Tarif EDF
+platform: tarif_edf
+status: beta
+url: https://github.com/delphiki/hass-tarif-edf
+# The price of the kWh now (contract and power in its object id) and, for Tempo, the colour of the day.
+roles:
+  tariff_price: ['^tarif_actuel_(?:base|hphc|tempo)_\d+kva_ttc$']
+  tariff_color: ['^tarif_tempo_couleur$']
+capabilities:
+  tariff: provided

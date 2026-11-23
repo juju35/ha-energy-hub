@@ -1,0 +1,93 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Energy Hub",
+        "description": "Energy Hub encuentra solo tus integraciones solares, de baterías y de contador. Activa la demo para probar el panel con una instalación simulada.",
+        "data": {
+          "demo": "Modo demo (instalación simulada)",
+          "show_panel": "Mostrar el panel en la barra lateral"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Energy Hub ya está configurado.",
+      "single_instance_allowed": "Energy Hub ya está configurado."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opciones de Energy Hub",
+        "description": "Un bloque `energy_hub:` en configuration.yaml prevalece sobre estas opciones.",
+        "data": {
+          "demo": "Modo demo (instalación simulada)",
+          "show_panel": "Mostrar el panel en la barra lateral"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "self_consumption": {
+        "name": "Autoconsumo"
+      },
+      "self_sufficiency": {
+        "name": "Autosuficiencia"
+      },
+      "pv_energy_today": {
+        "name": "Energía solar de hoy"
+      },
+      "specific_yield": {
+        "name": "Rendimiento específico de hoy"
+      },
+      "performance_index": {
+        "name": "Índice de rendimiento"
+      },
+      "losses_today": {
+        "name": "Pérdidas de producción de hoy"
+      },
+      "clipping_today": {
+        "name": "Recorte de hoy"
+      },
+      "battery_soc": {
+        "name": "Carga del parque de baterías"
+      },
+      "battery_power": {
+        "name": "Potencia del parque de baterías"
+      },
+      "battery_autonomy": {
+        "name": "Autonomía de las baterías"
+      },
+      "savings_today": {
+        "name": "Ahorro de hoy"
+      },
+      "alerts": {
+        "name": "Alertas"
+      }
+    }
+  },
+  "exceptions": {
+    "alert_clipping": {
+      "message": "Recorte del inversor hoy: {kwh} kWh perdidos."
+    },
+    "alert_string_lagging": {
+      "message": "{name} produce un {pct} % menos que sus pares."
+    },
+    "alert_shading": {
+      "message": "Sombra recurrente {unit} de {start} a {end}."
+    },
+    "alert_soiling": {
+      "message": "Pérdida por suciedad {loss} %: una limpieza puede compensar."
+    },
+    "alert_cell_drift": {
+      "message": "{battery}: la celda {cell} alcanza el umbral de dispersión en {days} días."
+    },
+    "alert_battery_exchange": {
+      "message": "Una batería carga a otra ({kw} kW): energía perdida en idas y vueltas."
+    },
+    "alert_stale": {
+      "message": "Una fuente de Energy Hub ha dejado de actualizarse: {entities}"
+    }
+  }
+}

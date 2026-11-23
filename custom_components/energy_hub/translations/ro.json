@@ -1,0 +1,93 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Energy Hub",
+        "description": "Energy Hub găsește singur integrările tale solare, de baterii și de contor. Activează demo-ul pentru a încerca panoul cu o instalație simulată.",
+        "data": {
+          "demo": "Mod demo (instalație simulată)",
+          "show_panel": "Afișează panoul în bara laterală"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Energy Hub este deja configurat.",
+      "single_instance_allowed": "Energy Hub este deja configurat."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opțiuni Energy Hub",
+        "description": "Un bloc `energy_hub:` în configuration.yaml are prioritate față de aceste opțiuni.",
+        "data": {
+          "demo": "Mod demo (instalație simulată)",
+          "show_panel": "Afișează panoul în bara laterală"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "self_consumption": {
+        "name": "Autoconsum"
+      },
+      "self_sufficiency": {
+        "name": "Autosuficiență"
+      },
+      "pv_energy_today": {
+        "name": "Energie solară azi"
+      },
+      "specific_yield": {
+        "name": "Randament specific azi"
+      },
+      "performance_index": {
+        "name": "Indice de performanță"
+      },
+      "losses_today": {
+        "name": "Pierderi de producție azi"
+      },
+      "clipping_today": {
+        "name": "Limitare azi"
+      },
+      "battery_soc": {
+        "name": "Încărcarea parcului de baterii"
+      },
+      "battery_power": {
+        "name": "Puterea parcului de baterii"
+      },
+      "battery_autonomy": {
+        "name": "Autonomia bateriilor"
+      },
+      "savings_today": {
+        "name": "Economii azi"
+      },
+      "alerts": {
+        "name": "Alerte"
+      }
+    }
+  },
+  "exceptions": {
+    "alert_clipping": {
+      "message": "Limitarea invertorului azi: {kwh} kWh pierduți."
+    },
+    "alert_string_lagging": {
+      "message": "{name} produce cu {pct} % mai puțin decât celelalte."
+    },
+    "alert_shading": {
+      "message": "Umbrire recurentă {unit} de la {start} la {end}."
+    },
+    "alert_soiling": {
+      "message": "Pierdere din murdărie {loss} %: o curățare poate merita."
+    },
+    "alert_cell_drift": {
+      "message": "{battery}: celula {cell} atinge pragul de dispersie în {days} zile."
+    },
+    "alert_battery_exchange": {
+      "message": "O baterie încarcă alta ({kw} kW): energie pierdută dus-întors."
+    },
+    "alert_stale": {
+      "message": "O sursă Energy Hub nu se mai actualizează: {entities}"
+    }
+  }
+}

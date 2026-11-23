@@ -1,0 +1,93 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Energy Hub",
+        "description": "Energy Hub vindt zelf je zonne-, batterij- en meterintegraties. Zet de demo aan om het paneel met een gesimuleerde installatie te proberen.",
+        "data": {
+          "demo": "Demomodus (gesimuleerde installatie)",
+          "show_panel": "Paneel in de zijbalk tonen"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Energy Hub is al ingesteld.",
+      "single_instance_allowed": "Energy Hub is al ingesteld."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Energy Hub-opties",
+        "description": "Een blok `energy_hub:` in configuration.yaml gaat voor deze opties.",
+        "data": {
+          "demo": "Demomodus (gesimuleerde installatie)",
+          "show_panel": "Paneel in de zijbalk tonen"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "self_consumption": {
+        "name": "Eigen verbruik"
+      },
+      "self_sufficiency": {
+        "name": "Zelfvoorziening"
+      },
+      "pv_energy_today": {
+        "name": "Zonne-energie vandaag"
+      },
+      "specific_yield": {
+        "name": "Specifieke opbrengst vandaag"
+      },
+      "performance_index": {
+        "name": "Prestatie-index"
+      },
+      "losses_today": {
+        "name": "Productieverliezen vandaag"
+      },
+      "clipping_today": {
+        "name": "Clipping vandaag"
+      },
+      "battery_soc": {
+        "name": "Lading van het batterijpark"
+      },
+      "battery_power": {
+        "name": "Vermogen van het batterijpark"
+      },
+      "battery_autonomy": {
+        "name": "Batterij-autonomie"
+      },
+      "savings_today": {
+        "name": "Besparing vandaag"
+      },
+      "alerts": {
+        "name": "Meldingen"
+      }
+    }
+  },
+  "exceptions": {
+    "alert_clipping": {
+      "message": "Clipping van de omvormer vandaag: {kwh} kWh verloren."
+    },
+    "alert_string_lagging": {
+      "message": "{name} produceert {pct} % minder dan de andere."
+    },
+    "alert_shading": {
+      "message": "Terugkerende schaduw {unit} van {start} tot {end}."
+    },
+    "alert_soiling": {
+      "message": "Verlies door vervuiling {loss} %: reinigen kan lonen."
+    },
+    "alert_cell_drift": {
+      "message": "{battery}: cel {cell} bereikt de spreidingsgrens over {days} dagen."
+    },
+    "alert_battery_exchange": {
+      "message": "De ene batterij laadt de andere ({kw} kW): energie gaat verloren heen en terug."
+    },
+    "alert_stale": {
+      "message": "Een bron van Energy Hub werkt niet meer bij: {entities}"
+    }
+  }
+}

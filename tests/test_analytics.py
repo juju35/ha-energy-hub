@@ -1,7 +1,7 @@
 """The analytics core against synthetic series whose answer is known."""
 
 import math
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 import pytest
 
@@ -207,3 +207,88 @@ def test_finance():
     assert p.share_paid == pytest.approx(5470 / 8660)
     never = payback(net_cost=100000, gained_so_far=0, yearly_gain=100, horizon_years=20)
     assert never.years_to_break_even is None
+
+
+# ---- tariffs
+def test_easter_and_french_holidays():
+    from custom_components.energy_hub.analytics.tariffs import easter, french_holidays, is_weekend
+
+    assert easter(2026) == date(2026, 4, 5)
+    assert easter(2027) == date(2027, 3, 28)
+    holidays = french_holidays(2026)
+    assert {date(2026, 4, 6), date(2026, 5, 14), date(2026, 5, 25), date(2026, 7, 14)} <= holidays
+    assert is_weekend(date(2026, 5, 14))  # Ascension, a Thursday
+    assert not is_weekend(date(2026, 5, 13))
+
+
+def test_offpeak_ranges_cross_midnight():
+    from custom_components.energy_hub.analytics.tariffs import in_ranges, parse_ranges
+
+    ranges = parse_ranges("22:00-06:00, 12:30-14:30, bad")
+    assert ranges == ((1320, 360), (750, 870))
+    assert in_ranges(23 * 60, ranges) and in_ranges(5 * 60 + 59, ranges) and in_ranges(13 * 60, ranges)
+    assert not in_ranges(6 * 60, ranges) and not in_ranges(15 * 60, ranges)
+
+
+def test_slot_prices_of_each_kind():
+    from custom_components.energy_hub.analytics.tariffs import offers
+
+    by_key = {o.key: o for o in offers(9)}
+    monday, saturday = date(2026, 1, 12), date(2026, 1, 17)
+    assert by_key["base"].slot_price(monday, 600) == 0.1985
+    assert by_key["hphc"].slot_price(monday, 23 * 60) == 0.1589
+    assert by_key["hphc"].slot_price(monday, 600) == 0.2142
+    assert by_key["zen_weekend"].slot_price(saturday, 600) == 0.1710
+    assert by_key["zen_weekend"].slot_price(monday, 600) == 0.2285
+    colors = {"2026-01-11": "Bleu", "2026-01-12": "rouge"}
+    tempo = by_key["tempo"]
+    # 5:00 on a red Monday still belongs to Sunday's blue day; 7:00 is a red peak hour.
+    assert tempo.slot_price(monday, 5 * 60, colors) == 0.1356
+    assert tempo.slot_price(monday, 7 * 60, colors) == 0.7295
+    flex = by_key["zen_flex"]
+    assert flex.slot_price(monday, 9 * 60, {"2026-01-12": "sobriete"}) == 0.7467
+    assert flex.slot_price(monday, 14 * 60, {"2026-01-12": "eco"}) == 0.1595
+    # A Tempo colour says nothing about a Zen Flex day: the winter weekday mix is used.
+    assert flex.slot_price(monday, 9 * 60, colors) == pytest.approx(0.2 * 0.7467 + 0.8 * 0.2142)
+
+
+def test_offers_by_power_and_overrides():
+    from custom_components.energy_hub.analytics.tariffs import offers
+
+    assert {o.key for o in offers(3)} == {"base", "hphc", "zen_weekend"}
+    mine = offers(
+        6,
+        overrides={
+            "base": {"prices": {"base": 0.18}},
+            "mine": {"kind": "hphc", "subscription": 150, "prices": {"hp": 0.2, "hc": 0.1}},
+            "odd": {"kind": "nope"},
+        },
+    )
+    by_key = {o.key: o for o in mine}
+    assert by_key["base"].prices["base"] == 0.18 and by_key["base"].custom
+    assert by_key["mine"].subscription == 150 and by_key["mine"].custom
+    assert "odd" not in by_key
+
+
+def test_compare_ranks_offers_and_scales_to_a_year():
+    from custom_components.energy_hub.analytics.tariffs import compare, offers
+
+    night = [0.5 if i < 12 or i >= 44 else 0.0 for i in range(48)]  # 8 kWh a day, all off-peak
+    days = [(date(2026, 6, 1) + timedelta(days=i), night) for i in range(73)]
+    result, scale = compare(days, [o for o in offers(6) if o.key in ("base", "hphc")])
+    assert scale == pytest.approx(5.0)
+    assert [r.key for r in result] == ["hphc", "base"]
+    assert result[0].energy_eur == pytest.approx(8 * 0.1589 * 365)
+    assert compare([], offers(6)) == ([], 0.0)
+
+
+def test_cloud_and_measured_factors():
+    from custom_components.energy_hub.analytics.clearsky import cloud_factor, measured_factor
+
+    assert cloud_factor(0) == 1.0
+    assert cloud_factor(1) == pytest.approx(0.25)
+    assert cloud_factor(0.5) == pytest.approx(1 - 0.75 * 0.5**3.4)
+    noon = datetime(2026, 6, 21, 13, 50, tzinfo=timezone(timedelta(hours=2)))
+    assert measured_factor(5000, noon, 48.1, -1.7) == 1.3
+    assert 0.3 < measured_factor(350, noon, 48.1, -1.7) < 0.4
+    assert measured_factor(10, datetime(2026, 6, 21, 2, 0, tzinfo=PARIS), 48.1, -1.7) is None

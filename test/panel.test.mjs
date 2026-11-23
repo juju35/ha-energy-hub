@@ -1,7 +1,7 @@
 // Unit tests for the panel: the panel file is evaluated with stubs and each tab is rendered to a string from the demo
 // snapshot (test/fixtures/demo.json, written by the integration's demo plant), no browser needed.
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import vm from 'node:vm';
 
@@ -29,8 +29,12 @@ const context = {
   Intl,
 };
 vm.createContext(context);
-vm.runInContext(`${source}\nthis.e = { ehEsc, ehIcon, EH_I18N, EH_ICONS, EH_TABS, EnergyHubPanel, ENERGY_HUB_PANEL_VERSION };`, context);
+vm.runInContext(`${source}\nthis.e = { ehEsc, ehIcon, EH_I18N, EH_ICONS, EH_LANGS, EH_TABS, EnergyHubPanel, ENERGY_HUB_PANEL_VERSION };`, context);
 const E = context.e;
+// The language files the panel fetches, loaded up front
+const I18N_DIR = new URL('../custom_components/energy_hub/frontend/i18n/', import.meta.url);
+const FILES = readdirSync(I18N_DIR).filter((f) => f.endsWith('.json'));
+for (const f of FILES) E.EH_I18N[f.slice(0, -5)] = JSON.parse(readFileSync(new URL(f, I18N_DIR), 'utf8'));
 
 function panel(lang = 'en', data = snapshot) {
   const p = new E.EnergyHubPanel();
@@ -60,16 +64,30 @@ function flat(o, prefix = '') {
   return Object.entries(o).flatMap(([k, v]) => (v && typeof v === 'object' && !Array.isArray(v) ? flat(v, `${prefix}${k}.`) : [[`${prefix}${k}`, v]]));
 }
 
-test('French has the English keys and placeholders', () => {
+test('every language file has the English keys and placeholders', () => {
+  assert.deepEqual(FILES.map((f) => f.slice(0, -5)).sort(), [...E.EH_LANGS].sort());
   const en = Object.fromEntries(flat(E.EH_I18N.en));
-  const fr = Object.fromEntries(flat(E.EH_I18N.fr));
-  assert.deepEqual(Object.keys(fr).sort(), Object.keys(en).sort());
   const ph = (v) => (Array.isArray(v) ? v.join(' ') : String(v)).match(/\{\w+\}/g)?.sort() ?? [];
-  for (const k of Object.keys(en)) assert.deepEqual(ph(fr[k]), ph(en[k]), k);
+  for (const lang of E.EH_LANGS) {
+    const other = Object.fromEntries(flat(E.EH_I18N[lang]));
+    assert.deepEqual(Object.keys(other).sort(), Object.keys(en).sort(), lang);
+    for (const k of Object.keys(en)) {
+      assert.deepEqual(ph(other[k]), ph(en[k]), `${lang}.${k}`);
+      if (Array.isArray(en[k])) assert.equal(other[k].length, en[k].length, `${lang}.${k}`);
+    }
+  }
+});
+
+test('language of Home Assistant: regional and script variants', () => {
+  const p = new E.EnergyHubPanel();
+  for (const [ha, lang] of [['fr-FR', 'fr'], ['pt-BR', 'pt'], ['sr-Latn', 'sr-Latn'], ['sr', 'sr'], ['xx', 'en']]) {
+    p._hass = { locale: { language: ha } };
+    assert.equal(p._lang, lang, ha);
+  }
 });
 
 test('every tab renders the demo snapshot, in both languages', () => {
-  for (const lang of ['en', 'fr']) {
+  for (const lang of ['en', ...E.EH_LANGS]) {
     const p = panel(lang);
     for (const [tab] of E.EH_TABS) {
       p._tab = tab;
@@ -91,10 +109,38 @@ test('a battery and its cells', () => {
   const p = panel('en');
   p._battery = 'maison';
   const html = p._batteries();
-  assert.match(html, /Cells · 16/);
+  assert.match(html, /Cells · 48/);
+  assert.match(html, /3 modules × 16 cells/);
   assert.match(html, /threshold 50 mV in \d+ days/);
+  assert.match(html, /State of health · 3 years/);
+  assert.match(html, /baldot/);
+  p._cell = 23;
+  assert.match(p._batteries(), /Drifts -?\d/);
   p._battery = 'garage';
   assert.match(p._batteries(), /does not report its cells/);
+});
+
+test('periods, events, calendar, bill and settings sub-tabs', () => {
+  const p = panel('en');
+  for (const period of ['7d', '30d', '12m']) {
+    p._period = period;
+    assert.ok(!/undefined|NaN/.test(p._curve()), period);
+  }
+  assert.match(p._events(), /Recurring/);
+  assert.match(p._events(), /Resolved/);
+  assert.match(p._finances(), /Gains calendar/);
+  assert.match(p._finances(), /Without solar/);
+  for (const sub of ['sources', 'installation', 'tariffs', 'alerts', 'yaml']) {
+    p._sub = sub;
+    const html = p._settingsTab();
+    assert.ok(!/undefined|NaN/.test(html), `${sub}: ${html.match(/.{40}(undefined|NaN).{40}/)?.[0]}`);
+  }
+  p._sub = 'installation';
+  p._node = 'battery:garage';
+  assert.match(p._settingsTab(), /AC-coupled/);
+  p._sub = 'sources';
+  assert.match(p._settingsTab(), /Attach Balcon BMS to the Balcon battery/);
+  assert.match(p._settingsTab(), /Data quality · 24 h/);
 });
 
 test('break-even moves with the price rise', () => {
@@ -114,4 +160,27 @@ test('without batteries nor cost the panel still renders', () => {
   assert.ok(p._overview().includes('Solar'));
   assert.ok(p._batteries().includes('none'));
   assert.ok(p._finances().includes('installation: cost:'));
+});
+
+test('offer comparator, contract and production reference', () => {
+  const p = panel('en');
+  const html = p._comparator();
+  assert.match(html, /Offer comparator/);
+  assert.match(html, /Switching to Tarif Bleu · Heures Creuses would save about/);
+  assert.match(html, /your contract/);
+  assert.ok(!/undefined|NaN/.test(html));
+  p._sub = 'tariffs';
+  assert.match(p._settingsTab(), /Tarif Bleu · Tempo/);
+  assert.match(p._settingsTab(), /sensor\.demo_tarif_actuel_tempo_9kva_ttc/);
+  assert.match(p._reference(), /Solar forecast/);
+  assert.match(panel('fr')._comparator(), /Comparateur d&#39;offres/);
+
+  const data = structuredClone(snapshot);
+  data.finances.comparator = { ...data.finances.comparator, offers: [], days: 3 };
+  assert.match(panel('en', data)._comparator(), /needs 14 days of grid readings \(3 so far\)/);
+  data.finances.comparator = { ...snapshot.finances.comparator, current: null, grid_stale: true, scale: 2, colors: 100 };
+  const unknown = panel('en', data)._comparator();
+  assert.match(unknown, /Contract unknown/);
+  assert.match(unknown, /more than 7 months old/);
+  assert.match(unknown, /scaled to a year/);
 });

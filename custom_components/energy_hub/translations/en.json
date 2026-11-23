@@ -29,18 +29,65 @@
   },
   "entity": {
     "sensor": {
-      "self_consumption": { "name": "Self-consumption" },
-      "self_sufficiency": { "name": "Self-sufficiency" },
-      "pv_energy_today": { "name": "Solar energy today" },
-      "specific_yield": { "name": "Specific yield today" },
-      "performance_index": { "name": "Performance index" },
-      "losses_today": { "name": "Production losses today" },
-      "clipping_today": { "name": "Clipping today" },
-      "battery_soc": { "name": "Battery fleet charge" },
-      "battery_power": { "name": "Battery fleet power" },
-      "battery_autonomy": { "name": "Battery autonomy" },
-      "savings_today": { "name": "Savings today" },
-      "alerts": { "name": "Alerts" }
+      "self_consumption": {
+        "name": "Self-consumption"
+      },
+      "self_sufficiency": {
+        "name": "Self-sufficiency"
+      },
+      "pv_energy_today": {
+        "name": "Solar energy today"
+      },
+      "specific_yield": {
+        "name": "Specific yield today"
+      },
+      "performance_index": {
+        "name": "Performance index"
+      },
+      "losses_today": {
+        "name": "Production losses today"
+      },
+      "clipping_today": {
+        "name": "Clipping today"
+      },
+      "battery_soc": {
+        "name": "Battery fleet charge"
+      },
+      "battery_power": {
+        "name": "Battery fleet power"
+      },
+      "battery_autonomy": {
+        "name": "Battery autonomy"
+      },
+      "savings_today": {
+        "name": "Savings today"
+      },
+      "alerts": {
+        "name": "Alerts"
+      }
+    }
+  },
+  "exceptions": {
+    "alert_clipping": {
+      "message": "Inverter clipping today: {kwh} kWh lost."
+    },
+    "alert_string_lagging": {
+      "message": "{name} produces {pct} % less than its peers."
+    },
+    "alert_shading": {
+      "message": "Recurring shading {unit} from {start} to {end}."
+    },
+    "alert_soiling": {
+      "message": "Soiling loss {loss} %: a cleaning may pay."
+    },
+    "alert_cell_drift": {
+      "message": "{battery}: cell {cell} reaches the spread threshold in {days} days."
+    },
+    "alert_battery_exchange": {
+      "message": "One battery charges another ({kw} kW): energy lost in round trips."
+    },
+    "alert_stale": {
+      "message": "A source of Energy Hub stopped updating: {entities}"
     }
   }
 }

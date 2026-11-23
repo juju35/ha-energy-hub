@@ -27,8 +27,9 @@ def _strings(data: dict, prefix: str = "") -> dict[str, str]:
     return strings
 
 
-def test_french_is_shipped():
-    assert "fr" in LANGUAGES
+def test_every_ha_language_is_shipped():
+    expected = "fr de es it nl pt pl sr sr-Latn ro da sv bg ru uk hu sk cs sl lv el".split()  # noqa: SIM905
+    assert sorted(LANGUAGES) == sorted(expected)
 
 
 @pytest.mark.parametrize("lang", LANGUAGES)

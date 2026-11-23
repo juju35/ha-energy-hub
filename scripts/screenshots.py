@@ -58,7 +58,7 @@ p.hass = {
 
 def snapshot() -> tuple[dict, dict]:
     """The demo snapshot and settings payloads, computed by the integration (Home Assistant must be installed)."""
-    from custom_components.energy_hub import demo, settings_yaml
+    from custom_components.energy_hub import demo, settings_payload
     from custom_components.energy_hub.config import parse
     from custom_components.energy_hub.engine import build_snapshot
     from custom_components.energy_hub.history import History
@@ -70,7 +70,7 @@ def snapshot() -> tuple[dict, dict]:
     inst = demo.installation()
     snap = build_snapshot(history, inst, cfg, reading, NOW, demo=True)
     snap = json.loads(json.dumps(snap, default=str))
-    return snap, {"yaml": settings_yaml(cfg, inst)}
+    return snap, settings_payload(cfg, inst, yaml_configured=True, show_panel=True)
 
 
 def fixture_text() -> str:
@@ -93,9 +93,14 @@ def _save(page, path: Path) -> None:
 
 
 def _serve(html: str):
-    """Return a route handler answering with `html`."""
+    """Return a route handler answering with `html`, and with the panel's language files."""
 
     def handler(route) -> None:
+        url = route.request.url
+        if "/energy_hub_static/i18n/" in url:
+            name = url.split("/i18n/")[1].split("?")[0]
+            route.fulfill(path=str(PANEL.parent / "i18n" / name), content_type="application/json")
+            return
         route.fulfill(body=html, content_type="text/html")
 
     return handler
@@ -147,11 +152,43 @@ def main() -> None:
                 page.set_viewport_size({"width": 1100, "height": min(max(height, 400), 2400)})
                 page.wait_for_timeout(150)
                 _save(page, out / f"{theme}-{tab}.png")
+                extra = {
+                    "overview": [("overview-30d", ["[data-period='30d']"])],
+                    "settings": [
+                        ("settings-installation", ["[data-sub=installation]", "[data-node='battery:maison']"]),
+                        ("settings-alerts", ["[data-sub=alerts]"]),
+                        ("settings-tariffs", ["[data-sub=tariffs]"]),
+                    ],
+                }.get(tab, [])
+                for name, clicks in extra:
+                    for selector in clicks:
+                        page.evaluate(
+                            "(s) => document.querySelector('energy-hub-panel').shadowRoot.querySelector(s).dispatchEvent("
+                            "new MouseEvent('click', {bubbles: true}))",
+                            selector,
+                        )
+                        page.wait_for_timeout(120)
+                    height = page.evaluate(
+                        "() => document.querySelector('energy-hub-panel').shadowRoot.querySelector('.scroll').scrollHeight"
+                    )
+                    page.set_viewport_size({"width": 1100, "height": min(max(height, 400), 2400)})
+                    page.wait_for_timeout(120)
+                    _save(page, out / f"{theme}-{name}.png")
                 if tab == "batteries":
                     page.evaluate(
                         "() => document.querySelector('energy-hub-panel').shadowRoot"
                         ".querySelector('[data-battery=maison]').click()"
                     )
+                    page.wait_for_timeout(150)
+                    page.evaluate(
+                        "() => document.querySelector('energy-hub-panel').shadowRoot"
+                        ".querySelector('[data-cell=\"23\"]').click()"
+                    )
+                    page.wait_for_timeout(150)
+                    height = page.evaluate(
+                        "() => document.querySelector('energy-hub-panel').shadowRoot.querySelector('.scroll').scrollHeight"
+                    )
+                    page.set_viewport_size({"width": 1100, "height": min(max(height, 400), 3200)})
                     page.wait_for_timeout(150)
                     _save(page, out / f"{theme}-cells.png")
                 page.set_viewport_size({"width": 1100, "height": 900})

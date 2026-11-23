@@ -1,0 +1,8 @@
+name: RTE Tempo
+platform: rtetempo
+status: beta
+url: https://github.com/hekmon/rtetempo
+roles:
+  tariff_color: ['^rte_tempo_couleur_actuelle$']
+capabilities:
+  tariff: provided

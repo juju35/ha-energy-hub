@@ -10,6 +10,8 @@
 
 <p align="center"><img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/custom_components/energy_hub/brand/icon.png" alt="Energy Hub" width="120"></p>
 
+<p align="center"><img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/wip.svg" alt="Work in progress: every screen works in demo mode, the profiles still need real installations" width="720"></p>
+
 Home Assistant integration and sidebar panel for **solar installations**: production, self-consumption, batteries (down to the cells), panel efficiency and **production losses** (clipping, shading, soiling, export limitation), with the payback of the installation. It reads the entities of the solar, battery, meter and forecast integrations you already have, and detects most of them by itself.
 
 [![Open your Home Assistant instance and open a repository inside the Marketplace.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=juju35&repository=ha-energy-hub&category=integration)
@@ -22,20 +24,21 @@ Home Assistant integration and sidebar panel for **solar installations**: produc
 ## Features
 
 - **Energy Hub sidebar panel** (no dashboard to build): an illustrated banner that follows the sun, the battery level and the alerts, folding into a compact bar on scroll, and six tabs
-  - **Overview**: live energy flow between solar, home, batteries and grid; self-consumption, self-sufficiency, savings and losses of the day with their trend; the day's curve (production, forecast, consumption, battery %, inverter maximum, clipping periods); the current alerts
+  - **Overview**: live energy flow between solar, home, batteries and grid; self-consumption, self-sufficiency, savings and losses of the day with their trend; the production chart over today, 7 days, 30 days or 12 months (forecast, consumption, battery %, inverter maximum, clipping hatched); the current alerts
   - **Production**: specific yield, performance index, peak, month total; **per-panel yield on a roof drawing** (micro-inverters, optimizers) and per-string comparison; 30-day performance index with rainy days; 12 months against expected
-  - **Batteries**: any number of batteries of any brand as one fleet (charge, net power, autonomy, battery-to-battery exchange), each battery's health, cycles, round-trip efficiency and temperature, and the **cells** (voltage or deviation heat map, spread trend and days to the threshold)
-  - **Losses**: from potential to produced (cascade), clipping heat map over 30 days, causes of the month, events
-  - **Finances**: share paid back, gains since commissioning, break-even date with a price-rise slider, gains by month and where they come from
-  - **Settings**: configuration check, detected sources with what each provides or what the hub estimates, entities used and their freshness, excluded entities (double counts), and the equivalent YAML to copy
+  - **Batteries**: any number of batteries of any brand as one fleet (charge, net power, autonomy, battery-to-battery exchange), each battery drawn with its level, its health over 3 years and charge of the day with their projections, its modules, and the **cells** as a modules × cells heat map (deviation, voltage, temperature, balancing), each cell's 30-day drift and the spread projected to the threshold
+  - **Losses**: from potential to produced (cascade), clipping heat map over 30 days, causes of the month, events with their status (recurring, to watch, resolved)
+  - **Finances**: share paid back, gains since commissioning, break-even date with a price-rise slider, gains calendar, the bill with and without solar, gains by month and where they come from, and an **offer comparator** that replays 12 months of your real grid draw under each EDF offer
+  - **Settings**: sources with what each provides or what the hub estimates, attachment suggestions, data quality of the last 24 hours; a clickable DC/AC layout and the configuration checks with their actions; tariffs; alert rules; the equivalent YAML to copy
 - **Loss detection based on the PV monitoring literature** (see [How it works](#how-it-works)): clipping, recurring shading per panel, soiling, string mismatch, degradation, export limitation, unavailability
-- **Automatic detection** of the installation from the Energy dashboard settings and from 21 integration profiles; YAML to override anything
+- **Automatic detection** of the installation from the Energy dashboard settings and from 24 integration profiles; YAML to override anything
+- **Expected production from what Home Assistant already knows**: a measured irradiance sensor, the solar forecast, or a weather entity's cloud cover, with no network call of its own
 - 12 **sensors** (self-consumption, self-sufficiency, solar energy today, specific yield, performance index, losses, clipping, fleet charge and power, autonomy, savings, alerts) for your own dashboards and automations
-- `energy_hub_alert` **event** and optional **notifications** (once a day per alert) to the notify action of your choice
+- `energy_hub_alert` **event** and **notifications** in Home Assistant's language (once a day per alert): through [Notify Hub](https://github.com/juju35/ha-notify-hub) when it is installed, or to the notify action or entity of your choice
 - **Sidebar badge** with the number of alerts, red when one is an error
 - **Demo mode**: a simulated installation (two strings, sixteen panels, three batteries, more than a year of history) to try every screen
 - Diagnostics download with the detected installation only: no location, no history of values
-- English and French
+- English, French, German, Spanish, Italian, Dutch, Portuguese, Polish, Serbian (Cyrillic and Latin), Romanian, Danish, Swedish, Bulgarian, Russian, Ukrainian, Hungarian, Slovak, Czech, Slovenian, Latvian and Greek
 
 ## Supported integrations
 
@@ -75,6 +78,11 @@ Energy Hub works on top of the integrations below. Each one has a detection prof
 | [Teleinfo](https://www.home-assistant.io/integrations/teleinfo) | | ✓ | | Linky meter |
 | [Forecast.Solar](https://www.home-assistant.io/integrations/forecast_solar) | forecast | | | |
 | [Solcast PV Forecast](https://github.com/BJReplay/ha-solcast-solar) | forecast | | | |
+| [Tarif EDF](https://github.com/delphiki/hass-tarif-edf) | | tariff | | contract, power, price now, Tempo colour |
+| [RTE Tempo](https://github.com/hekmon/rtetempo) | | tariff | | Tempo colour |
+| [EDF Zen Flex](https://github.com/AuroreVgn/edf-zen-flex) | | tariff | | eco / sobriety day |
+| Any weather station with an irradiance sensor ([Ecowitt](https://www.home-assistant.io/integrations/ecowitt), [WeatherFlow](https://www.home-assistant.io/integrations/weatherflow)…) | irradiance | | | detected by its `irradiance` device class |
+| Any [weather](https://www.home-assistant.io/integrations/weather) entity (Météo-France, Met.no, OpenWeatherMap, Open-Meteo…) | cloud cover | | | |
 
 Any other integration works through the **Energy dashboard** settings (solar production, grid import and export, battery energy are read from there) or through the `entities:` and `batteries:` YAML keys. What a source does not provide is estimated when possible (state of health from full charges, cycles from the energy discharged, kWp from the production peaks) and marked as such in the panel.
 
@@ -136,6 +144,7 @@ energy_hub:
     load_power: sensor.home_power
     forecast_power: sensor.solcast_power_now
     forecast_energy_today: sensor.solcast_forecast_today
+    irradiance: sensor.solar_radiation      # W/m², horizontal (detected by its device class)
   batteries:                      # one key per battery, any brand
     house:
       name: House
@@ -148,19 +157,35 @@ energy_hub:
       cycles: sensor.battery_cycles
       temperature: sensor.battery_temperature
       cells: sensor.jk_bms_cell_voltage_*   # glob of the cell voltage sensors
+      cell_temperatures: sensor.jk_bms_cell_temperature_*
+      cells_per_module: 16        # draws the cells as modules × cells
   ignore:                         # entities never read (a double count, for example)
     - sensor.zendure_ac_input
   tariff:
-    import: 0.2016                # price per kWh bought
+    import: 0.2016                # price per kWh bought, when no contract is known
     export: 0.04                  # price per kWh sold
     currency: EUR
+    contract: tempo               # base, hphc, tempo, zen_weekend, zen_weekend_hc, zen_flex (read from Tarif EDF)
+    kva: 9                        # subscribed power
+    offpeak: "22:00-06:00"        # your off-peak hours (Enedis), several ranges separated by commas
+    price: sensor.tarif_actuel_tempo_9kva_ttc    # price of the kWh now (detected with Tarif EDF)
+    color: sensor.rte_tempo_couleur_actuelle     # Tempo colour or Zen Flex day (detected)
+    offers:                       # change the embedded grid, or add an offer to compare
+      zen_weekend:
+        prices: {week: 0.2285, weekend: 0.1710}
+      my_supplier:
+        name: My supplier
+        kind: hphc                # base, hphc, tempo, weekend, weekend_hphc, flex
+        subscription: 190.32      # per year
+        prices: {hp: 0.205, hc: 0.155}
+  weather: weather.home           # cloud cover for the expected production (first weather entity by default)
   installation:                   # for the payback
     cost: 9800
     subsidy: 1140
     commissioned: 2023-04-12
     inverter_replacement_cost: 1400
     inverter_lifetime_years: 12
-  notify: notify.mobile_app_phone # alerts, once a day each
+  notify: notify.mobile_app_phone # alerts, once a day each; default: notify.notify_hub when Notify Hub is installed
 ```
 
 The **Settings** tab shows the YAML equivalent to what is detected, ready to copy.
@@ -182,30 +207,37 @@ The **Settings** tab shows the YAML equivalent to what is detected, ready to cop
 
 `energy_hub_alert` is fired once per alert and per day, with `kind` (`clipping`, `string_lagging`, `shading`, `soiling`, `cell_drift`, `battery_exchange`, `stale`), `severity` and the alert's details.
 
+The same alerts are sent as notifications, written in Home Assistant's language: to `notify:` when it is set (a notify entity through `notify.send_message`, or a legacy notify action), otherwise to `notify.notify_hub` when [Notify Hub](https://github.com/juju35/ha-notify-hub) is installed, where its routing rules decide who receives them. Nothing is sent in demo mode.
+
 ## Screenshots
 
 | Light | Dark |
 |---|---|
 | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/light-overview.png" alt="overview" width="480"> | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/dark-overview.png" alt="overview dark" width="480"> |
+| <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/light-overview-30d.png" alt="overview 30 days" width="480"> | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/dark-overview-30d.png" alt="overview 30 days dark" width="480"> |
 | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/light-production.png" alt="production" width="480"> | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/dark-production.png" alt="production dark" width="480"> |
 | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/light-batteries.png" alt="batteries" width="480"> | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/dark-batteries.png" alt="batteries dark" width="480"> |
 | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/light-cells.png" alt="cells" width="480"> | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/dark-cells.png" alt="cells dark" width="480"> |
 | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/light-losses.png" alt="losses" width="480"> | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/dark-losses.png" alt="losses dark" width="480"> |
 | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/light-finances.png" alt="finances" width="480"> | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/dark-finances.png" alt="finances dark" width="480"> |
 | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/light-settings.png" alt="settings" width="480"> | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/dark-settings.png" alt="settings dark" width="480"> |
+| <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/light-settings-installation.png" alt="settings installation" width="480"> | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/dark-settings-installation.png" alt="settings installation dark" width="480"> |
+| <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/light-settings-alerts.png" alt="settings alerts" width="480"> | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/dark-settings-alerts.png" alt="settings alerts dark" width="480"> |
+| <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/light-settings-tariffs.png" alt="settings tariffs" width="480"> | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/dark-settings-tariffs.png" alt="settings tariffs dark" width="480"> |
 
 ## How it works
 
 Every 30 seconds the integration reads the detected entities (powers converted to kW, energies to kWh), integrates them into 5-minute buckets, 15-minute bins and daily records kept for more than two years in Home Assistant's storage, and computes a snapshot that the panel receives over the websocket. Everything runs locally in pure Python, without any cloud service.
 
-- **Expected production**: the forecast integration's power when there is one, otherwise the clear-sky production of each plane (NOAA solar position, Haurwitz irradiance model, plane-of-array transposition). The **performance index** is the measured over expected energy, as the Energy Performance Index of **IEC 61724-1**.
+- **Expected production**: the clear-sky production of each plane (NOAA solar position, Haurwitz irradiance model, plane-of-array transposition), scaled by the best reference Home Assistant has: a **measured irradiance** sensor (measured over clear-sky horizontal irradiance, the closest to the pyranometer of **IEC 61724-1**), else the **forecast** integration's power, else a weather entity's **cloud cover** N with the **Kasten-Czeplak** relation 1 − 0.75 N^3.4 (the condition stands in when the entity gives no cover), else the clear sky alone. The **performance index** is the measured over expected energy, as the Energy Performance Index of IEC 61724-1.
 - **Clipping**: plateaus of the production at the inverter maximum while the expected power is above it, after the geometric and threshold methods of **PVAnalytics** (Perry et al.); a plateau at the export limit is counted as **limitation** instead.
 - **Soiling**: stochastic rate and recovery (**SRR**) method of **RdTools** (Deceglie et al., 2018) on the daily performance index, cleaning events detected from rain and sudden recoveries; needs 90 days.
 - **Degradation**: year-on-year method (Jordan et al.) with a Theil–Sen slope; needs two years, shown as *learning* until then.
 - **Recurring shading**: on clear days only, each panel's 15-minute yield against the median of its peers, kept when the same window repeats (density-based approach after the Utrecht University shading studies); needs 10 clear days.
 - **Mismatch**: a string or panel whose relative yield stays under 90 % of the leave-one-out median of its peers for 3 days (after Guerriero et al.).
 - **Batteries**: fleet charge weighted by capacity, autonomy above the reserves at the current load, state of health from charges covering at least 40 points of charge, equivalent cycles, round-trip efficiency over 30 days, cell spread and its Theil–Sen projection to the threshold (50 mV).
-- **Payback**: gains are the self-consumed energy at the import price plus the exported energy at the export price; the projection adds the yearly gain with the chosen price rise, 0.5 %/year of degradation and one inverter replacement.
+- **Offer comparator**: the grid draw is kept per half hour for a year; each offer prices every half hour (off-peak ranges, week-ends and French public holidays, the Tempo colour or Zen Flex day recorded that day, or the season's expected mix when it was not), adds its subscription and is ranked. The regulated prices change on 1 February and 1 August and the Zen offers at most twice a year: the grid is EDF's published one, embedded with its date, flagged after 7 months, updated by release, and the market offers are shown as references to check against your contract.
+- **Payback**: gains are the self-consumed energy at the price of its half hour (the price entity, else the contract's grid, else the flat import price) plus the exported energy at the export price; the projection adds the yearly gain with the chosen price rise, 0.5 %/year of degradation and one inverter replacement.
 
 ## Development
 
@@ -231,6 +263,28 @@ The integration and the panel follow the language of Home Assistant. Currently s
 |---|---|
 | English | `en` |
 | Français | `fr` |
+| Deutsch | `de` |
+| Español | `es` |
+| Italiano | `it` |
+| Nederlands | `nl` |
+| Português (Portugal) | `pt` |
+| Polski | `pl` |
+| Српски | `sr` |
+| Srpski (latinica) | `sr-Latn` |
+| Română | `ro` |
+| Dansk | `da` |
+| Svenska | `sv` |
+| Български | `bg` |
+| Русский | `ru` |
+| Українська | `uk` |
+| Magyar | `hu` |
+| Slovenčina | `sk` |
+| Čeština | `cs` |
+| Slovenščina | `sl` |
+| Latviešu | `lv` |
+| Ελληνικά | `el` |
+
+Brazilian Portuguese (`pt-BR`) uses the European Portuguese texts. The panel ships English and loads the other languages from `custom_components/energy_hub/frontend/i18n/` on demand.
 
 Contributions for additional languages are welcome!
 

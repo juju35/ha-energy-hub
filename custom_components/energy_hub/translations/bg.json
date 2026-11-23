@@ -1,0 +1,93 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Energy Hub",
+        "description": "Energy Hub сам намира вашите соларни интеграции, батерии и електромер. Включете демото, за да изпробвате панела със симулирана инсталация.",
+        "data": {
+          "demo": "Демо режим (симулирана инсталация)",
+          "show_panel": "Показване на панела в страничната лента"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Energy Hub вече е настроен.",
+      "single_instance_allowed": "Energy Hub вече е настроен."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Опции на Energy Hub",
+        "description": "Блок `energy_hub:` в configuration.yaml има предимство пред тези опции.",
+        "data": {
+          "demo": "Демо режим (симулирана инсталация)",
+          "show_panel": "Показване на панела в страничната лента"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "self_consumption": {
+        "name": "Собствено потребление"
+      },
+      "self_sufficiency": {
+        "name": "Самозадоволяване"
+      },
+      "pv_energy_today": {
+        "name": "Соларна енергия днес"
+      },
+      "specific_yield": {
+        "name": "Специфичен добив днес"
+      },
+      "performance_index": {
+        "name": "Индекс на производителност"
+      },
+      "losses_today": {
+        "name": "Загуби на производство днес"
+      },
+      "clipping_today": {
+        "name": "Отрязване днес"
+      },
+      "battery_soc": {
+        "name": "Заряд на батериите"
+      },
+      "battery_power": {
+        "name": "Мощност на батериите"
+      },
+      "battery_autonomy": {
+        "name": "Автономия на батериите"
+      },
+      "savings_today": {
+        "name": "Спестявания днес"
+      },
+      "alerts": {
+        "name": "Сигнали"
+      }
+    }
+  },
+  "exceptions": {
+    "alert_clipping": {
+      "message": "Отрязване на инвертора днес: загубени {kwh} kWh."
+    },
+    "alert_string_lagging": {
+      "message": "{name} произвежда с {pct} % по-малко от останалите."
+    },
+    "alert_shading": {
+      "message": "Повтарящо се засенчване {unit} от {start} до {end}."
+    },
+    "alert_soiling": {
+      "message": "Загуба от замърсяване {loss} %: почистване може да се изплати."
+    },
+    "alert_cell_drift": {
+      "message": "{battery}: клетка {cell} достига прага на разсейване след {days} дни."
+    },
+    "alert_battery_exchange": {
+      "message": "Една батерия зарежда друга ({kw} kW): енергия се губи в кръговрата."
+    },
+    "alert_stale": {
+      "message": "Източник на Energy Hub спря да се обновява: {entities}"
+    }
+  }
+}

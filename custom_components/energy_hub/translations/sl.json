@@ -1,0 +1,93 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Energy Hub",
+        "description": "Energy Hub sam najde vaše integracije sončne elektrarne, baterij in števca. Vklopite demo, da preizkusite ploščo s simulirano napravo.",
+        "data": {
+          "demo": "Način demo (simulirana naprava)",
+          "show_panel": "Prikaži ploščo v stranski vrstici"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Energy Hub je že nastavljen.",
+      "single_instance_allowed": "Energy Hub je že nastavljen."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Možnosti Energy Hub",
+        "description": "Blok `energy_hub:` v configuration.yaml ima prednost pred temi možnostmi.",
+        "data": {
+          "demo": "Način demo (simulirana naprava)",
+          "show_panel": "Prikaži ploščo v stranski vrstici"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "self_consumption": {
+        "name": "Lastna poraba"
+      },
+      "self_sufficiency": {
+        "name": "Samooskrba"
+      },
+      "pv_energy_today": {
+        "name": "Sončna energija danes"
+      },
+      "specific_yield": {
+        "name": "Specifični donos danes"
+      },
+      "performance_index": {
+        "name": "Indeks zmogljivosti"
+      },
+      "losses_today": {
+        "name": "Izgube proizvodnje danes"
+      },
+      "clipping_today": {
+        "name": "Rezanje danes"
+      },
+      "battery_soc": {
+        "name": "Napolnjenost parka baterij"
+      },
+      "battery_power": {
+        "name": "Moč parka baterij"
+      },
+      "battery_autonomy": {
+        "name": "Avtonomija baterij"
+      },
+      "savings_today": {
+        "name": "Prihranek danes"
+      },
+      "alerts": {
+        "name": "Opozorila"
+      }
+    }
+  },
+  "exceptions": {
+    "alert_clipping": {
+      "message": "Rezanje razsmernika danes: izgubljeno {kwh} kWh."
+    },
+    "alert_string_lagging": {
+      "message": "{name} proizvede {pct} % manj od ostalih."
+    },
+    "alert_shading": {
+      "message": "Ponavljajoče senčenje {unit} od {start} do {end}."
+    },
+    "alert_soiling": {
+      "message": "Izguba zaradi umazanije {loss} %: čiščenje se lahko splača."
+    },
+    "alert_cell_drift": {
+      "message": "{battery}: celica {cell} doseže prag razpršenosti čez {days} dni."
+    },
+    "alert_battery_exchange": {
+      "message": "Ena baterija polni drugo ({kw} kW): energija se izgublja v krogu."
+    },
+    "alert_stale": {
+      "message": "Vir Energy Hub se ne posodablja več: {entities}"
+    }
+  }
+}

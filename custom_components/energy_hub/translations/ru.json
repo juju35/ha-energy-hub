@@ -1,0 +1,93 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Energy Hub",
+        "description": "Energy Hub сам находит ваши интеграции солнечных панелей, батарей и счётчика. Включите демо, чтобы попробовать панель с имитацией установки.",
+        "data": {
+          "demo": "Демо-режим (имитация установки)",
+          "show_panel": "Показывать панель на боковой панели"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Energy Hub уже настроен.",
+      "single_instance_allowed": "Energy Hub уже настроен."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Параметры Energy Hub",
+        "description": "Блок `energy_hub:` в configuration.yaml имеет приоритет над этими параметрами.",
+        "data": {
+          "demo": "Демо-режим (имитация установки)",
+          "show_panel": "Показывать панель на боковой панели"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "self_consumption": {
+        "name": "Собственное потребление"
+      },
+      "self_sufficiency": {
+        "name": "Самообеспечение"
+      },
+      "pv_energy_today": {
+        "name": "Солнечная энергия сегодня"
+      },
+      "specific_yield": {
+        "name": "Удельная выработка сегодня"
+      },
+      "performance_index": {
+        "name": "Индекс эффективности"
+      },
+      "losses_today": {
+        "name": "Потери выработки сегодня"
+      },
+      "clipping_today": {
+        "name": "Ограничение сегодня"
+      },
+      "battery_soc": {
+        "name": "Заряд парка батарей"
+      },
+      "battery_power": {
+        "name": "Мощность парка батарей"
+      },
+      "battery_autonomy": {
+        "name": "Автономность батарей"
+      },
+      "savings_today": {
+        "name": "Экономия сегодня"
+      },
+      "alerts": {
+        "name": "Оповещения"
+      }
+    }
+  },
+  "exceptions": {
+    "alert_clipping": {
+      "message": "Ограничение инвертора сегодня: потеряно {kwh} kWh."
+    },
+    "alert_string_lagging": {
+      "message": "{name} вырабатывает на {pct} % меньше остальных."
+    },
+    "alert_shading": {
+      "message": "Повторяющееся затенение {unit} с {start} до {end}."
+    },
+    "alert_soiling": {
+      "message": "Потери от загрязнения {loss} %: чистка может окупиться."
+    },
+    "alert_cell_drift": {
+      "message": "{battery}: ячейка {cell} достигнет порога разброса через {days} дн."
+    },
+    "alert_battery_exchange": {
+      "message": "Одна батарея заряжает другую ({kw} kW): энергия теряется на перекачке."
+    },
+    "alert_stale": {
+      "message": "Источник Energy Hub перестал обновляться: {entities}"
+    }
+  }
+}

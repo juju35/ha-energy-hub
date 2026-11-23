@@ -1,9 +1,10 @@
 // Energy Hub — sidebar panel. Draws everything itself (no Lovelace card): the illustrated banner, which folds into a
 // sticky bar on scroll, and six tabs (Overview, Production, Batteries, Losses, Finances, Settings). The data comes from
 // the integration's snapshot (websocket `energy_hub/subscribe`, pushed every 30 seconds).
-const ENERGY_HUB_PANEL_VERSION = '1.0.0';
+const ENERGY_HUB_PANEL_VERSION = '1.4.0';
 
 const EH_ICONS = {
+  'bell-outline': 'M10 21H14C14 22.1 13.1 23 12 23S10 22.1 10 21M21 19V20H3V19L5 17V11C5 7.9 7 5.2 10 4.3V4C10 2.9 10.9 2 12 2S14 2.9 14 4V4.3C17 5.2 19 7.9 19 11V17L21 19M17 11C17 8.2 14.8 6 12 6S7 8.2 7 11V18H17V11Z',
   'alert-outline': 'M12,2L1,21H23M12,6L19.53,19H4.47M11,10V14H13V10M11,16V18H13V16',
   'arrow-left-right': 'M6.45,17.45L1,12L6.45,6.55L7.86,7.96L4.83,11H19.17L16.14,7.96L17.55,6.55L23,12L17.55,17.45L16.14,16.04L19.17,13H4.83L7.86,16.04L6.45,17.45Z',
   'battery-70': 'M16,10H8V6H16M16.67,4H15V2H9V4H7.33A1.33,1.33 0 0,0 6,5.33V20.67C6,21.4 6.6,22 7.33,22H16.67A1.33,1.33 0 0,0 18,20.67V5.33C18,4.6 17.4,4 16.67,4Z',
@@ -26,6 +27,7 @@ const EH_ICONS = {
   'lightbulb-on-outline': 'M20,11H23V13H20V11M1,11H4V13H1V11M13,1V4H11V1H13M4.92,3.5L7.05,5.64L5.63,7.05L3.5,4.93L4.92,3.5M16.95,5.63L19.07,3.5L20.5,4.93L18.37,7.05L16.95,5.63M12,6A6,6 0 0,1 18,12C18,14.22 16.79,16.16 15,17.2V19A1,1 0 0,1 14,20H10A1,1 0 0,1 9,19V17.2C7.21,16.16 6,14.22 6,12A6,6 0 0,1 12,6M14,21V22A1,1 0 0,1 13,23H11A1,1 0 0,1 10,22V21H14M11,18H13V15.87C14.73,15.43 16,13.86 16,12A4,4 0 0,0 12,8A4,4 0 0,0 8,12C8,13.86 9.27,15.43 11,15.87V18Z',
   'menu': 'M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z',
   'minus': 'M19,13H5V11H19V13Z',
+  'close': 'M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z',
   'piggy-bank-outline': 'M15 10C15 9.45 15.45 9 16 9C16.55 9 17 9.45 17 10S16.55 11 16 11 15 10.55 15 10M8 9H13V7H8V9M22 7.5V14.47L19.18 15.41L17.5 21H12V19H10V21H4.5C4.5 21 2 12.54 2 9.5S4.46 4 7.5 4H12.5C13.41 2.79 14.86 2 16.5 2C17.33 2 18 2.67 18 3.5C18 3.71 17.96 3.9 17.88 4.08C17.74 4.42 17.62 4.81 17.56 5.23L19.83 7.5H22M20 9.5H19L15.5 6C15.5 5.35 15.59 4.71 15.76 4.09C14.79 4.34 14 5.06 13.67 6H7.5C5.57 6 4 7.57 4 9.5C4 11.38 5.22 16.15 6 19H8V17H14V19H16L17.56 13.85L20 13.03V9.5Z',
   'power-plug-off-outline': 'M22.11 21.46L2.39 1.73L1.11 3L6.25 8.14C6.1 8.41 6 8.7 6 9V14.5L9.5 18V21H14.5V18L15.31 17.2L20.84 22.73L22.11 21.46M13.09 16.59L12.67 17H11.33L10.92 16.59L8 13.67V9.89L13.89 15.78L13.09 16.59M12.2 9L10.2 7H14V3H16V7C17 7 18 8 18 9V14.5L17.85 14.65L16 12.8V9.09C16 9.06 15.95 9 15.92 9H12.2M10 6.8L8 4.8V3H10V6.8Z',
   'refresh': 'M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z',
@@ -52,6 +54,9 @@ const EH_TABS = [
   ['finances', 'currency-eur'],
   ['settings', 'cog-outline'],
 ];
+
+// The other languages are files next to the panel (frontend/i18n/<lang>.json), fetched when Home Assistant uses one.
+const EH_LANGS = ['fr', 'de', 'es', 'it', 'nl', 'pt', 'pl', 'sr', 'sr-Latn', 'ro', 'da', 'sv', 'bg', 'ru', 'uk', 'hu', 'sk', 'cs', 'sl', 'lv', 'el'];
 
 const EH_I18N = {
   en: {
@@ -80,13 +85,13 @@ const EH_I18N = {
     full: 'Full',
     of_peak: '{v} of peak',
     solar_share: '{v} solar',
-    base_load: 'base load {v}',
     full_at: 'full at {v}',
     self_consumption: 'Self-consumption',
     self_sufficiency: 'Self-sufficiency',
     saved: 'Saved',
     losses: 'Losses',
     vs_yesterday: '{v} vs yesterday',
+    pts: 'pts',
     resale: 'resale {v}',
     of_day: '{v} · {p} of the day',
     production: 'Production',
@@ -98,7 +103,6 @@ const EH_I18N = {
     hover_hint: 'Hover the curve for details',
     inverter_max: 'Inverter max {v}',
     clipped: 'Clipped {v}',
-    now: 'now',
     alerts: {
       clipping: ['Clipping {from} – {to}', '{kwh} lost · {days} day(s) this week'],
       string_lagging: ['{name} lagging', '{pct} vs its peers for {days} days'],
@@ -138,7 +142,6 @@ const EH_I18N = {
     temperature: 'Temperature',
     estimated: 'estimated',
     measured: '{a} / {b} measured',
-    soc_24: 'State of charge · today',
     cells: 'Cells',
     voltage: 'Voltage',
     deviation: 'Deviation',
@@ -186,11 +189,7 @@ const EH_I18N = {
     no_cost: 'Set `installation: cost:` in YAML to see the payback.',
     sources: 'Sources',
     capabilities: { provided: 'provided', estimated: 'estimated by the hub', absent: 'not available' },
-    roles: 'Entities used',
-    quality: 'Data freshness',
-    last_value: 'last value',
     yaml: 'YAML',
-    copy: 'Copy',
     copied: 'Copied',
     excluded: 'Excluded',
     excluded_reason: { ignore: 'ignored in YAML', double_count: 'already counted by the inverter (double count)' },
@@ -205,160 +204,196 @@ const EH_I18N = {
     },
     check_missing: 'missing',
     kwp_estimated: 'kWp estimated from the peaks: set `planes:` in YAML',
+    active: 'active',
+    active_n: '{n} active',
+    no_notify: 'none',
+    detected: 'detected',
+    inactive: 'inactive',
+    after_years: 'after {v} years',
+    alert_rules: 'Alert rules',
+    alerts_label: 'Alerts',
+    azimuth: 'Azimuth',
+    balancing: 'Balancing',
+    bill_hint: 'With solar: grid purchases at {i}/kWh minus feed-in at {e}/kWh. Without: the whole consumption bought.',
+    bill_title: 'Bill with and without solar',
+    capacity: 'Capacity',
+    commissioned: 'Commissioned',
+    computed: 'computed',
+    copy_yaml: 'Copy YAML',
+    correlation: 'charges follow each other (r = {v})',
+    cost: 'Installation cost',
+    credit: 'credit',
+    days_30: '30 days',
+    diag_drift: 'Drifts {v} mV a day against the others: balancing or a check of this cell may be needed.',
+    diag_stable: 'Follows the other cells: nothing to do.',
+    drifting: 'Drifting',
+    event_name: 'Event',
+    export_limit: 'Export limit',
+    export_price: 'Feed-in price',
+    frequency: 'Frequency',
+    gains_calendar: 'Gains calendar',
+    gaps: 'gaps {v}',
+    high: 'high',
+    home_computed: 'No home consumption sensor: computed from production, grid and batteries.',
+    import_price: 'Purchase price',
+    in_days: 'in {d} days',
+    installation_box: 'Installation',
+    inverter_cap: 'Inverter',
+    inverter_max_short: 'Inverter maximum',
+    inverter_replacement: 'Inverter replacement',
+    last_seen: 'last value {v} ago',
+    learning_short: 'Not enough data yet.',
+    limit_kw: 'limit {v}',
+    low: 'low',
+    measured_short: 'measured',
+    modules: 'Modules',
+    modules_x_cells: '{m} modules × {c} cells',
+    n_cells: '{n} cells',
+    n_days: '{n} days',
+    one_day: '1 day',
+    net_cost_label: 'Net cost',
+    no: 'no',
+    notifications: 'Notifications',
+    notify_target: 'Notify action',
+    now_short: 'now',
+    of_threshold: 'threshold {t}',
+    once_a_day: 'once a day per alert',
+    open: 'Open',
+    panels: 'panels',
+    per_day: '{v} a day',
+    plane_n: 'Plane {n}',
+    planes: 'Panels',
+    power: 'Power',
+    projection_dashed: 'dashed: projection',
+    quality_24h: 'Data quality · 24 h',
+    quality_hint: 'green: value read · red: missing',
+    reserve: 'reserve {v}',
+    saved_amount: '{v} saved',
+    schematic: 'DC / AC layout',
+    schematic_click: 'Click an element to see its capabilities and the entities used.',
+    schematic_hint: 'click an element',
+    soc: 'State of charge',
+    soc_today: 'Charge · today',
+    soh_3y: 'State of health · 3 years',
+    spread_trend: 'Cell spread · trend',
+    subsidy: 'Subsidy',
+    suggestions: 'Suggestions',
+    tariff_box: 'Tariff',
+    threshold: 'threshold',
+    tilt: 'Tilt',
+    today: 'today',
+    weeks_6: '6 weeks',
+    with_solar: 'With solar',
+    without_solar: 'Without solar',
+    yaml_detected: 'equivalent to the detection',
+    yaml_in_use: 'configuration.yaml in use',
+    yaml_wins: 'Edit in configuration.yaml: the energy_hub: block wins over the detection.',
+    yes: 'yes',
+    periods: { today: 'Today', '7d': '7 d', '30d': '30 d', '12m': '12 mo' },
+    coupling: { dc: 'DC-coupled', ac: 'AC-coupled' },
+    status: { recurring: 'Recurring', watch: 'To watch', resolved: 'Resolved' },
+    event: {
+      clipping: 'Clipping',
+      unavailability: 'Production unavailable',
+      shading: 'Shading {unit} · {from} – {to}',
+      string_lagging: '{name} lagging',
+      soiling: 'Soiling',
+      cell_drift: '{battery}: cell {cell} drifting',
+    },
+    subtabs: { sources: 'Sources', installation: 'Installation', tariffs: 'Tariffs', alerts: 'Alerts', yaml: 'YAML' },
+    source_role: { pv: 'Production', storage: 'Storage', meter: 'Grid meter', forecast: 'Forecast', tariff: 'Tariff', weather: 'Weather', prefs: 'Energy dashboard' },
+    suggest: {
+      attach_bms: 'Attach {bms} to the {battery} battery',
+      planes: 'Give the panels’ orientation (kWp, tilt, azimuth)',
+      capacity: 'Give the capacity of {battery}',
+      forecast: 'Add a production forecast',
+    },
+    cap: {
+      strings: 'strings',
+      optimizers: 'optimizers',
+      microinverters: 'micro-inverters',
+      pmax: 'inverter maximum',
+      export_limit: 'export limit',
+      soc: 'charge',
+      power: 'power',
+      soh: 'health',
+      cycles: 'cycles',
+      modules: 'modules',
+      cells: 'cells',
+      forecast: 'forecast',
+      tempo: 'tariff colour',
+      tariff: 'tariff',
+      irradiance: 'irradiance',
+      clouds: 'cloud cover',
+    },
+    role: {
+      pv_power: 'Solar power',
+      pv_energy: 'Solar energy',
+      grid_power: 'Grid power',
+      grid_import_energy: 'Grid import',
+      grid_export_energy: 'Grid export',
+      load_power: 'Home power',
+      forecast_power: 'Forecast power',
+      forecast_energy_today: 'Forecast today',
+      irradiance: 'Irradiance',
+      weather: 'Weather',
+      tariff_price: 'Price of the kWh',
+      tariff_color: 'Day colour',
+    },
+    alert_kind: {
+      clipping: 'Clipping',
+      string_lagging: 'String or panel lagging',
+      shading: 'Recurring shading',
+      soiling: 'Soiling',
+      cell_drift: 'Cell drift',
+      battery_exchange: 'Battery to battery',
+      stale: 'Source not updating',
+    },
+    alert_rule: {
+      clipping: 'more than 0.3 kWh clipped in the day',
+      string_lagging: 'under 90 % of its peers for 3 days',
+      shading: 'the same dip on 10 clear days or more',
+      soiling: 'more than 3 % lost to soiling',
+      cell_drift: 'cell spread reaching 50 mV within 14 days',
+      battery_exchange: 'more than 0.1 kW sent from one battery into another',
+      stale: 'an entity in use unavailable',
+    },
     beta: 'beta',
-  },
-  fr: {
-    title: 'Énergie',
-    tabs: { overview: "Vue d'ensemble", production: 'Production', batteries: 'Batteries', losses: 'Pertes', finances: 'Finances', settings: 'Réglages' },
-    demo: 'Démo',
-    loading: "Chargement d'Energy Hub…",
-    not_loaded: "Energy Hub n'est pas chargé.",
-    producing: 'Production {v}',
-    battery_pill: 'Batterie {v}',
-    night: 'Nuit',
-    alert_pill: '{n} alerte(s)',
-    subline_day: '{sc} autoconsommé · batterie {soc}',
-    subline_night: 'Maison {load} · autonomie {aut}',
-    kwp: '{v} kWc',
-    solar: 'Solaire',
-    home: 'Maison',
-    battery: 'Batterie',
-    batteries_n: '{n} batteries',
-    grid: 'Réseau',
-    importing: 'Soutirage',
-    exporting: 'Injection',
-    idle: 'Repos',
-    charging: 'Charge',
-    discharging: 'Décharge',
-    full: 'Pleine',
-    of_peak: '{v} de la crête',
-    solar_share: '{v} solaire',
-    base_load: 'talon {v}',
-    full_at: 'pleine à {v}',
-    self_consumption: 'Autoconsommation',
-    self_sufficiency: 'Autoproduction',
-    saved: 'Économisé',
-    losses: 'Pertes',
-    vs_yesterday: '{v} vs hier',
-    resale: 'revente {v}',
-    of_day: '{v} · {p} du jour',
-    production: 'Production',
-    forecast: 'Prévision',
-    consumption: 'Conso',
-    battery_pct: 'Batterie %',
-    clipping: 'Écrêtage',
-    produced_of: '{a} produits · {b} prévus',
-    hover_hint: 'Survole la courbe pour le détail',
-    inverter_max: 'Pmax onduleur {v}',
-    clipped: 'Écrêté {v}',
-    now: 'maintenant',
-    alerts: {
-      clipping: ['Écrêtage {from} – {to}', '{kwh} perdus · {days} jour(s) cette semaine'],
-      string_lagging: ['{name} en retrait', '{pct} vs ses voisines depuis {days} jours'],
-      shading: ['Ombrage {unit}', 'Chaque jour clair {from} – {to} · {kwh}/jour'],
-      soiling: ['Encrassement', '{pct} perdus : un nettoyage peut être rentable'],
-      cell_drift: ['{battery} : cellule {cell}', "Seuil d'écart dans {days} jours"],
-      battery_exchange: ['Batterie vers batterie', '{kw} envoyés d\'une batterie dans une autre'],
-      stale: ['Source figée', '{entities}'],
+    comparator: 'Offer comparator',
+    comparator_hint: '12 months · {v} drawn',
+    comparator_learning: 'The comparator needs {n} days of grid readings ({d} so far).',
+    offer: 'Offer',
+    avg_price: 'Average kWh',
+    subscription: 'Subscription',
+    total_year: 'Per year',
+    your_contract: 'your contract',
+    regulated: 'regulated',
+    market: 'market',
+    custom_offer: 'yours',
+    best_saving: 'Switching to {name} would save about {v} a year.',
+    best_is_current: 'Your contract is the cheapest for your consumption.',
+    no_contract: 'Contract unknown: set tariff: contract: in YAML, or install Tarif EDF, to see the difference.',
+    scaled: 'Based on {n} days of readings, scaled to a year.',
+    colors_estimated: '{n} days priced at the season’s mix of Tempo or Zen Flex days (colour not recorded).',
+    grid_info: 'EDF grid of {d}, VAT included. Market offers are references: check them against your contract.',
+    grid_stale: 'The embedded grid is more than 7 months old: a revision may have come since.',
+    contract_box: 'Contract',
+    contract: 'Contract',
+    subscribed_power: 'Subscribed power',
+    offpeak_hours: 'Off-peak hours',
+    price_now: 'Price now',
+    price_entity: 'Price entity',
+    color_entity: 'Day colour entity',
+    assumed: 'by default',
+    reference: 'Production reference',
+    contract_source: { tarif_edf: 'Tarif EDF', yaml: 'YAML' },
+    reference_kind: { measured: 'Measured irradiance', forecast: 'Solar forecast', weather: 'Weather cloud cover', clearsky: 'Clear sky' },
+    reference_hint: {
+      measured: 'clear sky scaled by the measured irradiance (IEC 61724-1)',
+      forecast: 'from the forecast integration',
+      weather: 'clear sky × (1 − 0.75 N^3.4), N the cloud cover',
+      clearsky: 'no irradiance sensor, forecast or weather entity found',
     },
-    yield: 'Rendement',
-    pr: 'Indice de performance',
-    pr_range: 'plage saine {v}',
-    peak_day: 'Crête du jour',
-    reached_limit: 'plafond onduleur atteint',
-    this_month: 'Ce mois',
-    of_expected: '{v} du prévu',
-    roof: 'Toit · rendement par panneau',
-    roof_hint: '% du meilleur panneau · aujourd\'hui',
-    strings: 'Strings',
-    pr_30: 'Indice de performance · 30 j',
-    rain: 'gouttes = pluie',
-    months_12: '12 mois',
-    expected_line: 'trait = attendu',
-    fleet: 'Parc',
-    net_power: 'Puissance nette',
-    n_charging: '{c} en charge · {d} en décharge',
-    autonomy: 'Autonomie',
-    autonomy_sub: 'à {v} · réserves déduites',
-    exchange: 'Échange interne',
-    to_avoid: 'à éviter',
-    none: 'aucun',
-    all: 'Toutes',
-    compare: 'Comparer',
-    health: 'État de santé',
-    cycles: 'Cycles',
-    rte: 'Rendement aller-retour',
-    temperature: 'Température',
-    estimated: 'estimé',
-    measured: '{a} / {b} mesurés',
-    soc_24: 'Charge · aujourd\'hui',
-    cells: 'Cellules',
-    voltage: 'Tension',
-    deviation: 'Écart',
-    spread: 'Écart',
-    min: 'Min',
-    max: 'Max',
-    threshold_in: 'seuil {t} dans {d} jours',
-    stable: 'stable',
-    no_cells: "Cette batterie n'expose pas ses cellules.",
-    capacity_share: 'Répartition de la capacité',
-    lost_today: "Perdu aujourd'hui",
-    this_month_lost: 'Ce mois',
-    availability: 'Disponibilité',
-    main_cause: 'Cause n° 1',
-    cascade: 'Du potentiel au produit',
-    axis_cut: 'Axe coupé pour rendre les pertes lisibles',
-    heatmap: 'Écrêtage · 30 j × heure',
-    causes_month: 'Causes · ce mois',
-    causes: { clipping: 'Écrêtage', shading: 'Ombrage', soiling: 'Encrassement', limitation: 'Bridage', unavailability: 'Indisponibilité' },
-    causes_short: { potential: 'Potentiel', clipping: 'Écrêtage', shading: 'Ombrage', soiling: 'Encrass.', limitation: 'Bridage', unavailability: 'Indispo', produced: 'Produit' },
-    potential: 'Potentiel',
-    produced: 'Produit',
-    events: 'Événements',
-    no_event: 'Aucune perte détectée.',
-    learning: 'en apprentissage · {d}/{n} jours',
-    soiling_trend: 'Encrassement',
-    degradation: 'Dégradation',
-    per_year: '{v}/an',
-    amortised: 'amorti',
-    gained_since: 'Gagné depuis la mise en service',
-    of_net_cost: 'sur {v} de coût net',
-    break_even: 'Point mort',
-    in_years: 'dans {v} ans',
-    gain_20: 'Gain net sur 20 ans',
-    projection: 'Projection',
-    price_rise: 'Hausse du prix',
-    per_year_short: '{v} %/an',
-    net_cost: 'coût net {v}',
-    inverter: 'onduleur',
-    gains_month: 'Gains par mois',
-    gains_from: "D'où viennent les gains",
-    direct: 'Autoconsommation directe',
-    battery_restored: 'Batterie restituée',
-    export: 'Revente',
-    no_cost: "Renseigne `installation: cost:` en YAML pour voir l'amortissement.",
-    sources: 'Sources',
-    capabilities: { provided: 'fourni', estimated: 'estimé par le hub', absent: 'non disponible' },
-    roles: 'Entités utilisées',
-    quality: 'Fraîcheur des données',
-    last_value: 'dernière valeur',
-    yaml: 'YAML',
-    copy: 'Copier',
-    copied: 'Copié',
-    excluded: 'Exclues',
-    excluded_reason: { ignore: 'ignorée en YAML', double_count: "déjà comptée par l'onduleur (double comptage)" },
-    health_title: 'Configuration',
-    checks: {
-      pv: 'Production détectée',
-      grid: 'Compteur réseau',
-      battery: 'Batteries',
-      forecast: 'Prévision',
-      planes: 'Orientation des panneaux',
-      tariff: "Tarifs et coût d'installation",
-    },
-    check_missing: 'manquant',
-    kwp_estimated: 'kWc estimés depuis les crêtes : renseigne `planes:` en YAML',
-    beta: 'bêta',
   },
 };
 
@@ -371,6 +406,16 @@ const EH_VIOLET = '#7F77DD';
 
 function ehEsc(s) {
   return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+}
+
+// Round axis ticks under ``max``: steps of 1, 2 or 5 × 10^n, about five of them
+function ehTicks(max) {
+  const raw = max / 5;
+  const mag = 10 ** Math.floor(Math.log10(raw || 1));
+  const step = [1, 2, 5, 10].map((k) => k * mag).find((k) => k >= raw) || mag;
+  const out = [];
+  for (let v = 0; v <= max + 1e-9; v += step) out.push(Math.round(v * 1000) / 1000);
+  return out;
 }
 
 function ehIcon(name, size = 18) {
@@ -389,6 +434,10 @@ class EnergyHubPanel extends HTMLElement {
     this._cellMetric = 'deviation';
     this._cell = null;
     this._rate = 3;
+    this._period = 'today';
+    this._sub = 'sources';
+    this._node = null;
+    this._snips = [];
     this._collapsed = false;
     this._error = null;
   }
@@ -396,6 +445,7 @@ class EnergyHubPanel extends HTMLElement {
   set hass(hass) {
     const first = !this._hass;
     this._hass = hass;
+    this._loadLang();
     if (first) this._connect();
   }
 
@@ -436,13 +486,35 @@ class EnergyHubPanel extends HTMLElement {
 
   // ---------- helpers
   get _lang() {
-    const l = (this._hass?.locale?.language || this._hass?.language || 'en').split('-')[0];
-    return EH_I18N[l] ? l : 'en';
+    const full = this._hass?.locale?.language || this._hass?.language || 'en';
+    if (EH_LANGS.includes(full)) return full;
+    const base = full.split('-')[0];
+    return EH_LANGS.includes(base) ? base : 'en';
   }
 
-  _t(path, params = {}) {
+  async _loadLang() {
+    const lang = this._lang;
+    if (lang === 'en' || EH_I18N[lang] || this._loading === lang) return;
+    this._loading = lang;
+    try {
+      const res = await fetch(`/energy_hub_static/i18n/${lang}.json?v=${ENERGY_HUB_PANEL_VERSION}`);
+      if (res.ok) {
+        EH_I18N[lang] = await res.json();
+        this._render();
+      }
+    } catch (_err) {
+      // English stays
+    }
+    this._loading = null;
+  }
+
+  get _locale() {
+    return this._hass?.locale?.language || this._hass?.language || 'en';
+  }
+
+  _t(path, params = {}, fallback = null) {
     const get = (dict) => path.split('.').reduce((o, k) => (o == null ? o : o[k]), dict);
-    let s = get(EH_I18N[this._lang]) ?? get(EH_I18N.en) ?? path;
+    let s = get(EH_I18N[this._lang]) ?? get(EH_I18N.en) ?? fallback ?? path;
     if (typeof s !== 'string') return s;
     for (const [k, v] of Object.entries(params)) s = s.replaceAll(`{${k}}`, v);
     return s;
@@ -500,10 +572,10 @@ class EnergyHubPanel extends HTMLElement {
     const night = !d.live.pv_kw || d.live.pv_kw < 0.02;
     const alerts = d.alerts.filter((a) => a.severity === 'error').length;
     const fleet = d.batteries.fleet;
-    if (alerts) return { kind: 'alert', pill: this._t('alert_pill', { n: d.alerts.length }), bg: '#F7C1C1', fg: '#791F1F', icBg: '#F7C1C1', icFg: '#791F1F' };
-    if (night && fleet?.soc != null) return { kind: 'night', pill: this._t('battery_pill', { v: this._pct(fleet.soc / 100) }), bg: '#9FE1CB', fg: '#085041', icBg: '#9FE1CB', icFg: '#085041' };
-    if (night) return { kind: 'night', pill: this._t('night'), bg: '#D3D1C7', fg: '#444441', icBg: '#D3D1C7', icFg: '#444441' };
-    return { kind: 'day', pill: this._t('producing', { v: this._kw(d.live.pv_kw) }), bg: '#C0DD97', fg: '#27500A', icBg: '#FAC775', icFg: '#633806' };
+    if (alerts) return { kind: 'alert', short: `! ${d.alerts.length}`, pill: this._t('alert_pill', { n: d.alerts.length }), bg: '#F7C1C1', fg: '#791F1F', icBg: '#F7C1C1', icFg: '#791F1F' };
+    if (night && fleet?.soc != null) return { kind: 'night', short: this._pct(fleet.soc / 100), pill: this._t('battery_pill', { v: this._pct(fleet.soc / 100) }), bg: '#9FE1CB', fg: '#085041', icBg: '#9FE1CB', icFg: '#085041' };
+    if (night) return { kind: 'night', short: '☾', pill: this._t('night'), bg: '#D3D1C7', fg: '#444441', icBg: '#D3D1C7', icFg: '#444441' };
+    return { kind: 'day', short: this._kw(d.live.pv_kw), pill: this._t('producing', { v: this._kw(d.live.pv_kw) }), bg: '#C0DD97', fg: '#27500A', icBg: '#FAC775', icFg: '#633806' };
   }
 
   // ---------- banner
@@ -587,11 +659,12 @@ class EnergyHubPanel extends HTMLElement {
           <button class="round menu" data-action="menu" aria-label="Menu">${ehIcon('menu', 20)}</button>
           <div class="badge" style="background:${st.icBg};color:${st.icFg}">${ehIcon('solar-power-variant', 22)}</div>
           <div class="titles">
-            <div class="title">${ehEsc(this._t('title'))}<span class="pill" style="background:${st.bg};color:${st.fg}">${ehEsc(st.pill)}</span>${d.demo ? `<span class="pill demo">${ehEsc(this._t('demo'))}</span>` : ''}</div>
+            <div class="title"><span class="tname">${ehEsc(this._t('title'))}</span><span class="pill" style="background:${st.bg};color:${st.fg}"><span class="long">${ehEsc(st.pill)}</span><span class="short">${ehEsc(st.short)}</span></span>${d.demo ? `<span class="pill demo">${ehEsc(this._t('demo'))}</span>` : ''}</div>
             <div class="sub">${ehEsc(sub)} · ${ehEsc(this._t('kwp', { v: this._num(d.kwp, 1) }))}</div>
           </div>
           <div class="tabpills">${tabs}</div>
-          <button class="round" data-action="refresh" aria-label="Refresh">${ehIcon('refresh', 18)}</button>
+          <button class="round bell" data-tab="losses" aria-label="${ehEsc(this._t('alerts_label'))}">${ehIcon('bell-outline', 18)}${d.alerts.length ? `<span class="count">${d.alerts.length}</span>` : ''}</button>
+          <button class="round refresh" data-action="refresh" aria-label="Refresh">${ehIcon('refresh', 18)}</button>
         </div>
       </header>
       <nav class="tabs">${EH_TABS.map(([key]) => `<button class="tab ${this._tab === key ? 'on' : ''}" data-tab="${key}">${ehEsc(this._t(`tabs.${key}`))}${key === 'losses' && d.alerts.length ? '<span class="dot inline"></span>' : ''}</button>`).join('')}</nav>`;
@@ -681,7 +754,7 @@ class EnergyHubPanel extends HTMLElement {
     const trend = (a, b) => {
       if (a == null || b == null) return '';
       const pts = Math.round((a - b) * 100);
-      return `<span style="color:${pts >= 0 ? 'var(--success-color,#43a047)' : 'var(--error-color,#db4437)'}">${pts >= 0 ? '▲' : '▼'} ${this._t('vs_yesterday', { v: `${Math.abs(pts)} pts` })}</span>`;
+      return `<span style="color:${pts >= 0 ? 'var(--success-color,#43a047)' : 'var(--error-color,#db4437)'}">${pts >= 0 ? '▲' : '▼'} ${this._t('vs_yesterday', { v: `${Math.abs(pts)} ${this._t('pts')}` })}</span>`;
     };
     const losses = Object.entries(d.losses.today).filter(([k]) => !['potential', 'produced'].includes(k)).reduce((a, [, v]) => a + (v || 0), 0);
     const kp = (label, value, sub, color) => `<div class="kpi"><div class="k1">${ehEsc(label)}</div><div class="k2" ${color ? `style="color:${color}"` : ''}>${value}</div><div class="k3">${sub}</div></div>`;
@@ -695,6 +768,47 @@ class EnergyHubPanel extends HTMLElement {
 
   _curve() {
     const d = this._data;
+    const period = this._period;
+    const seg = `<div class="seg">${['today', '7d', '30d', '12m'].map((p) => `<button class="${period === p ? 'on' : ''}" data-period="${p}">${ehEsc(this._t(`periods.${p}`))}</button>`).join('')}</div>`;
+    const chip = (c, label, dash) => `<span class="chip"><span style="width:14px;border-top:2px ${dash ? 'dashed' : 'solid'} ${c}"></span>${ehEsc(label)}</span>`;
+    const hatchChip = `<span class="chip"><svg width="14" height="10" aria-hidden="true"><rect width="14" height="10" fill="url(#ehhatch)" stroke="${EH_RED}" stroke-width=".6"/></svg>${ehEsc(this._t('clipping'))}</span>`;
+    const hatchDef = `<defs><pattern id="ehhatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="${EH_RED}" fill-opacity=".08"/><line x1="0" y1="0" x2="0" y2="5" stroke="${EH_RED}" stroke-width="1.6" stroke-opacity=".7"/></pattern></defs>`;
+    if (period !== 'today') {
+      const rows = d.periods?.[period] || [];
+      const W = 680;
+      const x0 = 50;
+      const x1 = 640;
+      const max = Math.max(1, ...rows.map((r) => Math.max((r.pv || 0) + (r.clipped || 0), r.exp || 0, r.load || 0))) * 1.1;
+      const Y = (v) => 190 - (v / max) * 160;
+      const step = (x1 - x0) / Math.max(rows.length, 1);
+      const bw = Math.max(Math.min(step * 0.62, 30), 3);
+      let o = `<svg class="curve" viewBox="0 0 ${W} 214" role="img" aria-label="${ehEsc(this._t(`periods.${period}`))}">${hatchDef}`;
+      for (const v of ehTicks(max)) {
+        o += `<line x1="${x0}" x2="${x1}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--divider-color)" stroke-width=".5"/><text class="svgt" x="${x0 - 8}" y="${Y(v) + 4}" text-anchor="end">${this._num(v, v % 1 ? 1 : 0)}</text>`;
+      }
+      o += '<text class="svgt" x="16" y="18">kWh</text>';
+      const loadPts = [];
+      rows.forEach((r, i) => {
+        const cx = x0 + step * (i + 0.5);
+        const pvTop = Y(r.pv || 0);
+        const label = period === '12m' ? new Date(`${r.d}-01T12:00`).toLocaleString(this._locale, { month: 'short' }) : new Date(`${r.d}T12:00`).toLocaleString(this._locale, period === '7d' ? { weekday: 'short' } : { day: 'numeric' });
+        o += `<g><title>${ehEsc(label)} · ${ehEsc(this._t('production'))} ${this._kwh(r.pv)} · ${ehEsc(this._t('forecast'))} ${this._kwh(r.exp)} · ${ehEsc(this._t('consumption'))} ${this._kwh(r.load)}${r.clipped ? ` · ${ehEsc(this._t('clipped', { v: this._kwh(r.clipped) }))}` : ''}</title>`;
+        o += `<rect x="${(cx - bw / 2).toFixed(1)}" y="${pvTop.toFixed(1)}" width="${bw.toFixed(1)}" height="${(190 - pvTop).toFixed(1)}" rx="2" fill="#FAC775" stroke="${EH_AMBER}" stroke-width=".6"/>`;
+        if (r.clipped > 0.01) o += `<rect x="${(cx - bw / 2).toFixed(1)}" y="${Y((r.pv || 0) + r.clipped).toFixed(1)}" width="${bw.toFixed(1)}" height="${(pvTop - Y((r.pv || 0) + r.clipped)).toFixed(1)}" fill="url(#ehhatch)" stroke="${EH_RED}" stroke-width=".6"/>`;
+        if (r.exp) o += `<line x1="${(cx - bw / 2 - 2).toFixed(1)}" x2="${(cx + bw / 2 + 2).toFixed(1)}" y1="${Y(r.exp).toFixed(1)}" y2="${Y(r.exp).toFixed(1)}" stroke="var(--secondary-text-color)" stroke-width="1.4" stroke-dasharray="3 2"/>`;
+        o += '</g>';
+        if (r.load != null) loadPts.push(`${cx.toFixed(1)} ${Y(r.load).toFixed(1)}`);
+        const every = period === '30d' ? 5 : 1;
+        if (i % every === 0 || i === rows.length - 1) o += `<text class="svgt" x="${cx.toFixed(1)}" y="208" text-anchor="middle">${ehEsc(label)}</text>`;
+      });
+      if (loadPts.length > 1) o += `<path d="M${loadPts.join(' L')}" fill="none" stroke="${EH_VIOLET}" stroke-width="1.8"/>${loadPts.map((p) => `<circle cx="${p.split(' ')[0]}" cy="${p.split(' ')[1]}" r="2.2" fill="${EH_VIOLET}"/>`).join('')}`;
+      o += '</svg>';
+      const total = rows.reduce((a, r) => a + (r.pv || 0), 0);
+      const totalExp = rows.reduce((a, r) => a + (r.exp || 0), 0);
+      const legend = `${chip(EH_AMBER, this._t('production'))}${chip('var(--secondary-text-color)', this._t('forecast'), true)}${chip(EH_VIOLET, this._t('consumption'))}${rows.some((r) => r.clipped > 0.01) ? hatchChip : ''}`;
+      this._curveMeta = null;
+      return this._box(this._t('production'), '', `<div class="hd sub">${seg}<span class="hint">${ehEsc(this._t('produced_of', { a: this._kwh(total), b: this._kwh(totalExp) }))}</span></div><div class="legend">${legend}</div>${o}`);
+    }
     const rows = d.curve;
     if (!rows.length) return '';
     const W = 680;
@@ -707,20 +821,27 @@ class EnergyHubPanel extends HTMLElement {
     const t1 = t0 + 17 * 3600;
     const max = Math.max(1, ...rows.map((r) => Math.max(r.pv || 0, r.exp || 0, r.load || 0)), d.inverter_max_kw || 0) * 1.1;
     const X = (t) => x0 + ((t - t0) / (t1 - t0)) * (x1 - x0);
-    const Y = (v) => 190 - (v / max) * 160;
+    const Y = (v) => 190 - (Math.min(v, max) / max) * 160;
     const YS = (s) => 190 - (s / 100) * 160;
-    const line = (key, f = Y) => rows.filter((r) => r[key] != null && r.t >= t0 && r.t <= t1).map((r, i) => `${i ? 'L' : 'M'}${X(r.t).toFixed(1)} ${f(r[key]).toFixed(1)}`).join(' ');
     const inRange = rows.filter((r) => r.t >= t0 && r.t <= t1);
-    let o = `<svg class="curve" viewBox="0 0 ${W} ${H}" role="img" aria-label="Today">`;
-    for (let i = 0; i <= 4; i++) {
-      const v = (max / 1.1) * (i / 4);
-      o += `<line x1="${x0}" x2="${x1}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--divider-color)" stroke-width=".5"/><text class="svgt" x="${x0 - 8}" y="${Y(v) + 4}" text-anchor="end">${this._num(v, 0)}</text>`;
+    const line = (key, f = Y) => inRange.filter((r) => r[key] != null).map((r, i) => `${i ? 'L' : 'M'}${X(r.t).toFixed(1)} ${f(r[key]).toFixed(1)}`).join(' ');
+    let o = `<svg class="curve" viewBox="0 0 ${W} ${H}" role="img" aria-label="${ehEsc(this._t('periods.today'))}">${hatchDef}`;
+    for (const v of ehTicks(max)) {
+      o += `<line x1="${x0}" x2="${x1}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--divider-color)" stroke-width=".5"/><text class="svgt" x="${x0 - 8}" y="${Y(v) + 4}" text-anchor="end">${this._num(v, v % 1 ? 1 : 0)}</text>`;
     }
     o += `<text class="svgt" x="16" y="18">kW</text><text class="svgt" x="${x1 + 6}" y="34">100</text><text class="svgt" x="${x1 + 6}" y="194">0 %</text>`;
-    const clipped = d.losses.clipping_periods || [];
-    for (const [a, b] of clipped) o += `<rect x="${X(a)}" y="30" width="${Math.max(X(b) - X(a), 2)}" height="160" fill="${EH_RED}" fill-opacity=".1"/>`;
     const pv = line('pv');
-    if (pv && inRange.length) o += `<path d="${pv} L${X(inRange[inRange.length - 1].t).toFixed(1)} 190 L${X(inRange[0].t).toFixed(1)} 190 Z" fill="#FAC775" fill-opacity=".5"/><path d="${pv}" fill="none" stroke="${EH_AMBER}" stroke-width="2"/>`;
+    if (pv && inRange.length) o += `<path d="${pv} L${X(inRange[inRange.length - 1].t).toFixed(1)} 190 L${X(inRange[0].t).toFixed(1)} 190 Z" fill="#FAC775" fill-opacity=".5"/>`;
+    // Clipping: the energy between the forecast and the plateau, hatched
+    const clipped = d.losses.clipping_periods || [];
+    for (const [a, b] of clipped) {
+      const seg2 = inRange.filter((r) => r.t >= a && r.t <= b && r.exp != null && r.pv != null);
+      if (seg2.length < 2) continue;
+      const top = seg2.map((r) => `${X(r.t).toFixed(1)} ${Y(Math.max(r.exp, r.pv)).toFixed(1)}`);
+      const bottom = seg2.map((r) => `${X(r.t).toFixed(1)} ${Y(r.pv).toFixed(1)}`).reverse();
+      o += `<path d="M${top.join(' L')} L${bottom.join(' L')} Z" fill="url(#ehhatch)" stroke="${EH_RED}" stroke-width=".8"/>`;
+    }
+    if (pv) o += `<path d="${pv}" fill="none" stroke="${EH_AMBER}" stroke-width="2"/>`;
     const exp = line('exp');
     if (exp) o += `<path d="${exp}" fill="none" stroke="var(--secondary-text-color)" stroke-width="1.3" stroke-dasharray="4 4"/>`;
     const load = line('load');
@@ -735,10 +856,9 @@ class EnergyHubPanel extends HTMLElement {
       o += `<text class="svgt" x="${X(t)}" y="208" text-anchor="middle">${this._lang === 'fr' ? `${h} h` : `${h}:00`}</text>`;
     }
     o += `<line class="hov" x1="0" x2="0" y1="30" y2="190" stroke="var(--secondary-text-color)" stroke-width=".5" style="display:none"/><rect class="hit" x="${x0}" y="30" width="${x1 - x0}" height="160" fill="transparent"/></svg>`;
-    const chip = (c, label, dash) => `<span class="chip"><span style="width:14px;border-top:2px ${dash ? 'dashed' : 'solid'} ${c}"></span>${ehEsc(label)}</span>`;
-    const legend = `${chip(EH_AMBER, this._t('production'))}${chip('var(--secondary-text-color)', this._t('forecast'), true)}${chip(EH_VIOLET, this._t('consumption'))}${chip(EH_TEAL, this._t('battery_pct'))}${clipped.length ? chip(EH_RED, this._t('clipping')) : ''}`;
+    const legend = `${chip(EH_AMBER, this._t('production'))}${chip('var(--secondary-text-color)', this._t('forecast'), true)}${chip(EH_VIOLET, this._t('consumption'))}${chip(EH_TEAL, this._t('battery_pct'))}${chip(EH_RED, 'Pmax', true)}${clipped.length ? hatchChip : ''}`;
     this._curveMeta = { t0, t1, x0, x1, max, rows: inRange };
-    return this._box(this._t('production'), this._t('produced_of', { a: this._kwh(d.today.pv_kwh), b: this._kwh(d.today.expected_kwh) }), `<div class="legend">${legend}</div><div class="curvewrap">${o}<div class="tip"></div></div><div class="hint">${ehEsc(this._t('hover_hint'))}</div>`);
+    return this._box(this._t('production'), '', `<div class="hd sub">${seg}<span class="hint">${ehEsc(this._t('produced_of', { a: this._kwh(d.today.pv_kwh), b: this._kwh(d.today.expected_kwh) }))}</span></div><div class="legend">${legend}</div><div class="curvewrap">${o}<div class="tip"></div></div><div class="hint">${ehEsc(this._t('hover_hint'))}</div>`);
   }
 
   _overview() {
@@ -850,20 +970,13 @@ class EnergyHubPanel extends HTMLElement {
     const selected = B.items.length === 1 ? B.items[0] : B.items.find((b) => b.key === this._battery);
     if (!selected) {
       const metric = (get, max, fmt) => B.items.map((b) => `<div class="barrow"><span>${ehEsc(b.name)}</span><div class="meter"><div style="width:${Math.max(2, ((get(b) || 0) / max) * 100)}%;background:${EH_TEAL}"></div></div><span>${fmt(get(b))}</span></div>`).join('');
-      o += `<div class="grid2">${this._box(this._t('health'), '', metric((b) => b.soh, 100, (v) => (v == null ? '–' : `${this._num(v, 0)} %`)))}${this._box(this._t('cycles'), '', metric((b) => b.cycles, Math.max(...B.items.map((b) => b.cycles || 0), 1), (v) => (v == null ? '–' : this._num(v, 0))))}</div>`;
+      o += `<div class="grid2">${this._box(this._t('soc'), '', metric((b) => b.soc, 100, (v) => this._pct(v / 100)))}${this._box(this._t('health'), '', metric((b) => b.soh, 100, (v) => (v == null ? '–' : `${this._num(v, 0)} %`)))}</div>`;
+      o += `<div class="grid2">${this._box(this._t('rte'), '', metric((b) => b.rte, 1, (v) => this._pct(v)))}${this._box(this._t('cycles'), '', metric((b) => b.cycles, Math.max(...B.items.map((b) => b.cycles || 0), 1), (v) => (v == null ? '–' : this._num(v, 0))))}</div>`;
       const cap = B.items.map((b, i) => `<div style="flex:${b.capacity_kwh};background:${['#0F6E56', EH_TEAL, '#5DCAA5', '#9FE1CB'][i % 4]}">${ehEsc(b.name)} ${this._num(b.capacity_kwh, 1)} kWh</div>`).join('');
-      o += this._box(this._t('capacity_share'), '', `<div class="stack">${cap}</div>`);
+      o += this._box(this._t('capacity_share'), `${this._num(fleet.capacity_kwh, 1)} kWh`, `<div class="stack">${cap}</div>`);
       return o;
     }
-    const b = selected;
-    o += this._box(`${b.name}`, b.platform, `<div class="grid4">
-      ${this._tile('heart-pulse', '#E1F5EE', '#0F6E56', this._t('health'), b.soh != null ? `${this._num(b.soh, 0)} %` : '–', b.soh_estimated ? this._t('estimated') : this._t('measured', { a: this._num((b.capacity_kwh * (b.soh || 0)) / 100, 1), b: `${this._num(b.capacity_kwh, 1)} kWh` }))}
-      ${this._tile('sync', '#E1F5EE', '#0F6E56', this._t('cycles'), b.cycles != null ? this._num(b.cycles, 0) : '–', b.cycles_estimated ? this._t('estimated') : '')}
-      ${this._tile('arrow-left-right', '#E1F5EE', '#0F6E56', this._t('rte'), this._pct(b.rte), '')}
-      ${this._tile('thermometer', '#EAF3DE', '#3B6D11', this._t('temperature'), b.temperature != null ? `${this._num(b.temperature, 0)} °C` : '–', '')}
-    </div>`);
-    o += this._cells(b);
-    return o;
+    return o + this._batteryDetail(selected);
   }
 
   _miniBattery(soc, state) {
@@ -871,43 +984,190 @@ class EnergyHubPanel extends HTMLElement {
     return `<svg width="22" height="40" viewBox="0 0 22 40" aria-hidden="true"><rect x="7" y="1" width="8" height="4" rx="1.5" fill="var(--secondary-text-color)"/><rect x="2" y="5" width="18" height="34" rx="4" fill="none" stroke="var(--secondary-text-color)" stroke-width="1.5"/><rect x="5" y="${36 - h}" width="12" height="${h}" rx="2" fill="${state === 'discharging' ? EH_BLUE : '#5DCAA5'}"/></svg>`;
   }
 
+  // The selected battery drawn as a wall unit: its level, its state and power, its reserve
+  _bigBattery(b) {
+    const soc = b.soc || 0;
+    const h = Math.round((150 * soc) / 100);
+    const res = Math.round((150 * (b.reserve || 0)) / 100);
+    const col = b.state === 'discharging' ? EH_BLUE : EH_TEAL;
+    const anim = b.state === 'charging' ? `<animate attributeName="opacity" values="1;.35;1" dur="1.6s" repeatCount="indefinite"/>` : '';
+    let o = `<svg class="bigbatt" viewBox="0 0 134 200" role="img" aria-label="${ehEsc(b.name)} ${this._pct(soc / 100)}">`;
+    o += `<rect x="44" y="6" width="32" height="10" rx="3" fill="var(--secondary-text-color)"/><rect x="14" y="16" width="92" height="176" rx="14" fill="var(--secondary-background-color)" stroke="var(--secondary-text-color)" stroke-width="2"/>`;
+    o += `<clipPath id="ehbb"><rect x="22" y="30" width="76" height="150" rx="8"/></clipPath><g clip-path="url(#ehbb)"><rect x="22" y="${180 - h}" width="76" height="${h}" fill="${col}" fill-opacity=".85">${anim}</rect><rect x="22" y="${180 - h}" width="76" height="4" fill="#fff" fill-opacity=".35"/></g>`;
+    o += `<line x1="18" x2="102" y1="${180 - res}" y2="${180 - res}" stroke="${EH_RED}" stroke-dasharray="3 3"/><text class="svgt" x="104" y="${183 - res}" style="font-size:9px">${this._num(b.reserve, 0)} %</text>`;
+    o += `<text x="60" y="${soc > 55 ? 100 : 70}" text-anchor="middle" class="svgth" style="font-size:22px;fill:${soc > 55 ? '#fff' : 'var(--primary-text-color)'}">${this._num(soc, 0)} %</text>`;
+    if (b.state === 'charging') o += `<path d="M64 112 L52 132 H60 L56 150 L70 126 H62 Z" fill="#fff"/>`;
+    if (b.state === 'discharging') o += `<path d="M60 118 V146 M50 136 L60 146 L70 136" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+    return `${o}</svg>`;
+  }
+
+  _batteryDetail(b) {
+    const d = this._data;
+    const stateColor = b.state === 'discharging' ? EH_BLUE : EH_TEAL;
+    const head = `<div class="battrow"><div class="bbwrap">${this._bigBattery(b)}<div class="a1">${ehEsc(b.name)}</div><div class="t3" style="color:${stateColor}">${ehEsc(this._t(b.state))}${b.power_kw ? ` · ${this._kw(b.power_kw)}` : ''}</div><span class="brand">${ehEsc(b.platform)} · ${ehEsc(this._t(`coupling.${b.coupling}`))}</span></div><div class="grid3">
+      ${this._tile('heart-pulse', '#E1F5EE', '#0F6E56', this._t('health'), b.soh != null ? `${this._num(b.soh, 0)} %` : '–', b.soh_estimated ? this._t('estimated') : this._t('measured', { a: this._num((b.capacity_kwh * (b.soh || 0)) / 100, 1), b: `${this._num(b.capacity_kwh, 1)} kWh` }))}
+      ${this._tile('sync', '#E1F5EE', '#0F6E56', this._t('cycles'), b.cycles != null ? this._num(b.cycles, 0) : '–', b.cycles_estimated ? this._t('estimated') : '')}
+      ${this._tile('arrow-left-right', '#E1F5EE', '#0F6E56', this._t('rte'), this._pct(b.rte), this._t('days_30'))}
+      ${this._tile('timer-sand', '#E6F1FB', '#185FA5', this._t('autonomy'), b.autonomy_h != null ? `${this._num(b.autonomy_h, 1)} h` : '–', this._t('autonomy_sub', { v: this._kw(d.live.load_kw) }))}
+      ${this._tile('thermometer', '#EAF3DE', '#3B6D11', this._t('temperature'), b.temperature != null ? `${this._num(b.temperature, 0)} °C` : '–', '')}
+      ${this._tile('battery-70', '#E1F5EE', '#0F6E56', this._t('capacity'), `${this._num(b.capacity_kwh, 1)} kWh`, b.capacity_estimated ? this._t('estimated') : this._t('reserve', { v: `${this._num(b.reserve, 0)} %` }))}
+    </div></div>`;
+    let o = this._box(b.name, b.platform, head);
+    o += `<div class="grid2">${this._box(this._t('soc_today'), b.soc_projection?.length ? this._t('projection_dashed') : '', this._socChart(b))}${this._box(this._t('soh_3y'), b.soh_trend ? this._t('per_year', { v: `${this._num(b.soh_trend.per_year, 2)} %` }) : '', this._sohChart(b))}</div>`;
+    if (b.modules?.length) {
+      const mods = b.modules.map((m) => `<div class="tile">${this._miniBattery(m.soc, b.state)}<div class="tt"><div class="a1">${ehEsc(m.name)}</div><div class="t3">${m.soc != null ? this._pct(m.soc / 100) : '–'}${m.voltage != null ? ` · ${this._num(m.voltage, 1)} V` : ''}${m.temperature != null ? ` · ${this._num(m.temperature, 1)} °C` : ''}</div></div></div>`).join('');
+      o += this._box(this._t('modules'), `${b.modules.length}`, `<div class="grid-auto">${mods}</div>`);
+    }
+    return o + this._cells(b);
+  }
+
+  _socChart(b) {
+    const pts = b.soc_today || [];
+    if (pts.length < 2) return `<div class="hint">${ehEsc(this._t('learning_short'))}</div>`;
+    const start = new Date(this._data.generated);
+    start.setHours(0, 0, 0, 0);
+    const t0 = start.getTime() / 1000;
+    const X = (t) => 30 + ((t - t0) / 86400) * 600;
+    const Y = (v) => 110 - (v / 100) * 96;
+    let o = `<svg class="mini m" viewBox="0 0 640 128" role="img" aria-label="${ehEsc(this._t('soc_today'))}">`;
+    for (const v of [0, 50, 100]) o += `<line x1="30" x2="630" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--divider-color)" stroke-width=".5"/><text class="svgt" x="24" y="${Y(v) + 3}" text-anchor="end">${v}</text>`;
+    o += `<line x1="30" x2="630" y1="${Y(b.reserve)}" y2="${Y(b.reserve)}" stroke="${EH_RED}" stroke-width=".8" stroke-dasharray="3 3"/>`;
+    const path = pts.map((p, i) => `${i ? 'L' : 'M'}${X(p[0]).toFixed(1)} ${Y(p[1]).toFixed(1)}`).join(' ');
+    o += `<path d="${path} L${X(pts[pts.length - 1][0]).toFixed(1)} 110 L${X(pts[0][0]).toFixed(1)} 110 Z" fill="${EH_TEAL}" fill-opacity=".12"/><path d="${path}" fill="none" stroke="${EH_TEAL}" stroke-width="2"/>`;
+    const proj = b.soc_projection || [];
+    if (proj.length > 1) o += `<path d="${proj.map((p, i) => `${i ? 'L' : 'M'}${X(p[0]).toFixed(1)} ${Y(p[1]).toFixed(1)}`).join(' ')}" fill="none" stroke="${EH_TEAL}" stroke-width="1.6" stroke-dasharray="4 4"/>`;
+    const last = pts[pts.length - 1];
+    o += `<circle cx="${X(last[0])}" cy="${Y(last[1])}" r="4" fill="${EH_TEAL}" stroke="var(--card-background-color)" stroke-width="2"/>`;
+    for (let h = 0; h <= 24; h += 6) o += `<text class="svgt" x="${X(t0 + h * 3600)}" y="124" text-anchor="${h === 24 ? 'end' : h === 0 ? 'start' : 'middle'}">${this._lang === 'fr' ? `${h} h` : `${h}:00`}</text>`;
+    return `${o}</svg>`;
+  }
+
+  _sohChart(b) {
+    const tr = b.soh_trend;
+    if (!tr) return `<div class="hint">${ehEsc(this._t('learning_short'))}</div>`;
+    const day = (s) => new Date(`${s}T12:00`).getTime() / 86400000;
+    const all = [...tr.points, tr.projected];
+    const d0 = day(all[0][0]);
+    const d1 = day(tr.projected[0]);
+    const lo = Math.floor(Math.min(...all.map((p) => p[1])) - 2);
+    const X = (s) => 30 + ((day(s) - d0) / Math.max(d1 - d0, 1)) * 600;
+    const Y = (v) => 110 - ((v - lo) / (100 - lo)) * 96;
+    let o = `<svg class="mini m" viewBox="0 0 640 128" role="img" aria-label="${ehEsc(this._t('soh_3y'))}">`;
+    for (const v of [lo, Math.round((lo + 100) / 2), 100]) o += `<line x1="30" x2="630" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--divider-color)" stroke-width=".5"/><text class="svgt" x="24" y="${Y(v) + 3}" text-anchor="end">${v}</text>`;
+    o += `<path d="${tr.points.map((p, i) => `${i ? 'L' : 'M'}${X(p[0]).toFixed(1)} ${Y(p[1]).toFixed(1)}`).join(' ')}" fill="none" stroke="${EH_TEAL}" stroke-width="2"/>`;
+    const lastP = tr.points[tr.points.length - 1];
+    o += `<path d="M${X(lastP[0]).toFixed(1)} ${Y(lastP[1]).toFixed(1)} L${X(tr.projected[0]).toFixed(1)} ${Y(tr.projected[1]).toFixed(1)}" stroke="${EH_TEAL}" stroke-width="1.6" stroke-dasharray="4 4"/>`;
+    o += `<circle cx="${X(lastP[0])}" cy="${Y(lastP[1])}" r="4" fill="${EH_TEAL}" stroke="var(--card-background-color)" stroke-width="2"/><circle cx="${X(tr.projected[0])}" cy="${Y(tr.projected[1])}" r="4" fill="var(--card-background-color)" stroke="${EH_TEAL}" stroke-width="2"/><text class="svgt" x="${X(tr.projected[0]) - 6}" y="${Y(tr.projected[1]) - 8}" text-anchor="end">${this._num(tr.projected[1], 1)} %</text>`;
+    const y0 = new Date(`${all[0][0]}T12:00`).getFullYear();
+    const y1 = new Date(`${tr.projected[0]}T12:00`).getFullYear();
+    for (let y = y0 + 1; y <= y1; y++) o += `<text class="svgt" x="${X(`${y}-01-01`)}" y="124" text-anchor="middle">${y}</text>`;
+    o += `<line x1="${X(lastP[0])}" x2="${X(lastP[0])}" y1="14" y2="110" stroke="var(--secondary-text-color)" stroke-width=".5" stroke-dasharray="3 3"/>`;
+    return `${o}</svg>`;
+  }
+
   _cells(b) {
     const c = b.cells;
     if (!c) return this._box(this._t('cells'), '', `<div class="hint">${ehEsc(this._t('no_cells'))}</div>`);
     const s = c.summary;
-    const mean = c.voltages.reduce((a, v) => a + v, 0) / c.voltages.length;
-    const metric = this._cellMetric;
-    const cells = c.voltages
-      .map((v, i) => {
-        const dev = (v - mean) * 1000;
-        let bg;
-        let label;
-        if (metric === 'voltage') {
-          bg = v < mean - 0.01 ? 'rgba(239,159,39,.9)' : `rgba(29,158,117,${(0.25 + Math.min(1, (v - s.min_v) / Math.max(s.max_v - s.min_v, 0.001)) * 0.6).toFixed(2)})`;
-          label = this._num(v, 3);
-        } else {
-          bg = Math.abs(dev) < 4 ? 'rgba(136,135,128,.18)' : dev < 0 ? `rgba(239,159,39,${Math.min(1, 0.25 + -dev / 36).toFixed(2)})` : `rgba(127,119,221,${Math.min(1, 0.25 + dev / 12).toFixed(2)})`;
-          label = `${dev >= 0 ? '+' : ''}${Math.round(dev)}`;
-        }
-        return `<button class="cell ${this._cell === i ? 'sel' : ''}" data-cell="${i}" style="background:${bg}" title="C${i + 1} · ${this._num(v, 3)} V">${label}</button>`;
-      })
-      .join('');
-    const seg = `<div class="seg"><button class="${metric === 'deviation' ? 'on' : ''}" data-cellmetric="deviation">${ehEsc(this._t('deviation'))}</button><button class="${metric === 'voltage' ? 'on' : ''}" data-cellmetric="voltage">${ehEsc(this._t('voltage'))}</button></div>`;
-    const sel = this._cell != null ? `<div class="hint">C${this._cell + 1} · ${this._num(c.voltages[this._cell], 3)} V · ${(c.voltages[this._cell] - mean) * 1000 >= 0 ? '+' : ''}${Math.round((c.voltages[this._cell] - mean) * 1000)} mV</div>` : '';
-    const spreads = c.spread_30d;
-    let trend = '';
-    if (spreads.length > 1) {
-      const maxv = Math.max(c.threshold_mv * 1.1, ...spreads);
-      const X = (i) => 10 + (i / (spreads.length - 1)) * 620;
-      const Y = (v) => 100 - (v / maxv) * 90;
-      trend = `<div class="hint">${ehEsc(this._t('spread'))} · ${this._lang === 'fr' ? '30 j' : '30 d'}</div><svg class="mini" viewBox="0 0 640 110" role="img" aria-label="Spread"><line x1="10" x2="630" y1="${Y(c.threshold_mv)}" y2="${Y(c.threshold_mv)}" stroke="${EH_RED}" stroke-dasharray="2 3"/><path d="${spreads.map((v, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)} ${Y(v).toFixed(1)}`).join(' ')}" fill="none" stroke="#EF9F27" stroke-width="2"/><line x1="10" x2="630" y1="100" y2="100" stroke="var(--divider-color)"/></svg>`;
+    const n = c.voltages.length;
+    const mean = c.voltages.reduce((a, v) => a + v, 0) / n;
+    const metric = this._cellMetric === 'temperature' && !c.temps?.length ? 'deviation' : this._cellMetric;
+    const per = c.per_module || Math.min(n, 16);
+    const rows = Math.ceil(n / per);
+    const tMin = c.temps?.length ? Math.min(...c.temps) : 0;
+    const tMax = c.temps?.length ? Math.max(...c.temps) : 1;
+    const cell = (i) => {
+      const v = c.voltages[i];
+      const dev = (v - mean) * 1000;
+      let bg;
+      let label;
+      if (metric === 'voltage') {
+        bg = `rgba(29,158,117,${(0.2 + Math.min(1, (v - s.min_v) / Math.max(s.max_v - s.min_v, 0.001)) * 0.65).toFixed(2)})`;
+        label = this._num(v, 3);
+      } else if (metric === 'temperature') {
+        const k = (c.temps[i] - tMin) / Math.max(tMax - tMin, 0.1);
+        bg = `rgba(${Math.round(55 + 180 * k)},${Math.round(138 - 60 * k)},${Math.round(221 - 160 * k)},.75)`;
+        label = this._num(c.temps[i], 1);
+      } else {
+        bg = Math.abs(dev) < 4 ? 'rgba(136,135,128,.18)' : dev < 0 ? `rgba(239,159,39,${Math.min(1, 0.25 + -dev / 36).toFixed(2)})` : `rgba(55,138,221,${Math.min(1, 0.25 + dev / 14).toFixed(2)})`;
+        label = `${dev >= 0 ? '+' : ''}${Math.round(dev)}`;
+      }
+      const bal = c.balancing?.includes(i) ? '<span class="baldot"></span>' : '';
+      const drift = c.drifting?.includes(i) ? ' drift' : '';
+      return `<button class="cell${this._cell === i ? ' sel' : ''}${drift}" data-cell="${i}" style="background:${bg}" title="C${(i % per) + 1} · ${this._num(v, 3)} V">${label}${bal}</button>`;
+    };
+    let grid = '';
+    for (let r = 0; r < rows; r++) {
+      const cellsRow = [];
+      for (let i = r * per; i < Math.min(n, (r + 1) * per); i++) cellsRow.push(cell(i));
+      grid += `<div class="cellrow"><span class="rowlab">${c.per_module ? ehEsc(b.modules?.[r]?.name || `M${r + 1}`) : ''}</span><div class="cells" style="grid-template-columns:repeat(${per},1fr)">${cellsRow.join('')}</div></div>`;
     }
+    const metrics = ['deviation', 'voltage', ...(c.temps?.length ? ['temperature'] : [])];
+    const seg = `<div class="seg">${metrics.map((m) => `<button class="${metric === m ? 'on' : ''}" data-cellmetric="${m}">${ehEsc(this._t(m))}</button>`).join('')}</div>`;
+    const legendBits = metric === 'deviation' ? `<span class="chip"><span class="sw" style="background:rgba(239,159,39,.8)"></span>${ehEsc(this._t('low'))}</span><span class="chip"><span class="sw" style="background:rgba(136,135,128,.25)"></span>± 4 mV</span><span class="chip"><span class="sw" style="background:rgba(55,138,221,.8)"></span>${ehEsc(this._t('high'))}</span>` : '';
+    const legend = `<div class="legend">${legendBits}${c.balancing?.length ? `<span class="chip"><span class="baldot static"></span>${ehEsc(this._t('balancing'))}</span>` : ''}${c.drifting?.length ? `<span class="chip"><span class="sw" style="outline:2px solid ${EH_RED};background:none"></span>${ehEsc(this._t('drifting'))}</span>` : ''}</div>`;
     const tiles = `<div class="grid4">
-      ${this._tile('flash-outline', '#E1F5EE', '#0F6E56', this._t('max'), `${this._num(s.max_v, 3)} V`, `C${s.max_index + 1}`)}
-      ${this._tile('flash-outline', '#FAEEDA', '#854F0B', this._t('min'), `${this._num(s.min_v, 3)} V`, `C${s.min_index + 1}`, EH_AMBER)}
-      ${this._tile('scale-balance', '#FAEEDA', '#854F0B', this._t('spread'), `${this._num(s.spread_mv, 0)} mV`, c.days_to_threshold != null ? this._t('threshold_in', { t: `${c.threshold_mv} mV`, d: this._num(c.days_to_threshold, 0) }) : this._t('stable'), EH_AMBER)}
+      ${this._tile('flash-outline', '#E1F5EE', '#0F6E56', this._t('max'), `${this._num(s.max_v, 3)} V`, this._cellName(c, s.max_index, b))}
+      ${this._tile('flash-outline', '#FAEEDA', '#854F0B', this._t('min'), `${this._num(s.min_v, 3)} V`, this._cellName(c, s.min_index, b), EH_AMBER)}
+      ${this._tile('scale-balance', '#FAEEDA', '#854F0B', this._t('spread'), `${this._num(s.spread_mv, 0)} mV`, this._t('of_threshold', { t: `${c.threshold_mv} mV` }), EH_AMBER)}
+      ${this._tile('sync', '#EEEDFE', '#3C3489', this._t('balancing'), c.balancing?.length ? this._t('n_cells', { n: c.balancing.length }) : this._t('none'), '')}
     </div>`;
-    return this._box(`${this._t('cells')} · ${c.voltages.length}`, '', `${tiles}<div class="hd" style="margin-top:10px">${seg}</div><div class="cells" style="grid-template-columns:repeat(${Math.min(c.voltages.length, 16)},1fr)">${cells}</div>${sel}${trend}`);
+    let o = this._box(`${this._t('cells')} · ${n}`, c.per_module ? this._t('modules_x_cells', { m: rows, c: per }) : '', `${tiles}<div class="hd" style="margin-top:10px">${seg}</div>${grid}${legend}`);
+    if (this._cell != null && this._cell < n) o += this._cellDetail(b, this._cell, mean);
+    o += this._box(this._t('spread_trend'), c.days_to_threshold != null ? this._t('threshold_in', { t: `${c.threshold_mv} mV`, d: this._num(c.days_to_threshold, 0) }) : this._t('stable'), this._spreadChart(c));
+    return o;
+  }
+
+  _cellName(c, i, b) {
+    if (!c.per_module) return `C${i + 1}`;
+    const m = Math.floor(i / c.per_module);
+    return `${b.modules?.[m]?.name || `M${m + 1}`} · C${(i % c.per_module) + 1}`;
+  }
+
+  _cellDetail(b, i, mean) {
+    const c = b.cells;
+    const v = c.voltages[i];
+    const dev = (v - mean) * 1000;
+    const hist = c.history?.[i] || [];
+    const slope = c.drift_mv_day?.[i];
+    let spark = '';
+    if (hist.length > 1) {
+      const lo = Math.min(...hist, -5);
+      const hi = Math.max(...hist, 5);
+      const X = (k) => 10 + (k / (hist.length - 1)) * 580;
+      const Y = (val) => 84 - ((val - lo) / (hi - lo)) * 72;
+      spark = `<svg class="mini m" viewBox="0 0 600 104" role="img" aria-label="30 d"><line x1="10" x2="590" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--divider-color)"/><path d="${hist.map((val, k) => `${k ? 'L' : 'M'}${X(k).toFixed(1)} ${Y(val).toFixed(1)}`).join(' ')}" fill="none" stroke="${c.drifting?.includes(i) ? EH_RED : EH_TEAL}" stroke-width="2"/><text class="svgt" x="10" y="100">${ehEsc(this._t('days_30'))}</text><text class="svgt" x="590" y="100" text-anchor="end">mV</text></svg>`;
+    }
+    const diag = c.drifting?.includes(i) ? this._t('diag_drift', { v: `${slope > 0 ? '+' : ''}${this._num(slope, 1)}` }) : this._t('diag_stable');
+    const tiles = `<div class="grid4">
+      ${this._tile('flash-outline', '#E1F5EE', '#0F6E56', this._t('voltage'), `${this._num(v, 3)} V`, '')}
+      ${this._tile('scale-balance', '#FAEEDA', '#854F0B', this._t('deviation'), `${dev >= 0 ? '+' : ''}${Math.round(dev)} mV`, slope != null ? this._t('per_day', { v: `${slope > 0 ? '+' : ''}${this._num(slope, 2)} mV` }) : '')}
+      ${this._tile('thermometer', '#EAF3DE', '#3B6D11', this._t('temperature'), c.temps?.length ? `${this._num(c.temps[i], 1)} °C` : '–', '')}
+      ${this._tile('sync', '#EEEDFE', '#3C3489', this._t('balancing'), c.balancing?.includes(i) ? this._t('yes') : this._t('no'), '')}
+    </div>`;
+    return this._box(this._cellName(c, i, b), '', `${tiles}<div class="grid2 tight"><div>${spark}</div><div class="diag ${c.drifting?.includes(i) ? 'bad' : ''}">${ehIcon(c.drifting?.includes(i) ? 'alert-outline' : 'check', 16)}<span>${ehEsc(diag)}</span></div></div>`);
+  }
+
+  _spreadChart(c) {
+    const spreads = c.spread_30d || [];
+    if (spreads.length < 2) return `<div class="hint">${ehEsc(this._t('learning_short'))}</div>`;
+    const ahead = c.days_to_threshold != null ? Math.min(c.days_to_threshold, 60) : 0;
+    const total = spreads.length - 1 + ahead;
+    const maxv = Math.max(c.threshold_mv * 1.15, ...spreads);
+    const X = (k) => 40 + (k / Math.max(total, 1)) * 1120;
+    const Y = (v) => 110 - (v / maxv) * 96;
+    let o = `<svg class="mini m" viewBox="0 0 1200 128" role="img" aria-label="${ehEsc(this._t('spread_trend'))}">`;
+    o += `<line x1="40" x2="1160" y1="${Y(c.threshold_mv)}" y2="${Y(c.threshold_mv)}" stroke="${EH_RED}" stroke-dasharray="3 3"/><text class="svgt" x="44" y="${Y(c.threshold_mv) - 4}" style="fill:${EH_RED}">${ehEsc(this._t('threshold'))} ${c.threshold_mv} mV</text>`;
+    o += `<path d="${spreads.map((v, k) => `${k ? 'L' : 'M'}${X(k).toFixed(1)} ${Y(v).toFixed(1)}`).join(' ')}" fill="none" stroke="#EF9F27" stroke-width="2"/>`;
+    const lastK = spreads.length - 1;
+    if (ahead) {
+      const end = spreads[lastK] + ((c.threshold_mv - spreads[lastK]) * ahead) / c.days_to_threshold;
+      o += `<path d="M${X(lastK).toFixed(1)} ${Y(spreads[lastK]).toFixed(1)} L${X(total).toFixed(1)} ${Y(end).toFixed(1)}" stroke="#EF9F27" stroke-width="1.6" stroke-dasharray="4 4"/><circle cx="${X(total)}" cy="${Y(end)}" r="4" fill="var(--card-background-color)" stroke="${EH_RED}" stroke-width="2"/>`;
+      o += `<text class="svgt" x="${X(total) - 6}" y="${Y(end) + 16}" text-anchor="end">${ehEsc(this._t('in_days', { d: this._num(c.days_to_threshold, 0) }))}</text>`;
+    }
+    o += `<line x1="${X(lastK)}" x2="${X(lastK)}" y1="14" y2="110" stroke="var(--secondary-text-color)" stroke-width=".5" stroke-dasharray="3 3"/><line x1="40" x2="1160" y1="110" y2="110" stroke="var(--divider-color)"/>`;
+    o += `<text class="svgt" x="40" y="124">−${ehEsc(this._t('days_30'))}</text><text class="svgt" x="${X(lastK)}" y="124" text-anchor="middle">${ehEsc(this._t('today'))}</text>`;
+    return `${o}</svg>`;
   }
 
   // ---------- Losses
@@ -969,11 +1229,92 @@ class EnergyHubPanel extends HTMLElement {
     const stack = CAUSES.map((k) => [k, month[k] || 0]).filter(([, v]) => v > 0).map(([k, v]) => `<div style="flex:${v};background:${colors[k]}" title="${ehEsc(this._t(`causes.${k}`))}"></div>`).join('');
     const legend = CAUSES.map((k) => [k, month[k] || 0]).map(([k, v]) => `<span class="chip"><span class="sw" style="background:${colors[k]}"></span>${ehEsc(this._t(`causes.${k}`))} ${monthTotal ? this._pct(v / monthTotal) : '–'}</span>`).join('');
     o += this._box(this._t('causes_month'), this._kwh(monthTotal), `${stack ? `<div class="stack thin">${stack}</div>` : ''}<div class="legend">${legend}</div>`);
-    o += this._box(this._t('events'), '', d.alerts.length ? this._alertTiles() : `<div class="hint">${ehEsc(this._t('no_event'))}</div>`);
+    o += this._box(this._t('events'), this._t('days_30'), this._events());
     return o;
   }
 
+  _events() {
+    const ev = this._data.losses.events || [];
+    if (!ev.length) return `<div class="hint">${ehEsc(this._t('no_event'))}</div>`;
+    const icon = { clipping: 'alert-outline', string_lagging: 'solar-panel', shading: 'weather-cloudy-alert', soiling: 'water-off', cell_drift: 'scale-balance', unavailability: 'power-plug-off-outline' };
+    const statusColor = { recurring: ['#FCEBEB', '#A32D2D'], watch: ['#FAEEDA', '#854F0B'], resolved: ['#EAF3DE', '#3B6D11'] };
+    const day = (s) => (s ? new Date(`${s}T12:00`).toLocaleDateString(this._locale, { day: 'numeric', month: 'short' }) : '');
+    return ev
+      .map((e) => {
+        const [bg, fg] = statusColor[e.status];
+        const title = this._t(`event.${e.kind}`, { unit: e.unit || '', name: e.name || '', battery: e.battery || '', cell: e.cell || '', from: e.start != null ? this._hm(e.start) : '', to: e.end != null ? this._hm(e.end) : '' });
+        const bits = [];
+        if (e.first && e.first !== e.last) bits.push(`${day(e.first)} → ${day(e.last)}`);
+        else if (e.last) bits.push(day(e.last));
+        if (e.days) bits.push(this._t(e.days === 1 ? 'one_day' : 'n_days', { n: e.days }));
+        if (e.kwh != null) bits.push(this._kwh(e.kwh));
+        if (e.relative != null) bits.push(`−${this._num((1 - e.relative) * 100, 0)} %`);
+        if (e.loss != null) bits.push(`−${this._pct(e.loss, 1)}`);
+        return `<div class="event"><div class="pa" style="background:${bg};color:${fg}">${ehIcon(icon[e.kind] || 'alert-outline', 18)}</div><div class="tt"><div class="a1">${ehEsc(title)}</div><div class="t3">${ehEsc(bits.join(' · '))}</div></div><span class="status" style="background:${bg};color:${fg}">${ehEsc(this._t(`status.${e.status}`))}</span></div>`;
+      })
+      .join('');
+  }
+
   // ---------- Finances
+  _calendar() {
+    const cal = this._data.finances.calendar || [];
+    if (!cal.length) return '';
+    const max = Math.max(0.01, ...cal.map((c) => c.eur || 0));
+    const first = new Date(`${cal[0].d}T12:00`);
+    const heads = Array.from({ length: 7 }, (_v, i) => new Date(first.getTime() + i * 86400000).toLocaleDateString(this._locale, { weekday: 'narrow' }));
+    const today = cal[cal.length - 1].d;
+    const cells = cal
+      .map((c) => {
+        const k = c.eur != null ? c.eur / max : 0;
+        const dt = new Date(`${c.d}T12:00`);
+        return `<div class="cal${c.d === today ? ' today' : ''}" style="background:${c.eur != null ? `rgba(99,153,34,${(0.12 + 0.8 * k).toFixed(2)})` : 'var(--secondary-background-color)'};color:${k > 0.55 ? '#fff' : 'var(--primary-text-color)'}" title="${ehEsc(dt.toLocaleDateString(this._locale, { weekday: 'long', day: 'numeric', month: 'long' }))} · ${this._eur(c.eur)}"><span>${dt.getDate()}</span><b>${c.eur != null ? this._num(c.eur, c.eur < 10 ? 2 : 1) : ''}</b></div>`;
+      })
+      .join('');
+    const legend = `<div class="legend"><span class="chip">${this._eur(0, 0)}</span><span class="calscale"></span><span class="chip">${this._eur(max)}</span></div>`;
+    return `<div class="calgrid">${heads.map((h) => `<div class="calh">${ehEsc(h)}</div>`).join('')}${cells}</div>${legend}`;
+  }
+
+  _bill() {
+    const b = this._data.finances.bill;
+    if (!b) return '';
+    const max = Math.max(1, b.month.without || 0, b.year.without || 0);
+    const row = (label, p) => {
+      const saved = (p.without || 0) - (p.with || 0);
+      const scale = Math.max(p.without || 0, Math.abs(p.with || 0), 1);
+      return `<div class="billrow"><div class="a1">${ehEsc(label)}</div>
+        <div class="barrow"><span>${ehEsc(this._t('without_solar'))}</span><div class="meter"><div style="width:${((p.without || 0) / scale) * 100}%;background:#B4B2A9"></div></div><span>${this._eur(p.without, 0)}</span></div>
+        <div class="barrow"><span>${ehEsc(this._t('with_solar'))}</span><div class="meter"><div style="width:${(Math.max(p.with || 0, 0) / scale) * 100}%;background:#639922"></div></div><span>${this._eur(p.with, 0)}</span></div>
+        <div class="t3" style="color:${EH_GREEN}">${ehEsc(this._t('saved_amount', { v: this._eur(saved, 0) }))}${(p.with || 0) < 0 ? ` · ${ehEsc(this._t('credit'))}` : ''}</div></div>`;
+    };
+    return `${row(this._t('this_month'), b.month)}${row(this._t('months_12'), b.year)}<div class="hint">${ehEsc(this._t('bill_hint', { i: this._eur(this._data.finances.import_price, 4), e: this._eur(this._data.finances.export_price, 4) }))}</div>${max ? '' : ''}`;
+  }
+
+  _comparator() {
+    const C = this._data.finances.comparator;
+    if (!C) return '';
+    if (!C.offers.length) return this._box(this._t('comparator'), '', `<div class="hint">${ehEsc(this._t('comparator_learning', { n: C.needed, d: C.days }))}</div>`);
+    const tag = (r) => `<span class="pill small">${ehEsc(this._t(r.custom ? 'custom_offer' : r.regulated ? 'regulated' : 'market'))}</span>`;
+    const rows = C.offers
+      .map((r) => {
+        const cur = r.key === C.current;
+        const best = r.key === C.best;
+        const delta = r.delta == null || cur ? '' : `<span style="color:${r.delta < 0 ? EH_GREEN : 'var(--secondary-text-color)'}">${r.delta > 0 ? '+' : ''}${this._eur(r.delta, 0)}</span>`;
+        return `<tr class="${cur ? 'cur' : ''}"><td><div class="a1 oname">${best ? `<span style="color:${EH_GREEN}">${ehIcon('check', 14)}</span>` : ''}${ehEsc(r.name)}</div><div>${tag(r)}${cur ? ` <span class="pill small cur">${ehEsc(this._t('your_contract'))}</span>` : ''}</div></td><td class="num">${this._eur(r.avg_price, 4)}</td><td class="num">${this._eur(r.subscription, 0)}</td><td class="num"><b>${this._eur(r.total, 0)}</b><div class="t3">${delta}</div></td></tr>`;
+      })
+      .join('');
+    const bestOffer = C.offers.find((r) => r.key === C.best);
+    const verdict = !C.current ? this._t('no_contract') : C.best === C.current ? this._t('best_is_current') : this._t('best_saving', { name: bestOffer.name, v: this._eur(C.saving, 0) });
+    const notes = [this._t('grid_info', { d: new Date(`${C.grid_date}T12:00`).toLocaleDateString(this._locale, { day: 'numeric', month: 'long', year: 'numeric' }) })];
+    if (C.scale > 1.05) notes.push(this._t('scaled', { n: C.days }));
+    if (C.colors < C.days) notes.push(this._t('colors_estimated', { n: C.days - C.colors }));
+    const stale = C.grid_stale ? `<div class="hint" style="color:${EH_AMBER}">${ehIcon('alert-outline', 14)} ${ehEsc(this._t('grid_stale'))}</div>` : '';
+    return this._box(
+      this._t('comparator'),
+      this._t('comparator_hint', { v: this._kwh(C.kwh) }),
+      `<div class="verdict ${C.current && C.best !== C.current ? 'gain' : ''}">${ehEsc(verdict)}</div><table class="offers"><tr class="th"><td>${ehEsc(this._t('offer'))}</td><td class="num">${ehEsc(this._t('avg_price'))}</td><td class="num">${ehEsc(this._t('subscription'))}</td><td class="num">${ehEsc(this._t('total_year'))}</td></tr>${rows}</table>${stale}<div class="hint">${notes.map(ehEsc).join(' ')}</div>`,
+    );
+  }
+
   _finances() {
     const d = this._data;
     const F = d.finances;
@@ -1001,6 +1342,8 @@ class EnergyHubPanel extends HTMLElement {
     const bd = F.breakdown;
     const total = (bd.direct || 0) + (bd.battery || 0) + (bd.export || 0);
     const row = (label, v, col) => `<div class="barrow"><span>${ehEsc(label)}</span><div class="meter"><div style="width:${total ? (v / total) * 100 : 0}%;background:${col}"></div></div><span>${this._eur(v, 0)}</span></div>`;
+    o += `<div class="grid2">${this._box(this._t('gains_calendar'), this._t('weeks_6'), this._calendar())}${this._box(this._t('bill_title'), '', this._bill())}</div>`;
+    o += this._comparator();
     o += `<div class="grid2">${this._box(this._t('gains_month'), '', bars)}${this._box(this._t('gains_from'), this._eur(total, 0), row(this._t('direct'), bd.direct, '#639922') + row(this._t('battery_restored'), bd.battery, EH_TEAL) + row(this._t('export'), bd.export, EH_BLUE))}</div>`;
     return o;
   }
@@ -1044,32 +1387,220 @@ class EnergyHubPanel extends HTMLElement {
 
   // ---------- Settings
   _settingsTab() {
+    const subs = ['sources', 'installation', 'tariffs', 'alerts', 'yaml'];
+    const sub = subs.includes(this._sub) ? this._sub : 'sources';
+    const nav = `<div class="subtabs">${subs.map((k) => `<button class="${sub === k ? 'on' : ''}" data-sub="${k}">${ehEsc(this._t(`subtabs.${k}`))}</button>`).join('')}<button class="round refresh-inline" data-action="refresh" aria-label="Refresh">${ehIcon('refresh', 16)}</button></div>`;
+    this._snips = [];
+    const body = { sources: this._setSources, installation: this._setInstallation, tariffs: this._setTariffs, alerts: this._setAlerts, yaml: this._setYaml }[sub].call(this);
+    return nav + body;
+  }
+
+  _snip(yaml) {
+    this._snips.push(yaml);
+    return `<button class="copy" data-snip="${this._snips.length - 1}">${ehIcon('content-copy', 14)} ${ehEsc(this._t('copy_yaml'))}</button>`;
+  }
+
+  _setSources() {
     const d = this._data;
-    const s = this._settings;
+    let o = '';
+    const sugg = d.suggestions || [];
+    if (sugg.length) {
+      o += this._box(this._t('suggestions'), `${sugg.length}`, sugg.map((s) => `<div class="sugg"><span class="pa sm" style="background:#EEEDFE;color:#3C3489">${ehIcon('lightbulb-on-outline', 14)}</span><div class="tt"><div class="a1">${ehEsc(this._t(`suggest.${s.kind}`, { bms: s.bms || '', battery: s.battery || '' }))}</div><div class="t3">${s.correlation != null ? ehEsc(this._t('correlation', { v: this._num(s.correlation, 2) })) : ''}</div></div>${this._snip(s.yaml)}</div>`).join(''));
+    }
+    const capIcon = { provided: 'check', estimated: 'function-variant', absent: 'minus' };
+    const roleOrder = ['pv', 'storage', 'meter', 'forecast', 'weather', 'tariff', 'prefs'];
+    const sources = [...d.sources].sort((a, b) => roleOrder.indexOf(a.role) - roleOrder.indexOf(b.role));
+    let lastRole = null;
+    const list = sources
+      .map((src) => {
+        const head = src.role !== lastRole ? `<div class="rolehead">${ehEsc(this._t(`source_role.${src.role}`))}</div>` : '';
+        lastRole = src.role;
+        const caps = Object.entries(src.capabilities).map(([k, v]) => `<span class="cap ${v}" title="${ehEsc(this._t(`capabilities.${v}`))}">${ehIcon(capIcon[v] || 'minus', 12)}${ehEsc(this._t(`cap.${k}`))}</span>`).join('');
+        return `${head}<div class="src"><div class="tt"><div class="a1">${ehEsc(src.name)} ${src.status === 'beta' ? `<span class="pill small">${ehEsc(this._t('beta'))}</span>` : ''}</div><div>${caps}</div></div></div>`;
+      })
+      .join('');
+    o += this._box(this._t('sources'), `${d.sources.length}`, `${list}<div class="legend"><span class="cap provided">${ehIcon('check', 12)}${ehEsc(this._t('capabilities.provided'))}</span><span class="cap estimated">${ehIcon('function-variant', 12)}${ehEsc(this._t('capabilities.estimated'))}</span><span class="cap absent">${ehIcon('minus', 12)}${ehEsc(this._t('capabilities.absent'))}</span></div>`);
+    o += this._box(this._t('quality_24h'), this._t('quality_hint'), this._quality());
+    const excl = Object.entries(d.excluded || {}).map(([e, why]) => `<tr><td>${ehEsc(this._t('excluded'))}</td><td><code class="muted">${ehEsc(e)}</code></td><td class="age">${ehEsc(this._t(`excluded_reason.${why}`))}</td></tr>`).join('');
+    if (excl) o += this._box(this._t('excluded'), '', `<table class="roles">${excl}</table>`);
+    return o;
+  }
+
+  _quality() {
+    const q = this._data.quality || [];
+    if (!q.length) return `<div class="hint">${ehEsc(this._t('learning_short'))}</div>`;
+    const rows = q
+      .map((r) => {
+        const slots = r.slots.map((v) => `<i style="background:${v == null ? 'var(--divider-color)' : v >= 0.99 ? '#97C459' : v >= 0.5 ? '#EF9F27' : EH_RED}"></i>`).join('');
+        const gaps = (r.gaps || []).map(([a, b]) => `${this._time(a)}–${this._time(b)}`).join(', ');
+        const age = this._data.ages?.[r.entity];
+        return `<div class="qrow"><div class="qname"><div class="a1">${ehEsc(this._roleLabel(r.role))}</div><code class="t3">${ehEsc(r.entity)}</code></div><div class="qbar">${slots}</div><div class="qval"><b style="color:${r.share >= 0.99 ? EH_GREEN : r.share >= 0.9 ? EH_AMBER : EH_RED}">${this._pct(r.share, 1)}</b><div class="t3">${gaps ? ehEsc(this._t('gaps', { v: gaps })) : age != null ? ehEsc(this._t('last_seen', { v: `${this._num(age, 0)} s` })) : ''}</div></div></div>`;
+      })
+      .join('');
+    return `${rows}<div class="qrow axis"><span></span><div class="qaxis"><span>−24 h</span><span>−12 h</span><span>${ehEsc(this._t('now_short'))}</span></div><span></span></div>`;
+  }
+
+  _roleLabel(role) {
+    if (role.includes('.')) {
+      const [key, field] = role.split('.');
+      const b = this._data.batteries.items.find((x) => x.key === key);
+      return `${b ? b.name : key} · ${this._t(`cap.${field === 'power' ? 'power' : 'soc'}`)}`;
+    }
+    return this._t(`role.${role}`, {}, role);
+  }
+
+  _setInstallation() {
+    const d = this._data;
+    const s = this._settings || {};
     const roles = d.roles || {};
     const checks = [
-      ['pv', !!(roles.pv_power || roles.pv_energy), roles.pv_power || roles.pv_energy],
-      ['grid', !!(roles.grid_power || roles.grid_import_energy), roles.grid_power || roles.grid_import_energy],
-      ['battery', d.batteries.items.length > 0, this._t('batteries_n', { n: d.batteries.items.length })],
-      ['forecast', !!roles.forecast_power, roles.forecast_power],
-      ['planes', !d.kwp_estimated, d.kwp_estimated ? this._t('kwp_estimated') : this._t('kwp', { v: this._num(d.kwp, 1) })],
-      ['tariff', !!d.finances.net_cost, d.finances.net_cost ? this._eur(d.finances.net_cost, 0) : this._t('no_cost')],
+      ['pv', !!(roles.pv_power || roles.pv_energy), roles.pv_power || roles.pv_energy, null],
+      ['grid', !!(roles.grid_power || roles.grid_import_energy), roles.grid_power || roles.grid_import_energy, { link: '/config/energy' }],
+      ['battery', d.batteries.items.length > 0, this._t('batteries_n', { n: d.batteries.items.length }), { yaml: 'energy_hub:\n  batteries:\n    house:\n      soc: sensor.battery_soc\n      power: sensor.battery_power\n      capacity_kwh: 10\n' }],
+      ['forecast', !!roles.forecast_power, roles.forecast_power, { link: '/config/integrations/dashboard/add?domain=forecast_solar' }],
+      ['planes', !d.kwp_estimated, d.kwp_estimated ? this._t('kwp_estimated') : this._t('kwp', { v: this._num(d.kwp, 1) }), { yaml: 'energy_hub:\n  planes:\n    - kwp: 3.0\n      tilt: 30\n      azimuth: 180\n' }],
+      ['tariff', !!d.finances.net_cost, d.finances.net_cost ? this._eur(d.finances.net_cost, 0) : this._t('no_cost'), { yaml: 'energy_hub:\n  tariff:\n    import: 0.2016\n    export: 0.04\n  installation:\n    cost: 9000\n    subsidy: 0\n    commissioned: 2024-01-01\n' }],
     ];
     const okCount = checks.filter((c) => c[1]).length;
-    let o = `<div class="ringrow"><div class="tile col"><svg width="90" height="90" viewBox="0 0 90 90" role="img" aria-label="${okCount}/${checks.length}"><circle cx="45" cy="45" r="36" fill="none" stroke="var(--divider-color)" stroke-width="8"/><circle cx="45" cy="45" r="36" fill="none" stroke="#639922" stroke-width="8" stroke-linecap="round" transform="rotate(-90 45 45)" stroke-dasharray="${((226 * okCount) / checks.length).toFixed(0)} 227"/><text x="45" y="50" text-anchor="middle" class="svgth">${Math.round((okCount / checks.length) * 100)} %</text></svg><div class="t1">${ehEsc(this._t('health_title'))}</div></div><section class="box">`;
-    o += checks.map(([key, ok, detail]) => `<div class="check"><span class="pa sm" style="background:${ok ? '#EAF3DE' : '#FAEEDA'};color:${ok ? EH_GREEN : '#854F0B'}">${ehIcon(ok ? 'check' : 'alert-outline', 14)}</span><div class="tt"><div class="a1">${ehEsc(this._t(`checks.${key}`))}</div><div class="t3">${ehEsc(detail || this._t('check_missing'))}</div></div></div>`).join('');
+    const action = (a) => (a?.yaml ? this._snip(a.yaml) : a?.link ? `<a class="copy" href="${a.link}" target="_top">${ehIcon('chevron-right', 14)} ${ehEsc(this._t('open'))}</a>` : '');
+    let o = `<div class="ringrow"><div class="tile col"><svg width="90" height="90" viewBox="0 0 90 90" role="img" aria-label="${okCount}/${checks.length}"><circle cx="45" cy="45" r="36" fill="none" stroke="var(--divider-color)" stroke-width="8"/><circle cx="45" cy="45" r="36" fill="none" stroke="#639922" stroke-width="8" stroke-linecap="round" transform="rotate(-90 45 45)" stroke-dasharray="${((226 * okCount) / checks.length).toFixed(0)} 227"/><text x="45" y="50" text-anchor="middle" class="svgth">${okCount}/${checks.length}</text></svg><div class="t1">${ehEsc(this._t('health_title'))}</div></div><section class="box">`;
+    o += checks.map(([key, ok, detail, act]) => `<div class="check"><span class="pa sm" style="background:${ok ? '#EAF3DE' : '#FAEEDA'};color:${ok ? EH_GREEN : '#854F0B'}">${ehIcon(ok ? 'check' : 'alert-outline', 14)}</span><div class="tt"><div class="a1">${ehEsc(this._t(`checks.${key}`))}</div><div class="t3">${ehEsc(detail || this._t('check_missing'))}</div></div>${ok ? '' : action(act)}</div>`).join('');
     o += '</section></div>';
-    const capIcon = { provided: 'check', estimated: 'function-variant', absent: 'minus' };
-    const sources = d.sources.map((src) => {
-      const caps = Object.entries(src.capabilities).map(([k, v]) => `<span class="cap ${v}" title="${ehEsc(this._t(`capabilities.${v}`))}">${ehIcon(capIcon[v] || 'minus', 12)}${ehEsc(k)}</span>`).join('');
-      return `<div class="src"><div class="tt"><div class="a1">${ehEsc(src.name)} ${src.status === 'beta' ? `<span class="pill small">${ehEsc(this._t('beta'))}</span>` : ''}</div><div>${caps}</div></div></div>`;
-    }).join('');
-    o += this._box(this._t('sources'), `${d.sources.length}`, `${sources}<div class="legend"><span class="cap provided">${ehIcon('check', 12)}${ehEsc(this._t('capabilities.provided'))}</span><span class="cap estimated">${ehIcon('function-variant', 12)}${ehEsc(this._t('capabilities.estimated'))}</span><span class="cap absent">${ehIcon('minus', 12)}${ehEsc(this._t('capabilities.absent'))}</span></div>`);
-    const roleRows = Object.entries(roles).map(([r, e]) => `<tr><td>${ehEsc(r)}</td><td><code>${ehEsc(e)}</code></td><td class="age">${d.ages?.[e] != null ? `${this._num(d.ages[e], 0)} s` : ''}</td></tr>`).join('');
-    const excl = Object.entries(d.excluded || {}).map(([e, why]) => `<tr><td>${ehEsc(this._t('excluded'))}</td><td><code class="muted">${ehEsc(e)}</code></td><td class="age">${ehEsc(this._t(`excluded_reason.${why}`))}</td></tr>`).join('');
-    o += this._box(this._t('roles'), this._t('last_value'), `<table class="roles">${roleRows}${excl}</table>`);
-    if (s?.yaml) o += this._box(this._t('yaml'), '', `<button class="copy" data-action="copy">${ehIcon('content-copy', 14)} ${ehEsc(this._t('copy'))}</button><pre>${ehEsc(s.yaml)}</pre>`);
+    o += this._box(this._t('schematic'), this._t('schematic_hint'), `${this._schematic()}${this._nodeDetail()}`);
+    const planes = (s.planes || []).map((p, i) => `<tr><td>${ehEsc(this._t('plane_n', { n: i + 1 }))}</td><td>${this._num(p.kwp, 2)} kWp</td><td>${this._num(p.tilt, 0)}°</td><td>${this._num(p.azimuth, 0)}°</td></tr>`).join('');
+    o += this._box(this._t('planes'), d.kwp_estimated ? this._t('estimated') : this._t('kwp', { v: this._num(d.kwp, 2) }), `${planes ? `<table class="roles"><tr><th></th><th>${ehEsc(this._t('power'))}</th><th>${ehEsc(this._t('tilt'))}</th><th>${ehEsc(this._t('azimuth'))}</th></tr>${planes}</table>` : `<div class="hint">${ehEsc(this._t('kwp_estimated'))}</div>`}<table class="roles"><tr><td>${ehEsc(this._t('inverter_max_short'))}</td><td>${this._kw(d.inverter_max_kw)}</td></tr><tr><td>${ehEsc(this._t('export_limit'))}</td><td>${d.export_limit_kw ? this._kw(d.export_limit_kw) : '–'}</td></tr></table>`);
+    o += this._reference();
     return o;
+  }
+
+  _reference() {
+    const R = this._data.reference || {};
+    const order = [
+      ['measured', R.irradiance],
+      ['forecast', R.forecast],
+      ['weather', R.weather],
+      ['clearsky', null],
+    ];
+    const used = R.source || 'clearsky';
+    const rows = order
+      .map(([kind, entity]) => {
+        const on = kind === used;
+        const avail = kind === 'clearsky' || !!entity;
+        return `<div class="check"><span class="pa sm" style="background:${on ? '#EAF3DE' : 'var(--secondary-background-color)'};color:${on ? EH_GREEN : 'var(--secondary-text-color)'}">${ehIcon(on ? 'check' : avail ? 'minus' : 'close', 14)}</span><div class="tt"><div class="a1">${ehEsc(this._t(`reference_kind.${kind}`))}</div><div class="t3">${entity ? `<code>${ehEsc(entity)}</code> · ` : ''}${kind === 'clearsky' && !on ? '' : ehEsc(this._t(`reference_hint.${kind}`))}</div></div></div>`;
+      })
+      .join('');
+    return this._box(this._t('reference'), this._t(`reference_kind.${used}`), `${rows}${R.irradiance ? '' : this._snip('energy_hub:\n  entities:\n    irradiance: sensor.solar_radiation\n  weather: weather.home\n')}`);
+  }
+
+  _schematic() {
+    const d = this._data;
+    const L = d.layout || {};
+    const items = d.batteries.items;
+    const dc = items.filter((b) => b.coupling === 'dc');
+    const ac = items.filter((b) => b.coupling !== 'dc');
+    const sel = this._node;
+    const node = (key, x, y, w, h, title, sub, color, icon) => `<g class="node${sel === key ? ' on' : ''}" data-node="${ehEsc(key)}" tabindex="0" role="button"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="var(--card-background-color)" stroke="${color}" stroke-width="${sel === key ? 2.5 : 1.4}"/><circle cx="${x + 20}" cy="${y + h / 2}" r="13" fill="${color}" fill-opacity=".14"/><g transform="translate(${x + 11} ${y + h / 2 - 9}) scale(.75)" style="color:${color}"><path fill="currentColor" d="${EH_ICONS[icon]}"/></g><text class="svgth" x="${x + 40}" y="${y + h / 2 - 3}" style="font-size:12px">${ehEsc(title)}</text><text class="svgt" x="${x + 40}" y="${y + h / 2 + 12}" style="font-size:10px">${ehEsc(sub)}</text></g>`;
+    // DC side on the left: the panels and the DC-coupled batteries feed the inverter
+    const dcBottom = 110 + Math.max(dc.length, 0) * 62;
+    const busY = Math.max(dcBottom, 150) + 10;
+    const H = busY + 80;
+    let o = `<svg class="schema" viewBox="0 0 680 ${H}" role="img" aria-label="${ehEsc(this._t('schematic'))}">`;
+    o += '<path d="M180 49 H250" stroke="#EF9F27" stroke-width="3"/>';
+    for (let i = 0; i < dc.length; i++) o += `<path d="M180 ${135 + i * 62} H215 V60 H250" fill="none" stroke="#EF9F27" stroke-width="3"/>`;
+    o += '<text class="svgt" x="215" y="42" text-anchor="middle" style="font-size:10px;fill:#BA7517">DC</text>';
+    if (L.forecast) o += '<path d="M470 49 H420" fill="none" stroke="var(--secondary-text-color)" stroke-dasharray="3 3"/>';
+    // AC side below: AC-coupled batteries, the home and the meter on one bus
+    const acRow = ac.map((b) => [`battery:${b.key}`, b.name, `AC · ${this._num(b.capacity_kwh, 1)} kWh`, EH_TEAL, 'battery-charging']);
+    acRow.push(['home', this._t('home'), d.roles?.load_power ? this._t('measured_short') : this._t('computed'), EH_GREEN, 'home-lightning-bolt-outline']);
+    acRow.push(['meter', L.meter || this._t('grid'), d.export_limit_kw ? this._t('limit_kw', { v: this._kw(d.export_limit_kw) }) : this._t('grid'), EH_BLUE, 'transmission-tower']);
+    const w = Math.min(160, (640 - 10 * (acRow.length - 1)) / acRow.length);
+    const xs = acRow.map((_r, i) => 20 + i * (w + 10));
+    o += `<path d="M335 78 V${busY}" stroke="#378ADD" stroke-width="3"/><path d="M${Math.min(xs[0] + w / 2, 335)} ${busY} H${Math.max(xs[xs.length - 1] + w / 2, 335)}" stroke="#378ADD" stroke-width="3"/><text class="svgt" x="343" y="${busY - 8}" style="font-size:10px;fill:#185FA5">AC</text>`;
+    for (const x of xs) o += `<path d="M${x + w / 2} ${busY} V${busY + 20}" stroke="#378ADD" stroke-width="3"/>`;
+    o += node('pv', 20, 24, 160, 50, this._t('solar'), `${(L.strings || []).length} strings${L.units ? ` · ${L.units} ${this._t('panels')}` : ''}`, EH_AMBER, 'solar-panel');
+    o += node('inverter', 250, 24, 170, 54, L.inverter || this._t('inverter_cap'), `DC → AC · ${this._kw(d.inverter_max_kw)}`, EH_AMBER, 'flash-outline');
+    if (L.forecast) o += node('forecast', 470, 24, 190, 50, this._t('forecast'), L.forecast, '#888780', 'weather-cloudy-alert');
+    dc.forEach((b, i) => {
+      o += node(`battery:${b.key}`, 20, 110 + i * 62, 160, 50, b.name, `DC · ${this._num(b.capacity_kwh, 1)} kWh`, EH_TEAL, 'battery-charging');
+    });
+    acRow.forEach(([key, t, s2, c, ic], i) => {
+      o += node(key, xs[i], busY + 20, w, 50, t, s2, c, ic);
+    });
+    return `${o}</svg>`;
+  }
+
+  _nodeDetail() {
+    const key = this._node;
+    if (!key) return `<div class="hint">${ehEsc(this._t('schematic_click'))}</div>`;
+    const d = this._data;
+    const s = this._settings || {};
+    const roles = d.roles || {};
+    const capIcon = { provided: 'check', estimated: 'function-variant', absent: 'minus' };
+    const capsOf = (role) => {
+      const src = d.sources.find((x) => x.role === role);
+      return src ? Object.entries(src.capabilities).map(([k, v]) => `<span class="cap ${v}">${ehIcon(capIcon[v] || 'minus', 12)}${ehEsc(this._t(`cap.${k}`))}</span>`).join('') : '';
+    };
+    const ents = (list) => `<table class="roles">${list.filter(([, e]) => e).map(([r, e]) => `<tr><td>${ehEsc(r)}</td><td><code>${ehEsc(e)}</code></td><td class="age">${d.ages?.[e] != null ? `${this._num(d.ages[e], 0)} s` : ''}</td></tr>`).join('')}</table>`;
+    let title = '';
+    let body = '';
+    if (key === 'pv' || key === 'inverter') {
+      title = key === 'pv' ? this._t('solar') : d.layout?.inverter || this._t('inverter_cap');
+      body = `<div>${capsOf('pv')}</div>${ents([['pv_power', roles.pv_power], ['pv_energy', roles.pv_energy]])}${key === 'pv' ? `<div class="t3">${ehEsc((d.layout?.strings || []).join(' · '))}</div>` : ''}`;
+    } else if (key === 'forecast') {
+      title = d.layout?.forecast || this._t('forecast');
+      body = `<div>${capsOf('forecast')}</div>${ents([['forecast_power', roles.forecast_power], ['forecast_energy_today', roles.forecast_energy_today]])}`;
+    } else if (key === 'meter') {
+      title = d.layout?.meter || this._t('grid');
+      body = `<div>${capsOf('meter')}</div>${ents([['grid_power', roles.grid_power], ['grid_import_energy', roles.grid_import_energy], ['grid_export_energy', roles.grid_export_energy]])}`;
+    } else if (key === 'home') {
+      title = this._t('home');
+      body = roles.load_power ? ents([['load_power', roles.load_power]]) : `<div class="hint">${ehEsc(this._t('home_computed'))}</div>`;
+    } else if (key.startsWith('battery:')) {
+      const b = d.batteries.items.find((x) => `battery:${x.key}` === key);
+      const cfg = (s.batteries || []).find((x) => x.key === b?.key) || {};
+      const src = d.sources.find((x) => x.platform === b?.platform);
+      title = b ? b.name : '';
+      body = `<div>${src ? Object.entries(src.capabilities).map(([k, v]) => `<span class="cap ${v}">${ehIcon(capIcon[v] || 'minus', 12)}${ehEsc(this._t(`cap.${k}`))}</span>`).join('') : ''}</div>${ents([['soc', cfg.soc], ['power', cfg.power]])}<div class="t3">${ehEsc(this._t(`coupling.${b?.coupling}`))} · ${this._num(b?.capacity_kwh, 1)} kWh · ${ehEsc(this._t('reserve', { v: `${this._num(b?.reserve, 0)} %` }))}${cfg.cells ? ` · ${this._t('n_cells', { n: cfg.cells })}` : ''}</div>`;
+    }
+    return `<div class="nodedetail"><div class="a1">${ehEsc(title)}</div>${body}</div>`;
+  }
+
+  _setTariffs() {
+    const d = this._data;
+    const s = this._settings || {};
+    const t = s.tariff || {};
+    const inst = s.installation || {};
+    const F = d.finances;
+    const row = (label, value) => `<tr><td>${ehEsc(label)}</td><td>${value}</td></tr>`;
+    const C = F.comparator || {};
+    const offerName = (C.offers || []).find((r) => r.key === C.contract)?.name || C.contract;
+    const assumed = (flag) => (flag ? ` <span class="pill small">${ehEsc(this._t('assumed'))}</span>` : '');
+    const ent = (role) => (d.roles?.[role] ? `<code>${ehEsc(d.roles[role])}</code>` : '–');
+    let o = this._box(
+      this._t('contract_box'),
+      C.contract_source ? this._t(`contract_source.${C.contract_source}`) : '',
+      `<table class="roles">${row(this._t('contract'), C.contract ? ehEsc(offerName) : ehEsc(this._t('no_contract')))}${row(this._t('subscribed_power'), `${C.kva ?? '–'} kVA${assumed(C.kva_assumed)}`)}${row(this._t('offpeak_hours'), `${ehEsc(C.offpeak || '–')}${assumed(C.offpeak_assumed)}`)}${row(this._t('price_now'), `${this._eur(F.import_price, 4)} /kWh`)}${row(this._t('price_entity'), ent('tariff_price'))}${row(this._t('color_entity'), ent('tariff_color'))}</table>${this._snip(`energy_hub:\n  tariff:\n    contract: ${C.contract || 'hphc'}\n    kva: ${C.kva || 6}\n    offpeak: "${C.offpeak || '22:00-06:00'}"\n`)}`,
+    );
+    o += this._box(this._t('tariff_box'), d.currency, `<table class="roles">${C.contract ? '' : row(this._t('import_price'), `${this._eur(t.import ?? F.import_price, 4)} /kWh`)}${row(this._t('export_price'), `${this._eur(t.export ?? F.export_price, 4)} /kWh`)}</table>${this._snip(`energy_hub:\n  tariff:\n    import: ${t.import ?? F.import_price}\n    export: ${t.export ?? F.export_price}\n    currency: ${d.currency}\n`)}`);
+    o += this._box(this._t('installation_box'), '', `<table class="roles">${row(this._t('cost'), inst.cost != null ? this._eur(inst.cost, 0) : '–')}${row(this._t('subsidy'), inst.subsidy != null ? this._eur(inst.subsidy, 0) : '–')}${row(this._t('net_cost_label'), F.net_cost != null ? this._eur(F.net_cost, 0) : '–')}${row(this._t('commissioned'), inst.commissioned ? new Date(`${inst.commissioned}T12:00`).toLocaleDateString(this._locale, { day: 'numeric', month: 'long', year: 'numeric' }) : '–')}${row(this._t('inverter_replacement'), `${this._eur(F.inverter_replacement_cost, 0)} · ${this._t('after_years', { v: this._num(F.inverter_lifetime_years, 0) })}`)}</table>${this._snip(`energy_hub:\n  installation:\n    cost: ${inst.cost ?? 9000}\n    subsidy: ${inst.subsidy ?? 0}\n    commissioned: ${inst.commissioned ?? '2024-01-01'}\n`)}`);
+    return o + `<div class="hint">${ehEsc(this._t('yaml_wins'))}</div>`;
+  }
+
+  _setAlerts() {
+    const d = this._data;
+    const s = this._settings || {};
+    const active = new Set(d.alerts.map((a) => a.kind));
+    const kinds = ['clipping', 'string_lagging', 'shading', 'soiling', 'cell_drift', 'battery_exchange', 'stale'];
+    const rows = kinds.map((k) => `<div class="check"><span class="pa sm" style="background:${active.has(k) ? '#FCEBEB' : '#EAF3DE'};color:${active.has(k) ? '#A32D2D' : EH_GREEN}">${ehIcon(active.has(k) ? 'alert-outline' : 'check', 14)}</span><div class="tt"><div class="a1">${ehEsc(this._t(`alert_kind.${k}`))}</div><div class="t3">${ehEsc(this._t(`alert_rule.${k}`))}</div></div><span class="status" style="background:${active.has(k) ? '#FCEBEB' : 'var(--secondary-background-color)'};color:${active.has(k) ? '#A32D2D' : 'var(--secondary-text-color)'}">${ehEsc(this._t(active.has(k) ? 'active' : 'inactive'))}</span></div>`).join('');
+    let o = this._box(this._t('alert_rules'), this._t('active_n', { n: active.size }), rows);
+    o += this._box(this._t('notifications'), '', `<table class="roles"><tr><td>${ehEsc(this._t('notify_target'))}</td><td>${s.notify ? `<code>${ehEsc(s.notify)}</code>${s.notify_auto ? ` <span class="pill small">${ehEsc(this._t('detected'))}</span>` : ''}` : ehEsc(this._t('no_notify'))}</td></tr><tr><td>${ehEsc(this._t('event_name'))}</td><td><code>energy_hub_alert</code></td></tr><tr><td>${ehEsc(this._t('frequency'))}</td><td>${ehEsc(this._t('once_a_day'))}</td></tr></table>${s.notify ? '' : this._snip('energy_hub:\n  notify: notify.mobile_app_phone\n')}`);
+    return o;
+  }
+
+  _setYaml() {
+    const s = this._settings;
+    if (!s?.yaml) return `<div class="hint">${ehEsc(this._t('loading'))}</div>`;
+    return this._box(this._t('yaml'), s.yaml_configured ? this._t('yaml_in_use') : this._t('yaml_detected'), `${this._snip(s.yaml)}<pre>${ehEsc(s.yaml)}</pre>`);
   }
 
   // ---------- render
@@ -1119,11 +1650,43 @@ class EnergyHubPanel extends HTMLElement {
         this._render();
       });
     }
+    for (const el of root.querySelectorAll('[data-period]')) {
+      el.addEventListener('click', () => {
+        this._period = el.dataset.period;
+        this._render();
+      });
+    }
+    for (const el of root.querySelectorAll('[data-sub]')) {
+      el.addEventListener('click', () => {
+        this._sub = el.dataset.sub;
+        this._render();
+      });
+    }
+    for (const el of root.querySelectorAll('[data-node]')) {
+      const pick = () => {
+        this._node = this._node === el.dataset.node ? null : el.dataset.node;
+        this._render();
+      };
+      el.addEventListener('click', pick);
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') pick();
+      });
+    }
+    for (const el of root.querySelectorAll('[data-snip]')) {
+      el.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(this._snips[Number(el.dataset.snip)]);
+          el.textContent = this._t('copied');
+        } catch (_err) {
+          // clipboard unavailable (http)
+        }
+      });
+    }
     root.querySelector('[data-rate]')?.addEventListener('input', (e) => {
       this._rate = Number(e.target.value);
       this._render();
     });
-    root.querySelector('[data-action="refresh"]')?.addEventListener('click', async () => {
+    for (const el of root.querySelectorAll('[data-action="refresh"]')) el.addEventListener('click', async () => {
       try {
         this._data = await this._hass.callWS({ type: 'energy_hub/snapshot' });
         this._render();
@@ -1132,14 +1695,6 @@ class EnergyHubPanel extends HTMLElement {
       }
     });
     root.querySelector('[data-action="menu"]')?.addEventListener('click', () => this.dispatchEvent(new Event('hass-toggle-menu', { bubbles: true, composed: true })));
-    root.querySelector('[data-action="copy"]')?.addEventListener('click', async (e) => {
-      try {
-        await navigator.clipboard.writeText(this._settings.yaml);
-        e.currentTarget.textContent = this._t('copied');
-      } catch (_err) {
-        // clipboard unavailable (http): the text stays selectable
-      }
-    });
     this._bindCurve();
   }
 
@@ -1256,6 +1811,7 @@ main{padding:12px 16px 32px;max-width:1100px;margin:0 auto;display:flex;flex-dir
 .roof{width:100%;max-width:640px;margin:0 auto;display:block}
 .mini{width:100%;display:block}
 .mini .svgt{font-size:8px}
+.mini.m .svgt{font-size:11px}
 .barrow{display:grid;grid-template-columns:110px minmax(0,1fr) 120px;gap:8px;align-items:center;font-size:12px;margin:6px 0}
 .barrow span:last-child{text-align:right}
 .meter{height:10px;border-radius:5px;background:var(--secondary-background-color);overflow:hidden}
@@ -1281,13 +1837,78 @@ main{padding:12px 16px 32px;max-width:1100px;margin:0 auto;display:flex;flex-dir
 .cap.estimated{background:#FAEEDA;color:#633806}
 .cap.absent{background:var(--secondary-background-color);color:var(--secondary-text-color)}
 .roles{width:100%;border-collapse:collapse;font-size:12px}
+.offers{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+.offers td{padding:6px 4px;border-top:1px solid var(--divider-color);vertical-align:top}
+.offers tr.th td{border-top:0;color:var(--secondary-text-color);font-size:11px}
+.offers tr.cur td{background:var(--secondary-background-color)}
+.offers .oname{display:flex;align-items:center;gap:4px}
+.offers td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.pill.small.cur{background:#E6F1FB;color:#185FA5}
+.verdict{font-size:13px;padding:8px 10px;border-radius:8px;background:var(--secondary-background-color)}
+.verdict.gain{background:#EAF3DE;color:#27500A}
 .roles td{padding:5px 4px;border-top:1px solid var(--divider-color);vertical-align:top}
 .roles td.age{text-align:right;color:var(--secondary-text-color);white-space:nowrap}
 code,pre{font-family:var(--code-font-family,ui-monospace,monospace)}
 pre{background:var(--secondary-background-color);border-radius:8px;padding:10px 12px;font-size:12px;overflow-x:auto;margin:6px 0 0}
 .copy{font:inherit;font-size:12px;border:1px solid var(--divider-color);background:var(--card-background-color);color:var(--primary-text-color);border-radius:8px;padding:3px 10px;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
 .empty{padding:40px 16px;text-align:center;color:var(--secondary-text-color)}
-@media (max-width:600px){.kpis,.grid4{grid-template-columns:repeat(2,minmax(0,1fr))}.grid2,.ringrow{grid-template-columns:minmax(0,1fr)}.banner .title{font-size:15px}.banner.collapsed .titles .title>:not(.pill){display:none}.barrow{grid-template-columns:80px minmax(0,1fr) 90px}}
+.pill .short{display:none}
+.banner.collapsed .pill .long{display:none}
+.banner.collapsed .pill .short{display:inline}
+.banner.collapsed .pill.demo{display:none}
+.bell{position:relative}
+.bell .count{position:absolute;top:-3px;right:-3px;min-width:16px;height:16px;border-radius:8px;background:${EH_RED};color:#fff;font-size:10px;font-weight:500;display:flex;align-items:center;justify-content:center;padding:0 4px;box-sizing:border-box}
+.round.bell{margin-left:auto}
+.round.refresh{margin-left:0}
+.banner.collapsed .round.bell{margin-left:0}
+.refresh-inline{display:none;margin-left:auto;--btn:var(--secondary-background-color)}
+.hd.sub{margin-bottom:4px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.battrow{display:grid;grid-template-columns:150px minmax(0,1fr);gap:14px;align-items:center}
+.bbwrap{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center}
+.bigbatt{width:110px;height:auto}
+.cellrow{display:grid;grid-template-columns:70px minmax(0,1fr);gap:8px;align-items:center}
+.cellrow .cells{margin:2px 0}
+.rowlab{font-size:11px;color:var(--secondary-text-color)}
+.cell{position:relative}
+.cell.drift{outline:2px solid ${EH_RED};outline-offset:-2px}
+.baldot{position:absolute;top:3px;right:3px;width:6px;height:6px;border-radius:3px;background:${EH_VIOLET}}
+.baldot.static{position:static;display:inline-block}
+.diag{align-self:start;display:flex;gap:8px;align-items:flex-start;font-size:12px;background:#EAF3DE;color:#27500A;border-radius:10px;padding:10px}
+.diag.bad{background:#FCEBEB;color:#791F1F}
+.event{display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--divider-color)}
+.event:first-child{border-top:0}
+.status{font-size:11px;padding:2px 9px;border-radius:10px;white-space:nowrap}
+.calgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
+.calh{font-size:10px;color:var(--secondary-text-color);text-align:center}
+.cal{border-radius:6px;min-height:34px;padding:3px 4px;display:flex;flex-direction:column;justify-content:space-between;font-size:10px}
+.cal b{font-weight:500;font-size:11px;text-align:right}
+.cal.today{outline:2px solid var(--primary-text-color);outline-offset:-2px}
+.calscale{flex:1;max-width:160px;height:8px;border-radius:4px;background:linear-gradient(90deg,rgba(99,153,34,.12),rgba(99,153,34,.92))}
+.billrow{padding:6px 0;border-top:1px solid var(--divider-color)}
+.billrow:first-child{border-top:0}
+.subtabs{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.subtabs button:not(.round){font:inherit;font-size:13px;padding:5px 12px;border-radius:16px;border:1px solid var(--divider-color);background:var(--card-background-color);color:var(--secondary-text-color);cursor:pointer}
+.subtabs button.on{background:#FAC775;border-color:#FAC775;color:#633806}
+.sugg{display:flex;gap:9px;align-items:center;padding:6px 0;border-top:1px solid var(--divider-color)}
+.sugg:first-child{border-top:0}
+.rolehead{font-size:11px;font-weight:500;color:var(--secondary-text-color);text-transform:uppercase;letter-spacing:.04em;margin:10px 0 2px}
+.rolehead:first-child{margin-top:0}
+.qrow{display:grid;grid-template-columns:200px minmax(0,1fr) 110px;gap:10px;align-items:center;padding:5px 0;border-top:1px solid var(--divider-color)}
+.qrow:first-child{border-top:0}
+.qname code{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qbar{display:grid;grid-template-columns:repeat(96,1fr);gap:1px;height:14px}
+.qbar i{display:block;border-radius:1px}
+.qval{text-align:right;font-size:12px}
+.qrow.axis{border-top:0;padding-top:0}
+.qaxis{display:flex;justify-content:space-between;font-size:10px;color:var(--secondary-text-color)}
+.schema{width:100%;max-width:760px;display:block;margin:0 auto}
+.schema .node{cursor:pointer}
+.schema .node:hover rect{stroke-width:2.2}
+.schema .node:focus{outline:none}
+.nodedetail{margin-top:8px;padding:10px 12px;border-radius:10px;background:var(--secondary-background-color)}
+a.copy{text-decoration:none}@media (max-width:600px){.round.refresh{display:none}.refresh-inline{display:flex}.grid3{grid-template-columns:repeat(2,minmax(0,1fr))}.battrow{grid-template-columns:minmax(0,1fr)}.qrow{grid-template-columns:minmax(0,1fr) 70px}.qrow .qbar{grid-column:1/-1;grid-row:2}.qrow.axis .qaxis{grid-column:1/-1}.cellrow{grid-template-columns:minmax(0,1fr)}
+.kpis,.grid4{grid-template-columns:repeat(2,minmax(0,1fr))}.grid2,.ringrow{grid-template-columns:minmax(0,1fr)}.banner .title{font-size:15px}.banner.collapsed .tname{display:none}.banner:not(.collapsed) .titles{background:linear-gradient(90deg,var(--sky) 75%,transparent);padding-right:18px;position:relative;z-index:1}.barrow{grid-template-columns:80px minmax(0,1fr) 90px}}
 `;
 
 if (!customElements.get('energy-hub-panel')) {

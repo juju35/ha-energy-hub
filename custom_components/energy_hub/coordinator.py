@@ -5,24 +5,30 @@ from __future__ import annotations
 import logging
 import time
 from datetime import timedelta
+from pathlib import Path
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN
 from homeassistant.core import HomeAssistant, State, callback
 from homeassistant.helpers.storage import Store
+from homeassistant.helpers.translation import async_get_translations
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import dt as dt_util
 
 from . import demo
-from .analytics.clearsky import Plane, clearsky_power
+from .analytics.clearsky import CONDITION_CLOUDS, Plane, clearsky_power, cloud_factor, measured_factor
+from .analytics.tariffs import normalize_color
 from .config import HubConfig
-from .const import DOMAIN, EVENT_ALERT, STALE_SECONDS, STORAGE_KEY, STORAGE_VERSION, UPDATE_SECONDS
+from .const import DOMAIN, EVENT_ALERT, NOTIFY_HUB, STALE_SECONDS, STORAGE_KEY, STORAGE_VERSION, UPDATE_SECONDS
 from .engine import build_snapshot, estimate_kwp
 from .history import BatteryReading, History, Reading
 from .sources import Installation, discover, load_profiles
+from .views import contract_offer
 
 _LOGGER = logging.getLogger(__name__)
+# Languages with a translation file of their own
+TRANSLATED = frozenset(p.stem for p in (Path(__file__).parent / "translations").glob("*.json"))
 
 type EnergyHubConfigEntry = ConfigEntry[EnergyHubCoordinator]
 
@@ -144,6 +150,8 @@ class EnergyHubCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         stale: list[str] = []
         for entity_id in inst.entity_ids():
             state = get(entity_id)
+            if state is None or state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+                stale.append(entity_id)
             if state is None:
                 continue
             age = now - state.last_reported if hasattr(state, "last_reported") else now - state.last_updated
@@ -188,6 +196,8 @@ class EnergyHubCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     temperature=_number(get(b.temperature)) if b.temperature else None,
                     capacity_kwh=cap,
                     cells=cells,
+                    cell_temps=[v for v in (_number(get(e)) for e in b.cell_temperatures) if v is not None],
+                    cells_per_module=b.cells_per_module,
                 )
             )
         batt = sum(b.power_kw or 0.0 for b in batteries)
@@ -197,27 +207,63 @@ class EnergyHubCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         if load is None and grid is not None and pv is not None:
             load = max(pv + grid - batt, 0.0)
         clear = self._clearsky(now)
-        forecast = role_kw("forecast_power")
-        for entity_id in (inst.roles.get("pv_power"), inst.roles.get("grid_power")):
-            if entity_id and ages.get(entity_id, 0) > STALE_SECONDS and get(entity_id) is not None:
-                state = get(entity_id)
-                if state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
-                    stale.append(entity_id)
+        expected, reference = self._expected(now, clear, role_kw("forecast_power"))
+        color = normalize_color(st.state) if (st := get(inst.roles.get("tariff_color") or "")) else None
+        offline = any(
+            entity_id in stale and ages.get(entity_id, 0) > STALE_SECONDS
+            for entity_id in (inst.roles.get("pv_power"), inst.roles.get("grid_power"))
+            if entity_id
+        )
         return (
             Reading(
                 t=now.timestamp(),
                 pv_kw=pv,
                 load_kw=load,
                 grid_kw=grid,
-                expected_kw=forecast if forecast is not None else clear,
+                expected_kw=expected,
+                reference=reference,
                 clearsky_kw=clear,
+                import_price=self._price(now, color),
+                # The Tempo day starts at 6:00: before that the colour entity still shows yesterday's.
+                day_color=color if now.hour >= 6 else None,
                 units=units or {},
                 strings=strings,
                 batteries=batteries,
-                stale=stale,
+                stale=sorted(stale),
+                offline=offline,
             ),
             ages,
         )
+
+    def _expected(self, now, clear: float | None, forecast: float | None) -> tuple[float | None, str]:
+        """Expected production now and its reference, best first: a measured irradiance (the clear sky scaled by
+        measured / clear-sky irradiance), the forecast integration, the weather's cloud cover (Kasten-Czeplak), the
+        clear sky alone."""
+        get = self.hass.states.get
+        inst = self.installation
+        lat, lon = self.hass.config.latitude, self.hass.config.longitude
+        if clear is not None and (ghi := _number(get(inst.roles.get("irradiance") or ""))) is not None:
+            factor = measured_factor(ghi, now, lat, lon)
+            return (clear * factor if factor is not None else clear), "measured"
+        if forecast is not None:
+            return forecast, "forecast"
+        if clear is not None and (weather := get(inst.roles.get("weather") or "")) is not None:
+            cover = weather.attributes.get("cloud_coverage")
+            clouds = cover / 100 if isinstance(cover, int | float) else CONDITION_CLOUDS.get(weather.state)
+            if clouds is not None:
+                return clear * cloud_factor(clouds), "weather"
+        return clear, "clearsky"
+
+    def _price(self, now, color: str | None) -> float:
+        """Price of the kWh drawn now: the price entity (Tarif EDF), else the contract's grid, else the flat price."""
+        if (price := _number(self.hass.states.get(self.installation.roles.get("tariff_price") or ""))) is not None:
+            return price
+        if offer := contract_offer(self.cfg, self.installation):
+            # The colour entity shows the colour in force: before 6:00, the Tempo day that started yesterday.
+            days = (now.date(), now.date() - timedelta(days=1))
+            colors = {d.isoformat(): color for d in days} if color else {}
+            return offer.slot_price(now.date(), now.hour * 60 + now.minute, colors)
+        return self.cfg.import_price
 
     def _units(self, units) -> dict[str, float]:
         get = self.hass.states.get
@@ -242,8 +288,15 @@ class EnergyHubCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         return clearsky_power(now, self.hass.config.latitude, self.hass.config.longitude, planes)
 
     # ---- alerts
+    @property
+    def notify_target(self) -> str | None:
+        """Where alerts are sent: the YAML `notify:` target, else Notify Hub's entity when it is installed."""
+        if self.cfg.notify:
+            return self.cfg.notify
+        return NOTIFY_HUB if self.hass.states.get(NOTIFY_HUB) else None
+
     async def _async_alerts(self, snapshot: dict[str, Any]) -> None:
-        """Fire an event, and notify when configured, once a day per alert."""
+        """Fire an event, and notify when there is a target, once a day per alert."""
         today = snapshot["generated"][:10]
         for alert in snapshot["alerts"]:
             key = f"{alert['kind']}:{alert.get('name') or alert.get('unit') or alert.get('battery') or ''}"
@@ -251,15 +304,56 @@ class EnergyHubCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 continue
             self._notified[key] = today
             self.hass.bus.async_fire(EVENT_ALERT, alert)
-            if self.cfg.notify and not self.demo:
-                domain, _, service = self.cfg.notify.partition(".")
-                if self.hass.services.has_service(domain, service):
-                    await self.hass.services.async_call(
-                        domain,
-                        service,
-                        {"title": "Energy Hub", "message": _alert_text(alert)},
-                        blocking=False,
-                    )
+            target = self.notify_target
+            if target and not self.demo:
+                await self._async_notify(target, await self._async_alert_text(alert))
+
+    async def _async_notify(self, target: str, message: str) -> None:
+        """Send through a notify entity (`notify.send_message`, Notify Hub's way) or a legacy notify action."""
+        data = {"title": "Energy Hub", "message": message}
+        domain, _, service = target.partition(".")
+        if domain == "notify" and self.hass.states.get(target) is not None:
+            await self.hass.services.async_call("notify", "send_message", {"entity_id": target, **data}, blocking=False)
+        elif self.hass.services.has_service(domain, service):
+            await self.hass.services.async_call(domain, service, data, blocking=False)
+        else:
+            _LOGGER.warning("Energy Hub: notify target %s not found", target)
+
+    async def _async_alert_text(self, alert: dict[str, Any]) -> str:
+        """The alert in Home Assistant's language (translations `exceptions.alert_<kind>`), English as fallback."""
+        language = self.hass.config.language or "en"
+        # A regional variant without a file of its own (pt-BR) takes its base language rather than English.
+        lang = next((x for x in (language, language.split("-")[0]) if x in TRANSLATED), "en")
+        texts = await async_get_translations(self.hass, lang, "exceptions", [DOMAIN])
+        template = texts.get(f"component.{DOMAIN}.exceptions.alert_{alert['kind']}.message")
+        if template:
+            try:
+                return template.format(**alert_params(alert))
+            except (KeyError, IndexError, ValueError):
+                pass
+        return _alert_text(alert)
+
+
+def alert_params(alert: dict[str, Any]) -> dict[str, str]:
+    """The placeholders of the translated alert messages."""
+
+    def hm(minute: int | None) -> str:
+        return "" if minute is None else f"{minute // 60}:{minute % 60:02d}"
+
+    return {
+        "kwh": f"{alert.get('kwh', 0)}",
+        "name": str(alert.get("name") or ""),
+        "pct": f"{round((1 - (alert.get('relative') or 1)) * 100)}",
+        "unit": str(alert.get("unit") or ""),
+        "start": hm(alert.get("start")),
+        "end": hm(alert.get("end")),
+        "loss": f"{round((alert.get('loss') or 0) * 100, 1)}",
+        "battery": str(alert.get("battery") or ""),
+        "cell": str(alert.get("cell") or ""),
+        "days": str(alert.get("days") or ""),
+        "kw": f"{alert.get('kw', 0)}",
+        "entities": ", ".join(alert.get("entities") or []),
+    }
 
 
 def _alert_text(alert: dict[str, Any]) -> str:

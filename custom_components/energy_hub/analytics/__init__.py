@@ -10,6 +10,7 @@ Each module follows a published method, simplified for a residential installatio
 - ``mismatch``: strings or micro-inverters compared with their peers
 - ``battery``, ``cells``: battery fleet, health, cycles, round-trip efficiency, cell spread
 - ``finance``: savings and payback
+- ``tariffs``: price of each half hour under each offer, yearly cost of the real grid draw per offer
 
 Every estimate that needs history returns ``None`` below its minimum data: the panel then shows "learning".
 """

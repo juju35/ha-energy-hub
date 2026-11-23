@@ -1,0 +1,93 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Energy Hub",
+        "description": "Energy Hub findet deine Solar-, Batterie- und Zähler-Integrationen selbst. Aktiviere die Demo, um das Panel mit einer simulierten Anlage auszuprobieren.",
+        "data": {
+          "demo": "Demo-Modus (simulierte Anlage)",
+          "show_panel": "Panel in der Seitenleiste anzeigen"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Energy Hub ist bereits eingerichtet.",
+      "single_instance_allowed": "Energy Hub ist bereits eingerichtet."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Energy Hub-Optionen",
+        "description": "Ein Block `energy_hub:` in configuration.yaml hat Vorrang vor diesen Optionen.",
+        "data": {
+          "demo": "Demo-Modus (simulierte Anlage)",
+          "show_panel": "Panel in der Seitenleiste anzeigen"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "self_consumption": {
+        "name": "Eigenverbrauch"
+      },
+      "self_sufficiency": {
+        "name": "Autarkie"
+      },
+      "pv_energy_today": {
+        "name": "Solarenergie heute"
+      },
+      "specific_yield": {
+        "name": "Spezifischer Ertrag heute"
+      },
+      "performance_index": {
+        "name": "Performance-Index"
+      },
+      "losses_today": {
+        "name": "Erzeugungsverluste heute"
+      },
+      "clipping_today": {
+        "name": "Abregelung heute"
+      },
+      "battery_soc": {
+        "name": "Ladung des Batteriebestands"
+      },
+      "battery_power": {
+        "name": "Leistung des Batteriebestands"
+      },
+      "battery_autonomy": {
+        "name": "Batterieautonomie"
+      },
+      "savings_today": {
+        "name": "Ersparnis heute"
+      },
+      "alerts": {
+        "name": "Warnungen"
+      }
+    }
+  },
+  "exceptions": {
+    "alert_clipping": {
+      "message": "Abregelung des Wechselrichters heute: {kwh} kWh verloren."
+    },
+    "alert_string_lagging": {
+      "message": "{name} erzeugt {pct} % weniger als die anderen."
+    },
+    "alert_shading": {
+      "message": "Wiederkehrende Verschattung {unit} von {start} bis {end}."
+    },
+    "alert_soiling": {
+      "message": "Verlust durch Verschmutzung {loss} %: eine Reinigung kann sich lohnen."
+    },
+    "alert_cell_drift": {
+      "message": "{battery}: Zelle {cell} erreicht die Spreizungsgrenze in {days} Tagen."
+    },
+    "alert_battery_exchange": {
+      "message": "Eine Batterie lädt eine andere ({kw} kW): Energie geht beim Hin und Her verloren."
+    },
+    "alert_stale": {
+      "message": "Eine Quelle von Energy Hub aktualisiert nicht mehr: {entities}"
+    }
+  }
+}
