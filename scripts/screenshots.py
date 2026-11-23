@@ -121,7 +121,10 @@ def main() -> None:
     panel = PANEL.read_text(encoding="utf-8")
     with sync_playwright() as pw:
         browser = pw.chromium.launch(executable_path=args.chrome) if args.chrome else pw.chromium.launch()
-        page = browser.new_page(viewport={"width": 1100, "height": 900}, device_scale_factor=2)
+        # The demo is a summer afternoon in western France: render it in its own time zone, whatever the runner's.
+        page = browser.new_page(
+            viewport={"width": 1100, "height": 900}, device_scale_factor=2, timezone_id="Europe/Paris"
+        )
         page.clock.set_fixed_time(NOW)
         page.on("pageerror", lambda err: print("page error:", err, file=sys.stderr))
         for theme in ("light", "dark"):

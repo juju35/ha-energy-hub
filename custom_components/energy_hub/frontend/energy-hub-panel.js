@@ -158,6 +158,7 @@ const EH_I18N = {
     heatmap: 'Clipping · 30 days × hour',
     causes_month: 'Causes · this month',
     causes: { clipping: 'Clipping', shading: 'Shading', soiling: 'Soiling', limitation: 'Export limit', unavailability: 'Unavailability' },
+    causes_short: { potential: 'Potential', clipping: 'Clipping', shading: 'Shading', soiling: 'Soiling', limitation: 'Export', unavailability: 'Offline', produced: 'Produced' },
     potential: 'Potential',
     produced: 'Produced',
     events: 'Events',
@@ -310,6 +311,7 @@ const EH_I18N = {
     heatmap: 'Écrêtage · 30 j × heure',
     causes_month: 'Causes · ce mois',
     causes: { clipping: 'Écrêtage', shading: 'Ombrage', soiling: 'Encrassement', limitation: 'Bridage', unavailability: 'Indisponibilité' },
+    causes_short: { potential: 'Potentiel', clipping: 'Écrêtage', shading: 'Ombrage', soiling: 'Encrass.', limitation: 'Bridage', unavailability: 'Indispo', produced: 'Produit' },
     potential: 'Potentiel',
     produced: 'Produit',
     events: 'Événements',
@@ -945,7 +947,7 @@ class EnergyHubPanel extends HTMLElement {
       svg += `<rect x="${x}" y="${y0.toFixed(1)}" width="34" height="${Math.max(1.5, y1 - y0).toFixed(1)}" rx="3" fill="${col}"/>`;
       if (i < steps.length - 1) svg += `<line x1="${x + 34}" x2="${x + 47}" y1="${Y(cur).toFixed(1)}" y2="${Y(cur).toFixed(1)}" stroke="var(--secondary-text-color)" stroke-width=".6" stroke-dasharray="2 2"/>`;
       const label = total ? this._num(v || 0, 1) : v ? `−${this._num(-v, 1)}` : '0';
-      svg += `<text class="svgt" x="${x + 17}" y="${(y0 - 5).toFixed(1)}" text-anchor="middle" ${total ? '' : `style="fill:${EH_RED}"`}>${label}</text><text class="svgt" x="${x + 17}" y="158" text-anchor="middle">${ehEsc((total ? this._t(key) : this._t(`causes.${key}`)).slice(0, 9))}</text>`;
+      svg += `<text class="svgt" x="${x + 17}" y="${(y0 - 5).toFixed(1)}" text-anchor="middle" ${total ? '' : `style="fill:${EH_RED}"`}>${label}</text><text class="svgt" x="${x + 17}" y="158" text-anchor="middle">${ehEsc(this._t(`causes_short.${key}`))}</text>`;
     });
     svg += '<path d="M2 136 l4 -4 l4 4 l4 -4" fill="none" stroke="var(--secondary-text-color)"/><line x1="6" x2="336" y1="140" y2="140" stroke="var(--divider-color)"/></svg>';
     // heatmap
@@ -962,9 +964,10 @@ class EnergyHubPanel extends HTMLElement {
     heat += '</svg>';
     o += `<div class="grid2">${this._box(this._t('cascade'), 'kWh', `${svg}<div class="hint">${ehEsc(this._t('axis_cut'))}</div>`)}${this._box(this._t('heatmap'), 'kWh', heat)}</div>`;
     // causes
+    const CAUSES = ['clipping', 'shading', 'soiling', 'limitation', 'unavailability'];
     const colors = { clipping: EH_RED, shading: '#F09595', soiling: '#EF9F27', limitation: EH_VIOLET, unavailability: '#888780' };
-    const stack = Object.entries(month).filter(([, v]) => v > 0).map(([k, v]) => `<div style="flex:${v};background:${colors[k]}" title="${ehEsc(this._t(`causes.${k}`))}"></div>`).join('');
-    const legend = Object.entries(month).map(([k, v]) => `<span class="chip"><span class="sw" style="background:${colors[k]}"></span>${ehEsc(this._t(`causes.${k}`))} ${monthTotal ? this._pct(v / monthTotal) : '–'}</span>`).join('');
+    const stack = CAUSES.map((k) => [k, month[k] || 0]).filter(([, v]) => v > 0).map(([k, v]) => `<div style="flex:${v};background:${colors[k]}" title="${ehEsc(this._t(`causes.${k}`))}"></div>`).join('');
+    const legend = CAUSES.map((k) => [k, month[k] || 0]).map(([k, v]) => `<span class="chip"><span class="sw" style="background:${colors[k]}"></span>${ehEsc(this._t(`causes.${k}`))} ${monthTotal ? this._pct(v / monthTotal) : '–'}</span>`).join('');
     o += this._box(this._t('causes_month'), this._kwh(monthTotal), `${stack ? `<div class="stack thin">${stack}</div>` : ''}<div class="legend">${legend}</div>`);
     o += this._box(this._t('events'), '', d.alerts.length ? this._alertTiles() : `<div class="hint">${ehEsc(this._t('no_event'))}</div>`);
     return o;
