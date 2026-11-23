@@ -1,0 +1,9 @@
+name: Forecast.Solar
+platform: forecast_solar
+status: beta
+url: https://www.home-assistant.io/integrations/forecast_solar
+roles:
+  forecast_power: ['power_production_now$']
+  forecast_energy_today: ['energy_production_today$']
+capabilities:
+  forecast: provided

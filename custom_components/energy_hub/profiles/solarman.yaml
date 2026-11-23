@@ -1,0 +1,32 @@
+name: Solarman (Deye, Sunsynk, Sol-Ark…)
+platform: solarman
+status: beta
+url: https://github.com/davidrapan/ha-solarman
+roles:
+  pv_power: ['pv_power$', 'total_pv_power$']
+  pv_energy: ['total_production$', 'total_pv_production$']
+  grid_power: ['grid_power$']
+  load_power: ['load_power$']
+  grid_import_energy: ['total_energy_import$', 'total_grid_import$']
+  grid_export_energy: ['total_energy_export$', 'total_grid_export$']
+strings:
+  power: ['pv(\d+)_power$']
+  voltage: ['pv(\d+)_voltage$']
+  current: ['pv(\d+)_current$']
+battery:
+  soc: ['battery$', 'battery_soc$']
+  power: ['battery_power$']
+  soh: ['battery_soh$', 'battery_state_of_health$']
+  charge_energy: ['total_battery_charge$']
+  discharge_energy: ['total_battery_discharge$']
+  temperature: ['battery_temperature$']
+signs:
+  grid_power: import_positive
+  battery_power: discharge_positive
+capabilities:
+  strings: provided
+  soc: provided
+  soh: provided
+  cycles: estimated
+  modules: provided
+  cells: absent

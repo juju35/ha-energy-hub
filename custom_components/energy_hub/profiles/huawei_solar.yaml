@@ -1,0 +1,35 @@
+name: Huawei Solar
+platform: huawei_solar
+status: beta
+url: https://github.com/wlcrs/huawei_solar
+roles:
+  pv_power: ['inverter_input_power$', '_input_power$']
+  pv_energy: ['inverter_total_dc_input_energy$', 'inverter_total_yield$', '_total_yield$']
+  grid_power: ['power_meter_active_power$']
+  grid_import_energy: ['power_meter_consumption$', 'grid_accumulated_energy$']
+  grid_export_energy: ['power_meter_exported$', 'grid_exported_energy$']
+  inverter_max_power: ['inverter_rated_power$', 'inverter_maximum_active_power$']
+strings:
+  voltage: ['pv_(\d+)_voltage$']
+  current: ['pv_(\d+)_current$']
+units:
+  power: ['optimizer_(\w+)_output_power$']
+battery:
+  soc: ['battery_state_of_capacity$', 'battery_\d_state_of_capacity$']
+  power: ['battery_charge_discharge_power$']
+  charge_energy: ['battery_total_charge$']
+  discharge_energy: ['battery_total_discharge$']
+  temperature: ['battery_\d?_?temperature$']
+signs:
+  grid_power: export_positive
+  battery_power: charge_positive
+capabilities:
+  strings: provided
+  optimizers: provided
+  pmax: provided
+  export_limit: provided
+  soc: provided
+  soh: estimated
+  cycles: estimated
+  modules: provided
+  cells: absent

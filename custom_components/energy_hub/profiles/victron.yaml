@@ -1,0 +1,22 @@
+name: Victron GX
+platform: victron
+status: beta
+url: https://www.home-assistant.io/integrations/victron_gx
+roles:
+  pv_power: ['pv_power$', 'solarcharger_\w*power$', 'dc_pv_power$']
+  pv_energy: ['yield_total$', 'pv_yield$']
+  grid_power: ['grid_power$', 'grid_l1_power$']
+battery:
+  soc: ['battery_soc$', 'state_of_charge$']
+  power: ['battery_power$', 'dc_battery_power$']
+  temperature: ['battery_temperature$']
+  soh: ['state_of_health$']
+signs:
+  grid_power: import_positive
+  battery_power: charge_positive
+capabilities:
+  strings: provided
+  soc: provided
+  soh: provided
+  cycles: estimated
+  cells: absent

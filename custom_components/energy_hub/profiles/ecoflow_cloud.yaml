@@ -1,0 +1,23 @@
+name: EcoFlow Cloud
+platform: ecoflow_cloud
+status: beta
+url: https://github.com/tolwi/hassio-ecoflow-cloud
+roles:
+  pv_power: ['solar_1_watts$', 'pv_power$', 'solar_in_power$']
+  load_power: ['inverter_output_watts$']
+units:
+  power: ['solar_(\d)_watts$']
+battery:
+  soc: ['battery_level$', 'main_battery_level$']
+  power: ['battery_charging_power$', 'battery_power$']
+  soh: ['state_of_health$', 'battery_soh$']
+  cycles: ['cycles$', 'charge_cycles$']
+  temperature: ['battery_temperature$']
+signs:
+  battery_power: charge_positive
+capabilities:
+  microinverters: provided
+  soc: provided
+  soh: provided
+  cycles: provided
+  cells: absent

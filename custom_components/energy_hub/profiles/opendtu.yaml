@@ -1,0 +1,14 @@
+name: OpenDTU / AhoyDTU (MQTT)
+platform: mqtt
+match_device: ['opendtu', 'ahoy', 'hoymiles', '^hm[sst]?-', 'tsun']
+status: beta
+url: https://github.com/tbnobody/OpenDTU
+roles:
+  pv_power: ['_power_dc$', 'ac_power$']
+  pv_energy: ['yieldtotal$', 'yield_total$']
+  inverter_max_power: ['limit_nonpersistent_absolute$', 'limit_absolute$']
+units:
+  power: ['ch(\d+)_power$', '_(\d+)_power$']
+capabilities:
+  microinverters: provided
+  export_limit: provided

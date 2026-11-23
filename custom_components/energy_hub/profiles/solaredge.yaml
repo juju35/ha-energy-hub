@@ -1,0 +1,22 @@
+name: SolarEdge
+platform: solaredge
+status: beta
+url: https://www.home-assistant.io/integrations/solaredge
+roles:
+  pv_power: ['current_power$', 'solar_power$']
+  pv_energy: ['lifetime_energy$']
+  grid_power: ['grid_power$']
+  load_power: ['consumption_power$']
+  grid_import_energy: ['imported_energy$', 'purchased_energy$']
+  grid_export_energy: ['exported_energy$', 'feed_in_energy$']
+battery:
+  soc: ['storage_level$']
+  power: ['storage_power$']
+signs:
+  grid_power: import_positive
+  battery_power: discharge_positive
+capabilities:
+  soc: provided
+  soh: estimated
+  cycles: estimated
+  cells: absent

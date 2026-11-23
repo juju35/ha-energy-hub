@@ -1,0 +1,218 @@
+"""YAML configuration of Energy Hub: everything is optional, the detection fills the rest.
+
+```yaml
+energy_hub:
+  demo: false
+  planes:
+    - kwp: 3.0
+      tilt: 30
+      azimuth: 225
+  inverter_max_kw: 4.6
+  export_limit_kw: 3
+  entities:                     # override a detected role
+    pv_power: sensor.inverter_input_power
+  batteries:
+    maison:
+      name: Maison
+      soc: sensor.battery_state_of_capacity
+      power: sensor.battery_charge_discharge_power
+      capacity_kwh: 15
+      reserve: 10
+      cells: sensor.jk_bms_cell_*
+  ignore:
+    - sensor.zendure_ac_input
+  tariff:
+    import: 0.2016
+    export: 0.04
+  installation:
+    cost: 9800
+    subsidy: 1140
+    commissioned: 2023-04-12
+  notify: notify.notify_hub
+```
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from datetime import date
+from typing import Any
+
+import voluptuous as vol
+from homeassistant.helpers import config_validation as cv
+
+from .analytics.clearsky import Plane
+from .const import (
+    CONF_AZIMUTH,
+    CONF_BATTERIES,
+    CONF_DEMO,
+    CONF_ENTITIES,
+    CONF_EXPORT_LIMIT_KW,
+    CONF_FORECAST,
+    CONF_IGNORE,
+    CONF_INSTALLATION,
+    CONF_INVERTER_MAX_KW,
+    CONF_KWP,
+    CONF_NOTIFY,
+    CONF_PLANES,
+    CONF_SHOW_PANEL,
+    CONF_TARIFF,
+    CONF_TILT,
+)
+
+ROLES = (
+    "pv_power",
+    "pv_energy",
+    "grid_power",
+    "grid_import_energy",
+    "grid_export_energy",
+    "load_power",
+    "forecast_power",
+    "forecast_energy_today",
+)
+
+PLANE_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_KWP): vol.All(vol.Coerce(float), vol.Range(min=0.05, max=1000)),
+        vol.Optional(CONF_TILT, default=30): vol.All(vol.Coerce(float), vol.Range(min=0, max=90)),
+        vol.Optional(CONF_AZIMUTH, default=180): vol.All(vol.Coerce(float), vol.Range(min=0, max=360)),
+    }
+)
+
+BATTERY_SCHEMA = vol.Schema(
+    {
+        vol.Optional("name"): cv.string,
+        vol.Optional("soc"): cv.entity_id,
+        vol.Optional("power"): cv.entity_id,
+        vol.Optional("power_sign", default="charge_positive"): vol.In(["charge_positive", "discharge_positive"]),
+        vol.Optional("capacity_kwh"): vol.All(vol.Coerce(float), vol.Range(min=0.1)),
+        vol.Optional("reserve", default=10): vol.All(vol.Coerce(float), vol.Range(min=0, max=100)),
+        vol.Optional("soh"): cv.entity_id,
+        vol.Optional("cycles"): cv.entity_id,
+        vol.Optional("temperature"): cv.entity_id,
+        vol.Optional("cells"): cv.string,
+    }
+)
+
+YAML_SCHEMA = vol.Schema(
+    {
+        vol.Optional(CONF_DEMO): cv.boolean,
+        vol.Optional(CONF_SHOW_PANEL): cv.boolean,
+        vol.Optional(CONF_PLANES, default=[]): [PLANE_SCHEMA],
+        vol.Optional(CONF_INVERTER_MAX_KW): vol.All(vol.Coerce(float), vol.Range(min=0.1)),
+        vol.Optional(CONF_EXPORT_LIMIT_KW): vol.All(vol.Coerce(float), vol.Range(min=0)),
+        vol.Optional(CONF_ENTITIES, default={}): {vol.In(ROLES): cv.entity_id},
+        vol.Optional(CONF_BATTERIES, default={}): {cv.slug: BATTERY_SCHEMA},
+        vol.Optional(CONF_IGNORE, default=[]): [cv.entity_id],
+        vol.Optional(CONF_FORECAST, default=[]): [cv.entity_id],
+        vol.Optional(CONF_TARIFF, default={}): vol.Schema(
+            {
+                vol.Optional("import", default=0.2016): vol.Coerce(float),
+                vol.Optional("export", default=0.04): vol.Coerce(float),
+                vol.Optional("currency", default="EUR"): cv.string,
+            }
+        ),
+        vol.Optional(CONF_INSTALLATION, default={}): vol.Schema(
+            {
+                vol.Optional("cost"): vol.Coerce(float),
+                vol.Optional("subsidy", default=0): vol.Coerce(float),
+                vol.Optional("commissioned"): cv.date,
+                vol.Optional("inverter_replacement_cost", default=1400): vol.Coerce(float),
+                vol.Optional("inverter_lifetime_years", default=12): vol.Coerce(float),
+            }
+        ),
+        vol.Optional(CONF_NOTIFY): cv.string,
+    }
+)
+
+
+@dataclass(slots=True)
+class BatteryConfig:
+    key: str
+    name: str
+    soc: str | None = None
+    power: str | None = None
+    charge_positive: bool = True
+    capacity_kwh: float | None = None
+    reserve: float = 10.0
+    soh: str | None = None
+    cycles: str | None = None
+    temperature: str | None = None
+    cells: str | None = None
+
+
+@dataclass(slots=True)
+class HubConfig:
+    demo: bool = False
+    show_panel: bool = True
+    planes: list[Plane] = field(default_factory=list)
+    inverter_max_kw: float | None = None
+    export_limit_kw: float | None = None
+    entities: dict[str, str] = field(default_factory=dict)
+    batteries: list[BatteryConfig] = field(default_factory=list)
+    ignore: set[str] = field(default_factory=set)
+    forecast: list[str] = field(default_factory=list)
+    import_price: float = 0.2016
+    export_price: float = 0.04
+    currency: str = "EUR"
+    cost: float | None = None
+    subsidy: float = 0.0
+    commissioned: date | None = None
+    inverter_replacement_cost: float = 1400.0
+    inverter_lifetime_years: float = 12.0
+    notify: str | None = None
+
+    @property
+    def kwp(self) -> float:
+        return sum(p.kwp for p in self.planes)
+
+
+def parse(raw: dict[str, Any] | None, options: dict[str, Any] | None = None) -> HubConfig:
+    """HubConfig from the YAML block (validated here) and the entry's options; YAML wins where both say something."""
+    options = options or {}
+    data = YAML_SCHEMA(dict(raw or {}))
+    tariff = data[CONF_TARIFF] or YAML_SCHEMA({})[CONF_TARIFF]
+    tariff = {"import": 0.2016, "export": 0.04, "currency": "EUR", **tariff}
+    inst = {
+        "subsidy": 0.0,
+        "inverter_replacement_cost": 1400.0,
+        "inverter_lifetime_years": 12.0,
+        **data[CONF_INSTALLATION],
+    }
+    return HubConfig(
+        demo=bool(data[CONF_DEMO] if raw and CONF_DEMO in raw else options.get(CONF_DEMO, False)),
+        show_panel=bool(
+            data[CONF_SHOW_PANEL] if raw and CONF_SHOW_PANEL in raw else options.get(CONF_SHOW_PANEL, True)
+        ),
+        planes=[Plane(p[CONF_KWP], p[CONF_TILT], p[CONF_AZIMUTH]) for p in data[CONF_PLANES]],
+        inverter_max_kw=data.get(CONF_INVERTER_MAX_KW),
+        export_limit_kw=data.get(CONF_EXPORT_LIMIT_KW),
+        entities=dict(data[CONF_ENTITIES]),
+        batteries=[
+            BatteryConfig(
+                key=key,
+                name=b.get("name", key.replace("_", " ").title()),
+                soc=b.get("soc"),
+                power=b.get("power"),
+                charge_positive=b.get("power_sign", "charge_positive") == "charge_positive",
+                capacity_kwh=b.get("capacity_kwh"),
+                reserve=b.get("reserve", 10.0),
+                soh=b.get("soh"),
+                cycles=b.get("cycles"),
+                temperature=b.get("temperature"),
+                cells=b.get("cells"),
+            )
+            for key, b in data[CONF_BATTERIES].items()
+        ],
+        ignore=set(data[CONF_IGNORE]),
+        forecast=list(data[CONF_FORECAST]),
+        import_price=tariff["import"],
+        export_price=tariff["export"],
+        currency=tariff["currency"],
+        cost=inst.get("cost"),
+        subsidy=inst["subsidy"],
+        commissioned=inst.get("commissioned"),
+        inverter_replacement_cost=inst["inverter_replacement_cost"],
+        inverter_lifetime_years=inst["inverter_lifetime_years"],
+        notify=data.get(CONF_NOTIFY),
+    )

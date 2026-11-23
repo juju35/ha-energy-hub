@@ -1,0 +1,27 @@
+name: SMA Solar
+platform: sma
+status: beta
+url: https://www.home-assistant.io/integrations/sma
+roles:
+  pv_power: ['pv_power$']
+  pv_energy: ['total_yield$', 'pv_gen_meter$']
+  grid_import_energy: ['metering_total_absorbed$']
+  grid_export_energy: ['metering_total_yield$']
+strings:
+  power: ['pv_power_([ab])$']
+  voltage: ['pv_voltage_([ab])$']
+  current: ['pv_current_([ab])$']
+battery:
+  soc: ['battery_soc_total$', 'battery_soc$']
+  power: ['battery_power_charge_total$']
+  charge_energy: ['battery_charge_total$']
+  discharge_energy: ['battery_discharge_total$']
+  temperature: ['battery_temp_[a-c]$']
+signs:
+  battery_power: charge_positive
+capabilities:
+  strings: provided
+  soc: provided
+  soh: estimated
+  cycles: estimated
+  cells: absent

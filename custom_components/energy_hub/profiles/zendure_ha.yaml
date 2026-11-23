@@ -1,0 +1,23 @@
+name: Zendure
+platform: zendure_ha
+status: beta
+url: https://github.com/Zendure/Zendure-HA
+roles:
+  pv_power: ['solar_input_power$']
+  load_power: ['output_home_power$']
+units:
+  power: ['solar_power(\d)$', 'solar_input_power_(\d)$']
+battery:
+  soc: ['electric_level$']
+  power: ['pack_input_power$']
+  soh: ['soh$']
+  temperature: ['max_temp$']
+signs:
+  battery_power: charge_positive
+capabilities:
+  microinverters: provided
+  soc: provided
+  soh: provided
+  cycles: estimated
+  modules: provided
+  cells: absent

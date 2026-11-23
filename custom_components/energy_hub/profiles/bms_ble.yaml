@@ -1,0 +1,16 @@
+name: BLE Battery Management
+platform: bms_ble
+status: beta
+url: https://github.com/patman15/BMS_BLE-HA
+battery:
+  soc: ['battery$', '_battery_level$']
+  power: ['_power$']
+  cycles: ['cycles$']
+  temperature: ['temperature$']
+  cells: ['delta_voltage$']
+signs:
+  battery_power: charge_positive
+capabilities:
+  soc: provided
+  cycles: provided
+  cells: provided

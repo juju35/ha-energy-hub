@@ -1,0 +1,12 @@
+name: Teleinfo
+platform: teleinfo
+status: beta
+url: https://www.home-assistant.io/integrations/teleinfo
+roles:
+  grid_power: ['sinsts$', 'papp$', 'apparent_power$']
+  grid_import_energy: ['east$', 'base$', 'total_energy$']
+  grid_export_energy: ['eait$']
+signs:
+  grid_power: import_positive
+capabilities:
+  tempo: provided

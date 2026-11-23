@@ -1,0 +1,33 @@
+name: Solax Modbus (SolaX, Growatt, Sofar, Solis, AlphaESS, Qcells…)
+platform: solax_modbus
+status: beta
+url: https://github.com/wills106/homeassistant-solax-modbus
+roles:
+  pv_power: ['pv_power_total$', 'pv_total_power$']
+  pv_energy: ['total_solar_energy$', 'pv_energy_total$']
+  grid_power: ['measured_power$']
+  grid_import_energy: ['grid_import_total$', 'total_grid_import$']
+  grid_export_energy: ['grid_export_total$', 'total_grid_export$']
+  load_power: ['house_load$']
+  inverter_max_power: ['inverter_rate_power$', 'rated_power$']
+strings:
+  power: ['pv_power_(\d+)$']
+  voltage: ['pv_voltage_(\d+)$']
+  current: ['pv_current_(\d+)$']
+battery:
+  soc: ['battery_capacity$', 'battery_soc$']
+  power: ['battery_power_charge$', 'battery_power$']
+  soh: ['battery_state_of_health$', 'battery_soh$']
+  charge_energy: ['battery_input_energy_total$']
+  discharge_energy: ['battery_output_energy_total$']
+  temperature: ['battery_temperature$']
+signs:
+  grid_power: export_positive
+  battery_power: charge_positive
+capabilities:
+  strings: provided
+  pmax: provided
+  soc: provided
+  soh: provided
+  cycles: estimated
+  cells: absent

@@ -1,0 +1,28 @@
+name: Enphase Envoy
+platform: enphase_envoy
+status: beta
+url: https://www.home-assistant.io/integrations/enphase_envoy
+roles:
+  pv_power: ['current_power_production$']
+  pv_energy: ['lifetime_energy_production$']
+  load_power: ['current_power_consumption$']
+  grid_power: ['current_net_power_consumption$']
+  grid_import_energy: ['lifetime_net_energy_consumption$']
+  grid_export_energy: ['lifetime_net_energy_production$']
+units:
+  power: ['^inverter_(\w+)$']
+battery:
+  soc: ['battery$', 'encharge_\w+_battery$']
+  power: ['battery_power$']
+  capacity: ['battery_capacity$']
+  charge_energy: ['lifetime_battery_energy_charged$']
+  discharge_energy: ['lifetime_battery_energy_discharged$']
+signs:
+  grid_power: import_positive
+  battery_power: discharge_positive
+capabilities:
+  microinverters: provided
+  soc: provided
+  soh: estimated
+  cycles: estimated
+  cells: absent

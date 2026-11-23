@@ -1,0 +1,13 @@
+name: ZLinky (ZHA)
+platform: zha
+match_device: ['zlinky', 'lixee']
+status: beta
+url: https://www.home-assistant.io/integrations/zha
+roles:
+  grid_power: ['apparent_power$', '_power$']
+  grid_import_energy: ['summation_delivered$', 'current_summation_delivered$']
+  grid_export_energy: ['summation_received$', 'current_summation_received$']
+signs:
+  grid_power: import_positive
+capabilities:
+  tempo: provided

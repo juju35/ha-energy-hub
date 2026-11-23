@@ -1,0 +1,46 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Energy Hub",
+        "description": "Energy Hub finds your solar, battery and meter integrations by itself. Turn on the demo to try the panel with a simulated installation.",
+        "data": {
+          "demo": "Demo mode (simulated installation)",
+          "show_panel": "Show the panel in the sidebar"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Energy Hub is already set up.",
+      "single_instance_allowed": "Energy Hub is already set up."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Energy Hub options",
+        "description": "A `energy_hub:` block in configuration.yaml wins over these options.",
+        "data": {
+          "demo": "Demo mode (simulated installation)",
+          "show_panel": "Show the panel in the sidebar"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "self_consumption": { "name": "Self-consumption" },
+      "self_sufficiency": { "name": "Self-sufficiency" },
+      "pv_energy_today": { "name": "Solar energy today" },
+      "specific_yield": { "name": "Specific yield today" },
+      "performance_index": { "name": "Performance index" },
+      "losses_today": { "name": "Production losses today" },
+      "clipping_today": { "name": "Clipping today" },
+      "battery_soc": { "name": "Battery fleet charge" },
+      "battery_power": { "name": "Battery fleet power" },
+      "battery_autonomy": { "name": "Battery autonomy" },
+      "savings_today": { "name": "Savings today" },
+      "alerts": { "name": "Alerts" }
+    }
+  }
+}

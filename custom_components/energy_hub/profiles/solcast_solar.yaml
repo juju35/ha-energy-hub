@@ -1,0 +1,9 @@
+name: Solcast PV Forecast
+platform: solcast_solar
+status: beta
+url: https://github.com/BJReplay/ha-solcast-solar
+roles:
+  forecast_power: ['power_now$']
+  forecast_energy_today: ['forecast_today$']
+capabilities:
+  forecast: provided

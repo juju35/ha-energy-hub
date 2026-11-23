@@ -1,0 +1,22 @@
+name: Anker Solix
+platform: anker_solix
+status: beta
+url: https://github.com/thomluther/ha-anker-solix
+roles:
+  pv_power: ['solar_power$', 'solarbank_input_power$', 'input_power$']
+  pv_energy: ['solar_yield_total$', 'total_yield$']
+  grid_power: ['grid_to_home_power$']
+units:
+  power: ['solar_power_(\d)$']
+battery:
+  soc: ['state_of_charge$', 'battery_state_of_charge$']
+  power: ['charging_power$', 'battery_power$']
+  capacity: ['battery_capacity$']
+signs:
+  battery_power: charge_positive
+capabilities:
+  microinverters: provided
+  soc: provided
+  soh: estimated
+  cycles: estimated
+  cells: absent

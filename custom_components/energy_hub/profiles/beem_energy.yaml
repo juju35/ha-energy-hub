@@ -1,0 +1,17 @@
+name: Beem Energy
+platform: beem_energy
+status: beta
+url: https://github.com/CharlesP44/Beem_Energy
+roles:
+  pv_power: ['solar_power$', 'production_power$', 'power$']
+  pv_energy: ['total_energy$', 'energy_total$']
+battery:
+  soc: ['battery_soc$', 'soc$']
+  power: ['battery_power$']
+signs:
+  battery_power: charge_positive
+capabilities:
+  soc: provided
+  soh: estimated
+  cycles: estimated
+  cells: absent

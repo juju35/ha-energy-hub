@@ -1,0 +1,18 @@
+name: Marstek Local API
+platform: marstek_local_api
+status: beta
+url: https://github.com/jaapp/ha-marstek-local-api
+roles:
+  grid_power: ['grid_power$', 'ct_power$']
+battery:
+  soc: ['battery_soc$', '_soc$']
+  power: ['battery_power$']
+  capacity: ['battery_capacity$']
+  temperature: ['battery_temperature$']
+signs:
+  battery_power: charge_positive
+capabilities:
+  soc: provided
+  soh: estimated
+  cycles: estimated
+  cells: absent

@@ -1,0 +1,28 @@
+name: SolarEdge Modbus Multi
+platform: solaredge_modbus_multi
+status: beta
+url: https://github.com/WillCodeForCats/solaredge-modbus-multi
+roles:
+  pv_power: ['i\d+_dc_power$', '_dc_power$']
+  pv_energy: ['i\d+_ac_energy_kwh$', '_ac_energy_kwh$']
+  grid_power: ['m\d+_ac_power$']
+  grid_import_energy: ['m\d+_imported_kwh$']
+  grid_export_energy: ['m\d+_exported_kwh$']
+  inverter_max_power: ['i\d+_ac_limit$']
+battery:
+  soc: ['b\d+_state_of_energy$']
+  power: ['b\d+_dc_power$']
+  soh: ['b\d+_state_of_health$']
+  charge_energy: ['b\d+_imported_kwh$']
+  discharge_energy: ['b\d+_exported_kwh$']
+  temperature: ['b\d+_avg_temp$', 'b\d+_temp_avg$']
+signs:
+  grid_power: export_positive
+  battery_power: charge_positive
+capabilities:
+  pmax: provided
+  export_limit: provided
+  soc: provided
+  soh: provided
+  cycles: estimated
+  cells: absent

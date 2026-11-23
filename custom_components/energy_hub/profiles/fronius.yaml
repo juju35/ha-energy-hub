@@ -1,0 +1,28 @@
+name: Fronius
+platform: fronius
+status: beta
+url: https://www.home-assistant.io/integrations/fronius
+roles:
+  pv_power: ['power_photovoltaics$', 'solar_net_power_photovoltaics$']
+  pv_energy: ['energy_total$']
+  grid_power: ['power_grid$', 'solar_net_power_grid$']
+  load_power: ['power_load$']
+  grid_import_energy: ['energy_real_consumed$']
+  grid_export_energy: ['energy_real_produced$']
+strings:
+  voltage: ['voltage_dc_(\d+)$', 'voltage_dc_mppt(\d+)$']
+  current: ['current_dc_(\d+)$', 'current_dc_mppt(\d+)$']
+battery:
+  soc: ['state_of_charge$']
+  power: ['power_battery$']
+  capacity: ['capacity_designed$', 'capacity_maximum$']
+  temperature: ['temperature_cell$']
+signs:
+  grid_power: import_positive
+  battery_power: discharge_positive
+capabilities:
+  strings: provided
+  soc: provided
+  soh: estimated
+  cycles: estimated
+  cells: absent

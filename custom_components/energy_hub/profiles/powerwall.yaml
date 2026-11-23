@@ -1,0 +1,25 @@
+name: Tesla Powerwall
+platform: powerwall
+status: beta
+url: https://www.home-assistant.io/integrations/powerwall
+roles:
+  pv_power: ['solar_power$', 'powerwall_solar_now$']
+  pv_energy: ['solar_export$', 'powerwall_solar_export$']
+  grid_power: ['site_power$', 'powerwall_site_now$']
+  load_power: ['load_power$', 'powerwall_load_now$']
+  grid_import_energy: ['site_import$', 'powerwall_site_import$']
+  grid_export_energy: ['site_export$', 'powerwall_site_export$']
+battery:
+  soc: ['charge$', 'powerwall_charge$']
+  power: ['battery_power$', 'powerwall_battery_now$']
+  capacity: ['battery_capacity$', 'powerwall_\w*capacity$']
+  charge_energy: ['battery_import$', 'powerwall_battery_import$']
+  discharge_energy: ['battery_export$', 'powerwall_battery_export$']
+signs:
+  grid_power: import_positive
+  battery_power: discharge_positive
+capabilities:
+  soc: provided
+  soh: estimated
+  cycles: estimated
+  cells: absent
