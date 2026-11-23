@@ -312,7 +312,9 @@
     "storage": "Tárolás",
     "meter": "Mérő",
     "forecast": "Előrejelzés",
-    "prefs": "Energia irányítópult"
+    "prefs": "Energia irányítópult",
+    "tariff": "Tarifa",
+    "weather": "Időjárás"
   },
   "suggest": {
     "attach_bms": "{bms} hozzárendelése a(z) {battery} akkumulátorhoz",
@@ -333,7 +335,10 @@
     "modules": "modulok",
     "cells": "cellák",
     "forecast": "előrejelzés",
-    "tempo": "tarifaszín"
+    "tempo": "tarifaszín",
+    "tariff": "tarifa",
+    "irradiance": "besugárzás",
+    "clouds": "felhőzet"
   },
   "role": {
     "pv_power": "Napelem teljesítmény",
@@ -343,7 +348,11 @@
     "grid_export_energy": "Betáplálás a hálózatba",
     "load_power": "Ház teljesítménye",
     "forecast_power": "Várható teljesítmény",
-    "forecast_energy_today": "Mai előrejelzés"
+    "forecast_energy_today": "Mai előrejelzés",
+    "irradiance": "Besugárzás",
+    "weather": "Időjárás",
+    "tariff_price": "kWh ár",
+    "tariff_color": "Napszín"
   },
   "alert_kind": {
     "clipping": "Levágás",
@@ -363,5 +372,48 @@
     "battery_exchange": "több mint 0,1 kW megy át egyik akkumulátorból a másikba",
     "stale": "egy használt entitás nem elérhető"
   },
-  "beta": "béta"
+  "beta": "béta",
+  "comparator": "Ajánlat-összehasonlító",
+  "comparator_hint": "12 hónap · {v} vételezve",
+  "comparator_learning": "Az összehasonlításhoz {n} nap hálózati mérés kell (eddig {d}).",
+  "offer": "Ajánlat",
+  "avg_price": "Átlag kWh",
+  "subscription": "Alapdíj",
+  "total_year": "Évente",
+  "your_contract": "az Ön szerződése",
+  "regulated": "szabályozott",
+  "market": "piaci",
+  "custom_offer": "saját",
+  "best_saving": "A(z) {name} ajánlatra váltás évente kb. {v} megtakarítást hozna.",
+  "best_is_current": "Az Ön szerződése a legolcsóbb a fogyasztásához.",
+  "no_contract": "Ismeretlen szerződés: adja meg a tariff: contract: értéket YAML-ben, vagy telepítse a Tarif EDF-et a különbséghez.",
+  "scaled": "{n} nap mérése alapján, egy évre vetítve.",
+  "colors_estimated": "{n} nap a szezon Tempo- vagy Zen Flex-napjainak arányával árazva (szín nem rögzítve).",
+  "grid_info": "EDF árlista ({d}), áfával. A piaci ajánlatok tájékoztató jellegűek: ellenőrizze a szerződésében.",
+  "grid_stale": "A beépített árlista 7 hónapnál régebbi: azóta változhatott.",
+  "contract_box": "Szerződés",
+  "contract": "Szerződés",
+  "subscribed_power": "Lekötött teljesítmény",
+  "offpeak_hours": "Völgyidőszak",
+  "price_now": "Jelenlegi ár",
+  "price_entity": "Ár entitás",
+  "color_entity": "Napszín entitás",
+  "assumed": "alapértelmezett",
+  "reference": "Termelési referencia",
+  "contract_source": {
+    "tarif_edf": "Tarif EDF",
+    "yaml": "YAML"
+  },
+  "reference_kind": {
+    "measured": "Mért besugárzás",
+    "forecast": "Napelemes előrejelzés",
+    "weather": "Felhőzet (időjárás)",
+    "clearsky": "Derült égbolt"
+  },
+  "reference_hint": {
+    "measured": "derült égbolt a mért besugárzással skálázva (IEC 61724-1)",
+    "forecast": "az előrejelző integrációból",
+    "weather": "derült égbolt × (1 − 0,75 N^3,4), N a felhőzet",
+    "clearsky": "nem található besugárzásmérő, előrejelzés vagy időjárás-entitás"
+  }
 }

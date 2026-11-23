@@ -10,7 +10,8 @@ from __future__ import annotations
 from datetime import date, datetime, timedelta
 from typing import Any
 
-from .analytics import theil_sen
+from .analytics import tariffs, theil_sen
+from .config import HubConfig
 from .history import BatteryReading, History
 from .sources import Installation
 
@@ -250,10 +251,12 @@ def bill(history: History, today: date, import_price: float, export_price: float
 
     def period(keys: list[str]) -> dict[str, float | None]:
         recs = [history.days[k] for k in keys]
+        # A day valued at its half hours' prices (import_eur / load_eur) when they were known, else the flat price.
         with_solar = (
-            sum(d.get("import", 0) for d in recs) * import_price - sum(d.get("export", 0) for d in recs) * export_price
+            sum(d.get("import_eur", d.get("import", 0) * import_price) for d in recs)
+            - sum(d.get("export", 0) for d in recs) * export_price
         )
-        without = sum(d.get("load", 0) for d in recs) * import_price
+        without = sum(d.get("load_eur", d.get("load", 0) * import_price) for d in recs)
         return {"with": _r(with_solar, 2), "without": _r(without, 2)}
 
     keys = sorted(history.days)
@@ -350,3 +353,88 @@ def suggestions(
             {"kind": "forecast", "yaml": "energy_hub:\n  entities:\n    forecast_power: sensor.power_production_now\n"}
         )
     return out
+
+
+# ---- contract and offer comparator
+COMPARATOR_MIN_DAYS = 14
+DEFAULT_KVA = 6
+
+
+def contract(cfg: HubConfig, inst: Installation) -> dict[str, Any]:
+    """The contract as known: from the YAML, else from Tarif EDF, with what had to be assumed."""
+    detected = inst.tariff
+    return {
+        "contract": cfg.contract or detected.get("contract"),
+        "contract_source": "yaml" if cfg.contract else "tarif_edf" if detected.get("contract") else None,
+        "kva": cfg.kva or detected.get("kva") or DEFAULT_KVA,
+        "kva_assumed": not (cfg.kva or detected.get("kva")),
+        "offpeak": cfg.offpeak or "22:00-06:00",
+        "offpeak_assumed": cfg.offpeak is None,
+    }
+
+
+def offer_list(cfg: HubConfig, inst: Installation) -> list[tariffs.Offer]:
+    c = contract(cfg, inst)
+    return tariffs.offers(c["kva"], tariffs.parse_ranges(c["offpeak"]), cfg.offers)
+
+
+def contract_offer(cfg: HubConfig, inst: Installation) -> tariffs.Offer | None:
+    key = contract(cfg, inst)["contract"]
+    return next((o for o in offer_list(cfg, inst) if o.key == key), None)
+
+
+def comparator(history: History, cfg: HubConfig, inst: Installation, today: date) -> dict[str, Any]:
+    """Yearly cost of the last 12 months' grid draw under each offer, the current contract marked."""
+    c = contract(cfg, inst)
+    keys = [k for k in sorted(history.days) if k < today.isoformat()][-365:]
+    days = [(date.fromisoformat(k), history.days[k]["imp48"]) for k in keys if "imp48" in history.days[k]]
+    colors = {k: d["color"] for k, d in history.days.items() if d.get("color")}
+    grid_age = (today - date.fromisoformat(tariffs.GRID_DATE)).days
+    base = {
+        **c,
+        "days": len(days),
+        "needed": COMPARATOR_MIN_DAYS,
+        "colors": sum(1 for day, _ in days if day.isoformat() in colors),
+        "grid_date": tariffs.GRID_DATE,
+        "grid_stale": grid_age > tariffs.GRID_STALE_MONTHS * 30.5,
+        "sources": tariffs.GRID_SOURCES,
+        "offers": [],
+    }
+    if len(days) < COMPARATOR_MIN_DAYS:
+        return base
+    result, scale = tariffs.compare(days, offer_list(cfg, inst), colors)
+    current = next((r for r in result if r.key == c["contract"]), None)
+    kwh = sum(sum(slots) for _, slots in days) * scale
+    base.update(
+        {
+            "scale": _r(scale, 3),
+            "kwh": _r(kwh, 0),
+            "current": current.key if current else None,
+            "best": result[0].key,
+            "saving": _r(current.total_eur - result[0].total_eur, 0) if current else None,
+            "offers": [
+                {
+                    "key": r.key,
+                    "name": r.name,
+                    "regulated": r.regulated,
+                    "custom": r.custom,
+                    "energy": _r(r.energy_eur, 0),
+                    "subscription": _r(r.subscription_eur, 0),
+                    "total": _r(r.total_eur, 0),
+                    "avg_price": _r(r.energy_eur / kwh, 4) if kwh else None,
+                    "delta": _r(r.total_eur - current.total_eur, 0) if current else None,
+                }
+                for r in result
+            ],
+        }
+    )
+    return base
+
+
+def cached_comparator(history: History, cfg: HubConfig, inst: Installation, today: date) -> dict[str, Any]:
+    """The comparator once a day (a year of half hours under each offer is too much for every 30 s refresh)."""
+    key = (today.isoformat(), repr(contract(cfg, inst)), repr(cfg.offers), len(history.days))
+    if history.cache.get("comparator_key") != key:
+        history.cache["comparator"] = comparator(history, cfg, inst, today)
+        history.cache["comparator_key"] = key
+    return history.cache["comparator"]

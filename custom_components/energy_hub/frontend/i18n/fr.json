@@ -312,7 +312,9 @@
     "storage": "Stockage",
     "meter": "Compteur",
     "forecast": "Prévision",
-    "prefs": "Tableau Énergie"
+    "prefs": "Tableau Énergie",
+    "tariff": "Tarif",
+    "weather": "Météo"
   },
   "suggest": {
     "attach_bms": "Rattacher {bms} à la batterie {battery}",
@@ -333,7 +335,10 @@
     "modules": "modules",
     "cells": "cellules",
     "forecast": "prévision",
-    "tempo": "couleur Tempo"
+    "tempo": "couleur Tempo",
+    "tariff": "tarif",
+    "irradiance": "irradiance",
+    "clouds": "nébulosité"
   },
   "role": {
     "pv_power": "Puissance solaire",
@@ -343,7 +348,11 @@
     "grid_export_energy": "Injection",
     "load_power": "Puissance maison",
     "forecast_power": "Prévision",
-    "forecast_energy_today": "Prévision du jour"
+    "forecast_energy_today": "Prévision du jour",
+    "irradiance": "Irradiance",
+    "weather": "Météo",
+    "tariff_price": "Prix du kWh",
+    "tariff_color": "Couleur du jour"
   },
   "alert_kind": {
     "clipping": "Écrêtage",
@@ -363,5 +372,48 @@
     "battery_exchange": "plus de 0,1 kW envoyés d'une batterie dans une autre",
     "stale": "une entité utilisée indisponible"
   },
-  "beta": "bêta"
+  "beta": "bêta",
+  "comparator": "Comparateur d'offres",
+  "comparator_hint": "12 mois · {v} soutirés",
+  "comparator_learning": "Le comparateur a besoin de {n} jours de relevés réseau ({d} pour l'instant).",
+  "offer": "Offre",
+  "avg_price": "kWh moyen",
+  "subscription": "Abonnement",
+  "total_year": "Par an",
+  "your_contract": "votre contrat",
+  "regulated": "réglementé",
+  "market": "marché",
+  "custom_offer": "la vôtre",
+  "best_saving": "Passer à {name} ferait économiser environ {v} par an.",
+  "best_is_current": "Votre contrat est le moins cher pour votre consommation.",
+  "no_contract": "Contrat inconnu : renseignez tariff: contract: en YAML, ou installez Tarif EDF, pour voir l'écart.",
+  "scaled": "Sur {n} jours de relevés, ramenés à un an.",
+  "colors_estimated": "{n} jours valorisés au mix de la saison en jours Tempo ou Zen Flex (couleur non relevée).",
+  "grid_info": "Grille EDF du {d}, TTC. Les offres de marché sont des repères : vérifiez-les sur votre contrat.",
+  "grid_stale": "La grille embarquée a plus de 7 mois : une révision a pu intervenir depuis.",
+  "contract_box": "Contrat",
+  "contract": "Contrat",
+  "subscribed_power": "Puissance souscrite",
+  "offpeak_hours": "Heures creuses",
+  "price_now": "Prix actuel",
+  "price_entity": "Entité prix",
+  "color_entity": "Entité couleur du jour",
+  "assumed": "par défaut",
+  "reference": "Référence de production",
+  "contract_source": {
+    "tarif_edf": "Tarif EDF",
+    "yaml": "YAML"
+  },
+  "reference_kind": {
+    "measured": "Irradiance mesurée",
+    "forecast": "Prévision solaire",
+    "weather": "Nébulosité météo",
+    "clearsky": "Ciel clair"
+  },
+  "reference_hint": {
+    "measured": "ciel clair ajusté par l'irradiance mesurée (IEC 61724-1)",
+    "forecast": "de l'intégration de prévision",
+    "weather": "ciel clair × (1 − 0,75 N^3,4), N la nébulosité",
+    "clearsky": "aucun capteur d'irradiance, prévision ou entité météo trouvé"
+  }
 }

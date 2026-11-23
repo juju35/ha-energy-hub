@@ -312,7 +312,9 @@
     "storage": "Magazyn",
     "meter": "Licznik",
     "forecast": "Prognoza",
-    "prefs": "Panel energii"
+    "prefs": "Panel energii",
+    "tariff": "Taryfa",
+    "weather": "Pogoda"
   },
   "suggest": {
     "attach_bms": "Przypisz {bms} do baterii {battery}",
@@ -333,7 +335,10 @@
     "modules": "moduły",
     "cells": "ogniwa",
     "forecast": "prognoza",
-    "tempo": "kolor taryfy"
+    "tempo": "kolor taryfy",
+    "tariff": "taryfa",
+    "irradiance": "napromieniowanie",
+    "clouds": "zachmurzenie"
   },
   "role": {
     "pv_power": "Moc PV",
@@ -343,7 +348,11 @@
     "grid_export_energy": "Oddawanie do sieci",
     "load_power": "Moc domu",
     "forecast_power": "Prognozowana moc",
-    "forecast_energy_today": "Prognoza na dziś"
+    "forecast_energy_today": "Prognoza na dziś",
+    "irradiance": "Napromieniowanie",
+    "weather": "Pogoda",
+    "tariff_price": "Cena kWh",
+    "tariff_color": "Kolor dnia"
   },
   "alert_kind": {
     "clipping": "Obcinanie",
@@ -363,5 +372,48 @@
     "battery_exchange": "ponad 0,1 kW przesłane z jednej baterii do drugiej",
     "stale": "używana encja niedostępna"
   },
-  "beta": "beta"
+  "beta": "beta",
+  "comparator": "Porównanie ofert",
+  "comparator_hint": "12 miesięcy · {v} pobrane",
+  "comparator_learning": "Porównanie wymaga {n} dni odczytów sieci (na razie {d}).",
+  "offer": "Oferta",
+  "avg_price": "Średnia kWh",
+  "subscription": "Abonament",
+  "total_year": "Rocznie",
+  "your_contract": "twoja umowa",
+  "regulated": "regulowana",
+  "market": "rynkowa",
+  "custom_offer": "twoja",
+  "best_saving": "Przejście na {name} dałoby ok. {v} oszczędności rocznie.",
+  "best_is_current": "Twoja umowa jest najtańsza dla twojego zużycia.",
+  "no_contract": "Umowa nieznana: ustaw tariff: contract: w YAML lub zainstaluj Tarif EDF, aby zobaczyć różnicę.",
+  "scaled": "Na podstawie {n} dni odczytów, przeliczone na rok.",
+  "colors_estimated": "{n} dni wyceniono według sezonowej mieszanki dni Tempo lub Zen Flex (kolor nieodczytany).",
+  "grid_info": "Cennik EDF z {d}, z VAT. Oferty rynkowe są orientacyjne: sprawdź je w swojej umowie.",
+  "grid_stale": "Wbudowany cennik ma ponad 7 miesięcy: od tego czasu mogła nastąpić zmiana.",
+  "contract_box": "Umowa",
+  "contract": "Umowa",
+  "subscribed_power": "Moc umowna",
+  "offpeak_hours": "Godziny pozaszczytowe",
+  "price_now": "Cena teraz",
+  "price_entity": "Encja ceny",
+  "color_entity": "Encja koloru dnia",
+  "assumed": "domyślnie",
+  "reference": "Odniesienie produkcji",
+  "contract_source": {
+    "tarif_edf": "Tarif EDF",
+    "yaml": "YAML"
+  },
+  "reference_kind": {
+    "measured": "Zmierzone napromieniowanie",
+    "forecast": "Prognoza solarna",
+    "weather": "Zachmurzenie (pogoda)",
+    "clearsky": "Czyste niebo"
+  },
+  "reference_hint": {
+    "measured": "czyste niebo skalowane zmierzonym napromieniowaniem (IEC 61724-1)",
+    "forecast": "z integracji prognozy",
+    "weather": "czyste niebo × (1 − 0,75 N^3,4), N zachmurzenie",
+    "clearsky": "nie znaleziono czujnika napromieniowania, prognozy ani encji pogody"
+  }
 }

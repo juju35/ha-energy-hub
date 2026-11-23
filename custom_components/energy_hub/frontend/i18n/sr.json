@@ -312,7 +312,9 @@
     "storage": "Складиштење",
     "meter": "Бројило",
     "forecast": "Прогноза",
-    "prefs": "Контролна табла енергије"
+    "prefs": "Контролна табла енергије",
+    "tariff": "Тарифа",
+    "weather": "Време"
   },
   "suggest": {
     "attach_bms": "Повежи {bms} са батеријом {battery}",
@@ -333,7 +335,10 @@
     "modules": "модули",
     "cells": "ћелије",
     "forecast": "прогноза",
-    "tempo": "боја тарифе"
+    "tempo": "боја тарифе",
+    "tariff": "тарифа",
+    "irradiance": "зрачење",
+    "clouds": "облачност"
   },
   "role": {
     "pv_power": "Соларна снага",
@@ -343,7 +348,11 @@
     "grid_export_energy": "Предаја у мрежу",
     "load_power": "Снага куће",
     "forecast_power": "Прогнозирана снага",
-    "forecast_energy_today": "Прогноза за данас"
+    "forecast_energy_today": "Прогноза за данас",
+    "irradiance": "Зрачење",
+    "weather": "Време",
+    "tariff_price": "Цена kWh",
+    "tariff_color": "Боја дана"
   },
   "alert_kind": {
     "clipping": "Одсецање",
@@ -363,5 +372,48 @@
     "battery_exchange": "више од 0,1 kW шаље се из једне батерије у другу",
     "stale": "коришћени ентитет недоступан"
   },
-  "beta": "бета"
+  "beta": "бета",
+  "comparator": "Поређење понуда",
+  "comparator_hint": "12 месеци · {v} из мреже",
+  "comparator_learning": "Поређењу треба {n} дана очитавања мреже (засад {d}).",
+  "offer": "Понуда",
+  "avg_price": "Просечан kWh",
+  "subscription": "Претплата",
+  "total_year": "Годишње",
+  "your_contract": "ваш уговор",
+  "regulated": "регулисана",
+  "market": "тржишна",
+  "custom_offer": "ваша",
+  "best_saving": "Прелазак на {name} уштедео би око {v} годишње.",
+  "best_is_current": "Ваш уговор је најјефтинији за вашу потрошњу.",
+  "no_contract": "Уговор непознат: подесите tariff: contract: у YAML-у или инсталирајте Tarif EDF да видите разлику.",
+  "scaled": "На основу {n} дана очитавања, прерачунато на годину.",
+  "colors_estimated": "{n} дана обрачунато по сезонском миксу Tempo или Zen Flex дана (боја није забележена).",
+  "grid_info": "EDF ценовник од {d}, са ПДВ-ом. Тржишне понуде су оријентационе: проверите их у свом уговору.",
+  "grid_stale": "Уграђени ценовник старији је од 7 месеци: у међувремену је можда било измена.",
+  "contract_box": "Уговор",
+  "contract": "Уговор",
+  "subscribed_power": "Одобрена снага",
+  "offpeak_hours": "Јефтина тарифа",
+  "price_now": "Тренутна цена",
+  "price_entity": "Ентитет цене",
+  "color_entity": "Ентитет боје дана",
+  "assumed": "подразумевано",
+  "reference": "Референца производње",
+  "contract_source": {
+    "tarif_edf": "Tarif EDF",
+    "yaml": "YAML"
+  },
+  "reference_kind": {
+    "measured": "Измерено зрачење",
+    "forecast": "Соларна прогноза",
+    "weather": "Облачност (време)",
+    "clearsky": "Ведро небо"
+  },
+  "reference_hint": {
+    "measured": "ведро небо скалирано измереним зрачењем (IEC 61724-1)",
+    "forecast": "из интеграције прогнозе",
+    "weather": "ведро небо × (1 − 0,75 N^3,4), N облачност",
+    "clearsky": "није пронађен сензор зрачења, прогноза ни ентитет времена"
+  }
 }

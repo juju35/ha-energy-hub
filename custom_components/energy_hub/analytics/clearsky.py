@@ -102,3 +102,40 @@ def clearsky_power(
         cell = ambient + poa / 800 * 25
         total += plane.kwp * poa / 1000 * SYSTEM_FACTOR * (1 + TEMP_COEFF * (cell - 25))
     return max(total, 0.0)
+
+
+# Cloud cover of a weather condition, when the weather entity gives no `cloud_coverage` (0 = clear, 1 = overcast).
+CONDITION_CLOUDS = {
+    "sunny": 0.0,
+    "clear-night": 0.0,
+    "windy": 0.3,
+    "partlycloudy": 0.5,
+    "windy-variant": 0.6,
+    "cloudy": 0.9,
+    "fog": 1.0,
+    "rainy": 1.0,
+    "pouring": 1.0,
+    "snowy": 1.0,
+    "snowy-rainy": 1.0,
+    "hail": 1.0,
+    "lightning": 1.0,
+    "lightning-rainy": 1.0,
+    "exceptional": 1.0,
+}
+
+
+def cloud_factor(cloud_cover: float) -> float:
+    """Share of the clear-sky global irradiance left under a cloud cover N (0..1): 1 - 0.75 N^3.4
+    (Kasten & Czeplak, Solar Energy 24, 1980)."""
+    n = min(max(cloud_cover, 0.0), 1.0)
+    return 1 - 0.75 * n**3.4
+
+
+def measured_factor(ghi: float, when: datetime, latitude: float, longitude: float) -> float | None:
+    """Ratio of a measured horizontal irradiance (W/m²) to the clear sky's, clamped to 0..1.3 (cloud enhancement);
+    None when the sun is too low for the ratio to mean anything."""
+    zenith, _azimuth = solar_position(when, latitude, longitude)
+    clear = clearsky_ghi(zenith)
+    if clear < 50:
+        return None
+    return min(max(ghi / clear, 0.0), 1.3)

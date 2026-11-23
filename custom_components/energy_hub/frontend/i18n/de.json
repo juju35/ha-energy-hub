@@ -312,7 +312,9 @@
     "storage": "Speicher",
     "meter": "Netzzähler",
     "forecast": "Prognose",
-    "prefs": "Energie-Dashboard"
+    "prefs": "Energie-Dashboard",
+    "tariff": "Tarif",
+    "weather": "Wetter"
   },
   "suggest": {
     "attach_bms": "{bms} der Batterie {battery} zuordnen",
@@ -333,7 +335,10 @@
     "modules": "Module",
     "cells": "Zellen",
     "forecast": "Prognose",
-    "tempo": "Tariffarbe"
+    "tempo": "Tariffarbe",
+    "tariff": "Tarif",
+    "irradiance": "Einstrahlung",
+    "clouds": "Bewölkung"
   },
   "role": {
     "pv_power": "Solarleistung",
@@ -343,7 +348,11 @@
     "grid_export_energy": "Netzeinspeisung",
     "load_power": "Hausleistung",
     "forecast_power": "Prognoseleistung",
-    "forecast_energy_today": "Prognose heute"
+    "forecast_energy_today": "Prognose heute",
+    "irradiance": "Einstrahlung",
+    "weather": "Wetter",
+    "tariff_price": "kWh-Preis",
+    "tariff_color": "Tagesfarbe"
   },
   "alert_kind": {
     "clipping": "Abregelung",
@@ -363,5 +372,48 @@
     "battery_exchange": "mehr als 0,1 kW von einer Batterie in eine andere",
     "stale": "eine genutzte Entität nicht verfügbar"
   },
-  "beta": "Beta"
+  "beta": "Beta",
+  "comparator": "Angebotsvergleich",
+  "comparator_hint": "12 Monate · {v} bezogen",
+  "comparator_learning": "Der Vergleich braucht {n} Tage Netzmessungen (bisher {d}).",
+  "offer": "Angebot",
+  "avg_price": "Ø kWh",
+  "subscription": "Grundpreis",
+  "total_year": "Pro Jahr",
+  "your_contract": "Ihr Vertrag",
+  "regulated": "reguliert",
+  "market": "Markt",
+  "custom_offer": "Ihres",
+  "best_saving": "Ein Wechsel zu {name} spart etwa {v} pro Jahr.",
+  "best_is_current": "Ihr Vertrag ist für Ihren Verbrauch der günstigste.",
+  "no_contract": "Vertrag unbekannt: tariff: contract: in YAML setzen oder Tarif EDF installieren, um die Differenz zu sehen.",
+  "scaled": "Aus {n} Tagen Messungen, auf ein Jahr hochgerechnet.",
+  "colors_estimated": "{n} Tage mit dem saisonalen Mix der Tempo- bzw. Zen-Flex-Tage bewertet (Farbe nicht erfasst).",
+  "grid_info": "EDF-Preisliste vom {d}, inkl. MwSt. Marktangebote sind Richtwerte: prüfen Sie sie mit Ihrem Vertrag.",
+  "grid_stale": "Die eingebaute Preisliste ist älter als 7 Monate: inzwischen gab es vielleicht eine Anpassung.",
+  "contract_box": "Vertrag",
+  "contract": "Vertrag",
+  "subscribed_power": "Anschlussleistung",
+  "offpeak_hours": "Nebenzeiten",
+  "price_now": "Aktueller Preis",
+  "price_entity": "Preis-Entität",
+  "color_entity": "Entität Tagesfarbe",
+  "assumed": "Standard",
+  "reference": "Produktionsreferenz",
+  "contract_source": {
+    "tarif_edf": "Tarif EDF",
+    "yaml": "YAML"
+  },
+  "reference_kind": {
+    "measured": "Gemessene Einstrahlung",
+    "forecast": "Solarprognose",
+    "weather": "Bewölkung (Wetter)",
+    "clearsky": "Klarer Himmel"
+  },
+  "reference_hint": {
+    "measured": "klarer Himmel, skaliert mit der gemessenen Einstrahlung (IEC 61724-1)",
+    "forecast": "aus der Prognose-Integration",
+    "weather": "klarer Himmel × (1 − 0,75 N^3,4), N die Bewölkung",
+    "clearsky": "kein Einstrahlungssensor, keine Prognose und keine Wetter-Entität gefunden"
+  }
 }

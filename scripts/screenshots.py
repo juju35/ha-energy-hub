@@ -157,6 +157,7 @@ def main() -> None:
                     "settings": [
                         ("settings-installation", ["[data-sub=installation]", "[data-node='battery:maison']"]),
                         ("settings-alerts", ["[data-sub=alerts]"]),
+                        ("settings-tariffs", ["[data-sub=tariffs]"]),
                     ],
                 }.get(tab, [])
                 for name, clicks in extra:

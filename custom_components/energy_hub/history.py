@@ -8,7 +8,7 @@ degradation, shading, string mismatch, battery health). Everything is plain JSON
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Any
 
 from .const import BUCKET_SECONDS, BUCKETS_KEPT, DAYS_KEPT
@@ -18,6 +18,8 @@ BIN_DAYS_KEPT = 45
 BIN_MINUTES = 15
 # The same bins per string / panel, for the shading of one panel among its peers.
 UNIT_BIN_DAYS_KEPT = 21
+# Grid draw per half hour (48 kWh a day), for the offer comparator: a year and a little more.
+IMPORT_SLOT_DAYS_KEPT = 400
 
 
 @dataclass(slots=True)
@@ -54,6 +56,11 @@ class Reading:
     # Entities read without a usable value (unavailable, unknown, gone), and whether production or grid is off-line.
     stale: list[str] = field(default_factory=list)
     offline: bool = False
+    # Price of the kWh drawn now (EUR, the contract's price of this half hour) and the day's Tempo / Zen Flex kind.
+    import_price: float | None = None
+    day_color: str | None = None
+    # What the expected production was taken from: measured, forecast, weather or clearsky.
+    reference: str | None = None
 
     @property
     def battery_kw(self) -> float:
@@ -95,6 +102,8 @@ class History:
     unit_bins: dict[str, dict[str, dict[str, float]]] = field(default_factory=dict)
     _open: dict[str, Any] | None = None
     _last: Reading | None = None
+    # Results computed from the history and kept until it changes (not stored).
+    cache: dict[str, Any] = field(default_factory=dict)
 
     # ---- persistence
     def to_json(self) -> dict[str, Any]:
@@ -126,6 +135,8 @@ class History:
             del self.bins[key]
         for key in sorted(self.unit_bins)[:-UNIT_BIN_DAYS_KEPT]:
             del self.unit_bins[key]
+        for key in sorted(self.days)[:-IMPORT_SLOT_DAYS_KEPT]:
+            self.days[key].pop("imp48", None)
 
     def add(self, reading: Reading, local: datetime) -> bool:
         """Integrate a reading into today's record and the open bucket; True when a bucket was closed."""
@@ -151,10 +162,25 @@ class History:
                     ubin = self.unit_bins.setdefault(record["date"], {}).setdefault(str(minute), {})
                     for name, kw in (reading.units or reading.strings).items():
                         ubin[name] = ubin.get(name, 0.0) + kw * h
-            if (grid := _avg(last.grid_kw, reading.grid_kw)) is not None:
+            price = last.import_price if last.import_price is not None else reading.import_price
+            grid = _avg(last.grid_kw, reading.grid_kw)
+            if grid is not None:
                 record["import" if grid > 0 else "export"] += abs(grid) * h
-            if (load := _avg(last.load_kw, reading.load_kw)) is not None:
+                slots = record.setdefault("imp48", [0.0] * 48)
+                if grid > 0:
+                    begin = local - timedelta(seconds=dt)
+                    slots[(begin.hour * 60 + begin.minute) // 30] += grid * h
+            load = _avg(last.load_kw, reading.load_kw)
+            if load is not None:
                 record["load"] += load * h
+            if price is not None:
+                # Energies valued at the price of their half hour: the bill, and what self-consumption avoided.
+                record["import_eur"] = record.get("import_eur", 0.0) + max(grid or 0.0, 0.0) * h * price
+                if load is not None:
+                    record["load_eur"] = record.get("load_eur", 0.0) + load * h * price
+                if pv is not None:
+                    self_kw = max(pv - max(-(grid or 0.0), 0.0), 0.0)
+                    record["self_eur"] = record.get("self_eur", 0.0) + self_kw * h * price
             for name, kw in reading.units.items():
                 record["units"][name] = record["units"].get(name, 0.0) + kw * h
             for name, kw in reading.strings.items():
@@ -166,6 +192,8 @@ class History:
                 record[side][b.key] = record[side].get(b.key, 0.0) + abs(b.power_kw) * h
             if reading.offline and reading.expected_kw:
                 record["unavailable"] += reading.expected_kw * h
+        if reading.day_color:
+            record["color"] = reading.day_color
         if reading.pv_kw is not None and reading.pv_kw > record["peak"]:
             record["peak"] = reading.pv_kw
             record["peak_at"] = local.isoformat()

@@ -1,7 +1,7 @@
 // Energy Hub — sidebar panel. Draws everything itself (no Lovelace card): the illustrated banner, which folds into a
 // sticky bar on scroll, and six tabs (Overview, Production, Batteries, Losses, Finances, Settings). The data comes from
 // the integration's snapshot (websocket `energy_hub/subscribe`, pushed every 30 seconds).
-const ENERGY_HUB_PANEL_VERSION = '1.3.0';
+const ENERGY_HUB_PANEL_VERSION = '1.4.0';
 
 const EH_ICONS = {
   'bell-outline': 'M10 21H14C14 22.1 13.1 23 12 23S10 22.1 10 21M21 19V20H3V19L5 17V11C5 7.9 7 5.2 10 4.3V4C10 2.9 10.9 2 12 2S14 2.9 14 4V4.3C17 5.2 19 7.9 19 11V17L21 19M17 11C17 8.2 14.8 6 12 6S7 8.2 7 11V18H17V11Z',
@@ -27,6 +27,7 @@ const EH_ICONS = {
   'lightbulb-on-outline': 'M20,11H23V13H20V11M1,11H4V13H1V11M13,1V4H11V1H13M4.92,3.5L7.05,5.64L5.63,7.05L3.5,4.93L4.92,3.5M16.95,5.63L19.07,3.5L20.5,4.93L18.37,7.05L16.95,5.63M12,6A6,6 0 0,1 18,12C18,14.22 16.79,16.16 15,17.2V19A1,1 0 0,1 14,20H10A1,1 0 0,1 9,19V17.2C7.21,16.16 6,14.22 6,12A6,6 0 0,1 12,6M14,21V22A1,1 0 0,1 13,23H11A1,1 0 0,1 10,22V21H14M11,18H13V15.87C14.73,15.43 16,13.86 16,12A4,4 0 0,0 12,8A4,4 0 0,0 8,12C8,13.86 9.27,15.43 11,15.87V18Z',
   'menu': 'M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z',
   'minus': 'M19,13H5V11H19V13Z',
+  'close': 'M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z',
   'piggy-bank-outline': 'M15 10C15 9.45 15.45 9 16 9C16.55 9 17 9.45 17 10S16.55 11 16 11 15 10.55 15 10M8 9H13V7H8V9M22 7.5V14.47L19.18 15.41L17.5 21H12V19H10V21H4.5C4.5 21 2 12.54 2 9.5S4.46 4 7.5 4H12.5C13.41 2.79 14.86 2 16.5 2C17.33 2 18 2.67 18 3.5C18 3.71 17.96 3.9 17.88 4.08C17.74 4.42 17.62 4.81 17.56 5.23L19.83 7.5H22M20 9.5H19L15.5 6C15.5 5.35 15.59 4.71 15.76 4.09C14.79 4.34 14 5.06 13.67 6H7.5C5.57 6 4 7.57 4 9.5C4 11.38 5.22 16.15 6 19H8V17H14V19H16L17.56 13.85L20 13.03V9.5Z',
   'power-plug-off-outline': 'M22.11 21.46L2.39 1.73L1.11 3L6.25 8.14C6.1 8.41 6 8.7 6 9V14.5L9.5 18V21H14.5V18L15.31 17.2L20.84 22.73L22.11 21.46M13.09 16.59L12.67 17H11.33L10.92 16.59L8 13.67V9.89L13.89 15.78L13.09 16.59M12.2 9L10.2 7H14V3H16V7C17 7 18 8 18 9V14.5L17.85 14.65L16 12.8V9.09C16 9.06 15.95 9 15.92 9H12.2M10 6.8L8 4.8V3H10V6.8Z',
   'refresh': 'M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z',
@@ -300,7 +301,7 @@ const EH_I18N = {
       cell_drift: '{battery}: cell {cell} drifting',
     },
     subtabs: { sources: 'Sources', installation: 'Installation', tariffs: 'Tariffs', alerts: 'Alerts', yaml: 'YAML' },
-    source_role: { pv: 'Production', storage: 'Storage', meter: 'Grid meter', forecast: 'Forecast', prefs: 'Energy dashboard' },
+    source_role: { pv: 'Production', storage: 'Storage', meter: 'Grid meter', forecast: 'Forecast', tariff: 'Tariff', weather: 'Weather', prefs: 'Energy dashboard' },
     suggest: {
       attach_bms: 'Attach {bms} to the {battery} battery',
       planes: 'Give the panels’ orientation (kWp, tilt, azimuth)',
@@ -321,6 +322,9 @@ const EH_I18N = {
       cells: 'cells',
       forecast: 'forecast',
       tempo: 'tariff colour',
+      tariff: 'tariff',
+      irradiance: 'irradiance',
+      clouds: 'cloud cover',
     },
     role: {
       pv_power: 'Solar power',
@@ -331,6 +335,10 @@ const EH_I18N = {
       load_power: 'Home power',
       forecast_power: 'Forecast power',
       forecast_energy_today: 'Forecast today',
+      irradiance: 'Irradiance',
+      weather: 'Weather',
+      tariff_price: 'Price of the kWh',
+      tariff_color: 'Day colour',
     },
     alert_kind: {
       clipping: 'Clipping',
@@ -351,6 +359,41 @@ const EH_I18N = {
       stale: 'an entity in use unavailable',
     },
     beta: 'beta',
+    comparator: 'Offer comparator',
+    comparator_hint: '12 months · {v} drawn',
+    comparator_learning: 'The comparator needs {n} days of grid readings ({d} so far).',
+    offer: 'Offer',
+    avg_price: 'Average kWh',
+    subscription: 'Subscription',
+    total_year: 'Per year',
+    your_contract: 'your contract',
+    regulated: 'regulated',
+    market: 'market',
+    custom_offer: 'yours',
+    best_saving: 'Switching to {name} would save about {v} a year.',
+    best_is_current: 'Your contract is the cheapest for your consumption.',
+    no_contract: 'Contract unknown: set tariff: contract: in YAML, or install Tarif EDF, to see the difference.',
+    scaled: 'Based on {n} days of readings, scaled to a year.',
+    colors_estimated: '{n} days priced at the season’s mix of Tempo or Zen Flex days (colour not recorded).',
+    grid_info: 'EDF grid of {d}, VAT included. Market offers are references: check them against your contract.',
+    grid_stale: 'The embedded grid is more than 7 months old: a revision may have come since.',
+    contract_box: 'Contract',
+    contract: 'Contract',
+    subscribed_power: 'Subscribed power',
+    offpeak_hours: 'Off-peak hours',
+    price_now: 'Price now',
+    price_entity: 'Price entity',
+    color_entity: 'Day colour entity',
+    assumed: 'by default',
+    reference: 'Production reference',
+    contract_source: { tarif_edf: 'Tarif EDF', yaml: 'YAML' },
+    reference_kind: { measured: 'Measured irradiance', forecast: 'Solar forecast', weather: 'Weather cloud cover', clearsky: 'Clear sky' },
+    reference_hint: {
+      measured: 'clear sky scaled by the measured irradiance (IEC 61724-1)',
+      forecast: 'from the forecast integration',
+      weather: 'clear sky × (1 − 0.75 N^3.4), N the cloud cover',
+      clearsky: 'no irradiance sensor, forecast or weather entity found',
+    },
   },
 };
 
@@ -1246,6 +1289,32 @@ class EnergyHubPanel extends HTMLElement {
     return `${row(this._t('this_month'), b.month)}${row(this._t('months_12'), b.year)}<div class="hint">${ehEsc(this._t('bill_hint', { i: this._eur(this._data.finances.import_price, 4), e: this._eur(this._data.finances.export_price, 4) }))}</div>${max ? '' : ''}`;
   }
 
+  _comparator() {
+    const C = this._data.finances.comparator;
+    if (!C) return '';
+    if (!C.offers.length) return this._box(this._t('comparator'), '', `<div class="hint">${ehEsc(this._t('comparator_learning', { n: C.needed, d: C.days }))}</div>`);
+    const tag = (r) => `<span class="pill small">${ehEsc(this._t(r.custom ? 'custom_offer' : r.regulated ? 'regulated' : 'market'))}</span>`;
+    const rows = C.offers
+      .map((r) => {
+        const cur = r.key === C.current;
+        const best = r.key === C.best;
+        const delta = r.delta == null || cur ? '' : `<span style="color:${r.delta < 0 ? EH_GREEN : 'var(--secondary-text-color)'}">${r.delta > 0 ? '+' : ''}${this._eur(r.delta, 0)}</span>`;
+        return `<tr class="${cur ? 'cur' : ''}"><td><div class="a1 oname">${best ? `<span style="color:${EH_GREEN}">${ehIcon('check', 14)}</span>` : ''}${ehEsc(r.name)}</div><div>${tag(r)}${cur ? ` <span class="pill small cur">${ehEsc(this._t('your_contract'))}</span>` : ''}</div></td><td class="num">${this._eur(r.avg_price, 4)}</td><td class="num">${this._eur(r.subscription, 0)}</td><td class="num"><b>${this._eur(r.total, 0)}</b><div class="t3">${delta}</div></td></tr>`;
+      })
+      .join('');
+    const bestOffer = C.offers.find((r) => r.key === C.best);
+    const verdict = !C.current ? this._t('no_contract') : C.best === C.current ? this._t('best_is_current') : this._t('best_saving', { name: bestOffer.name, v: this._eur(C.saving, 0) });
+    const notes = [this._t('grid_info', { d: new Date(`${C.grid_date}T12:00`).toLocaleDateString(this._locale, { day: 'numeric', month: 'long', year: 'numeric' }) })];
+    if (C.scale > 1.05) notes.push(this._t('scaled', { n: C.days }));
+    if (C.colors < C.days) notes.push(this._t('colors_estimated', { n: C.days - C.colors }));
+    const stale = C.grid_stale ? `<div class="hint" style="color:${EH_AMBER}">${ehIcon('alert-outline', 14)} ${ehEsc(this._t('grid_stale'))}</div>` : '';
+    return this._box(
+      this._t('comparator'),
+      this._t('comparator_hint', { v: this._kwh(C.kwh) }),
+      `<div class="verdict ${C.current && C.best !== C.current ? 'gain' : ''}">${ehEsc(verdict)}</div><table class="offers"><tr class="th"><td>${ehEsc(this._t('offer'))}</td><td class="num">${ehEsc(this._t('avg_price'))}</td><td class="num">${ehEsc(this._t('subscription'))}</td><td class="num">${ehEsc(this._t('total_year'))}</td></tr>${rows}</table>${stale}<div class="hint">${notes.map(ehEsc).join(' ')}</div>`,
+    );
+  }
+
   _finances() {
     const d = this._data;
     const F = d.finances;
@@ -1274,6 +1343,7 @@ class EnergyHubPanel extends HTMLElement {
     const total = (bd.direct || 0) + (bd.battery || 0) + (bd.export || 0);
     const row = (label, v, col) => `<div class="barrow"><span>${ehEsc(label)}</span><div class="meter"><div style="width:${total ? (v / total) * 100 : 0}%;background:${col}"></div></div><span>${this._eur(v, 0)}</span></div>`;
     o += `<div class="grid2">${this._box(this._t('gains_calendar'), this._t('weeks_6'), this._calendar())}${this._box(this._t('bill_title'), '', this._bill())}</div>`;
+    o += this._comparator();
     o += `<div class="grid2">${this._box(this._t('gains_month'), '', bars)}${this._box(this._t('gains_from'), this._eur(total, 0), row(this._t('direct'), bd.direct, '#639922') + row(this._t('battery_restored'), bd.battery, EH_TEAL) + row(this._t('export'), bd.export, EH_BLUE))}</div>`;
     return o;
   }
@@ -1338,7 +1408,7 @@ class EnergyHubPanel extends HTMLElement {
       o += this._box(this._t('suggestions'), `${sugg.length}`, sugg.map((s) => `<div class="sugg"><span class="pa sm" style="background:#EEEDFE;color:#3C3489">${ehIcon('lightbulb-on-outline', 14)}</span><div class="tt"><div class="a1">${ehEsc(this._t(`suggest.${s.kind}`, { bms: s.bms || '', battery: s.battery || '' }))}</div><div class="t3">${s.correlation != null ? ehEsc(this._t('correlation', { v: this._num(s.correlation, 2) })) : ''}</div></div>${this._snip(s.yaml)}</div>`).join(''));
     }
     const capIcon = { provided: 'check', estimated: 'function-variant', absent: 'minus' };
-    const roleOrder = ['pv', 'storage', 'meter', 'forecast', 'prefs'];
+    const roleOrder = ['pv', 'storage', 'meter', 'forecast', 'weather', 'tariff', 'prefs'];
     const sources = [...d.sources].sort((a, b) => roleOrder.indexOf(a.role) - roleOrder.indexOf(b.role));
     let lastRole = null;
     const list = sources
@@ -1399,7 +1469,27 @@ class EnergyHubPanel extends HTMLElement {
     o += this._box(this._t('schematic'), this._t('schematic_hint'), `${this._schematic()}${this._nodeDetail()}`);
     const planes = (s.planes || []).map((p, i) => `<tr><td>${ehEsc(this._t('plane_n', { n: i + 1 }))}</td><td>${this._num(p.kwp, 2)} kWp</td><td>${this._num(p.tilt, 0)}°</td><td>${this._num(p.azimuth, 0)}°</td></tr>`).join('');
     o += this._box(this._t('planes'), d.kwp_estimated ? this._t('estimated') : this._t('kwp', { v: this._num(d.kwp, 2) }), `${planes ? `<table class="roles"><tr><th></th><th>${ehEsc(this._t('power'))}</th><th>${ehEsc(this._t('tilt'))}</th><th>${ehEsc(this._t('azimuth'))}</th></tr>${planes}</table>` : `<div class="hint">${ehEsc(this._t('kwp_estimated'))}</div>`}<table class="roles"><tr><td>${ehEsc(this._t('inverter_max_short'))}</td><td>${this._kw(d.inverter_max_kw)}</td></tr><tr><td>${ehEsc(this._t('export_limit'))}</td><td>${d.export_limit_kw ? this._kw(d.export_limit_kw) : '–'}</td></tr></table>`);
+    o += this._reference();
     return o;
+  }
+
+  _reference() {
+    const R = this._data.reference || {};
+    const order = [
+      ['measured', R.irradiance],
+      ['forecast', R.forecast],
+      ['weather', R.weather],
+      ['clearsky', null],
+    ];
+    const used = R.source || 'clearsky';
+    const rows = order
+      .map(([kind, entity]) => {
+        const on = kind === used;
+        const avail = kind === 'clearsky' || !!entity;
+        return `<div class="check"><span class="pa sm" style="background:${on ? '#EAF3DE' : 'var(--secondary-background-color)'};color:${on ? EH_GREEN : 'var(--secondary-text-color)'}">${ehIcon(on ? 'check' : avail ? 'minus' : 'close', 14)}</span><div class="tt"><div class="a1">${ehEsc(this._t(`reference_kind.${kind}`))}</div><div class="t3">${entity ? `<code>${ehEsc(entity)}</code> · ` : ''}${kind === 'clearsky' && !on ? '' : ehEsc(this._t(`reference_hint.${kind}`))}</div></div></div>`;
+      })
+      .join('');
+    return this._box(this._t('reference'), this._t(`reference_kind.${used}`), `${rows}${R.irradiance ? '' : this._snip('energy_hub:\n  entities:\n    irradiance: sensor.solar_radiation\n  weather: weather.home\n')}`);
   }
 
   _schematic() {
@@ -1482,7 +1572,16 @@ class EnergyHubPanel extends HTMLElement {
     const inst = s.installation || {};
     const F = d.finances;
     const row = (label, value) => `<tr><td>${ehEsc(label)}</td><td>${value}</td></tr>`;
-    let o = this._box(this._t('tariff_box'), d.currency, `<table class="roles">${row(this._t('import_price'), `${this._eur(t.import ?? F.import_price, 4)} /kWh`)}${row(this._t('export_price'), `${this._eur(t.export ?? F.export_price, 4)} /kWh`)}</table>${this._snip(`energy_hub:\n  tariff:\n    import: ${t.import ?? F.import_price}\n    export: ${t.export ?? F.export_price}\n    currency: ${d.currency}\n`)}`);
+    const C = F.comparator || {};
+    const offerName = (C.offers || []).find((r) => r.key === C.contract)?.name || C.contract;
+    const assumed = (flag) => (flag ? ` <span class="pill small">${ehEsc(this._t('assumed'))}</span>` : '');
+    const ent = (role) => (d.roles?.[role] ? `<code>${ehEsc(d.roles[role])}</code>` : '–');
+    let o = this._box(
+      this._t('contract_box'),
+      C.contract_source ? this._t(`contract_source.${C.contract_source}`) : '',
+      `<table class="roles">${row(this._t('contract'), C.contract ? ehEsc(offerName) : ehEsc(this._t('no_contract')))}${row(this._t('subscribed_power'), `${C.kva ?? '–'} kVA${assumed(C.kva_assumed)}`)}${row(this._t('offpeak_hours'), `${ehEsc(C.offpeak || '–')}${assumed(C.offpeak_assumed)}`)}${row(this._t('price_now'), `${this._eur(F.import_price, 4)} /kWh`)}${row(this._t('price_entity'), ent('tariff_price'))}${row(this._t('color_entity'), ent('tariff_color'))}</table>${this._snip(`energy_hub:\n  tariff:\n    contract: ${C.contract || 'hphc'}\n    kva: ${C.kva || 6}\n    offpeak: "${C.offpeak || '22:00-06:00'}"\n`)}`,
+    );
+    o += this._box(this._t('tariff_box'), d.currency, `<table class="roles">${C.contract ? '' : row(this._t('import_price'), `${this._eur(t.import ?? F.import_price, 4)} /kWh`)}${row(this._t('export_price'), `${this._eur(t.export ?? F.export_price, 4)} /kWh`)}</table>${this._snip(`energy_hub:\n  tariff:\n    import: ${t.import ?? F.import_price}\n    export: ${t.export ?? F.export_price}\n    currency: ${d.currency}\n`)}`);
     o += this._box(this._t('installation_box'), '', `<table class="roles">${row(this._t('cost'), inst.cost != null ? this._eur(inst.cost, 0) : '–')}${row(this._t('subsidy'), inst.subsidy != null ? this._eur(inst.subsidy, 0) : '–')}${row(this._t('net_cost_label'), F.net_cost != null ? this._eur(F.net_cost, 0) : '–')}${row(this._t('commissioned'), inst.commissioned ? new Date(`${inst.commissioned}T12:00`).toLocaleDateString(this._locale, { day: 'numeric', month: 'long', year: 'numeric' }) : '–')}${row(this._t('inverter_replacement'), `${this._eur(F.inverter_replacement_cost, 0)} · ${this._t('after_years', { v: this._num(F.inverter_lifetime_years, 0) })}`)}</table>${this._snip(`energy_hub:\n  installation:\n    cost: ${inst.cost ?? 9000}\n    subsidy: ${inst.subsidy ?? 0}\n    commissioned: ${inst.commissioned ?? '2024-01-01'}\n`)}`);
     return o + `<div class="hint">${ehEsc(this._t('yaml_wins'))}</div>`;
   }
@@ -1738,6 +1837,15 @@ main{padding:12px 16px 32px;max-width:1100px;margin:0 auto;display:flex;flex-dir
 .cap.estimated{background:#FAEEDA;color:#633806}
 .cap.absent{background:var(--secondary-background-color);color:var(--secondary-text-color)}
 .roles{width:100%;border-collapse:collapse;font-size:12px}
+.offers{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+.offers td{padding:6px 4px;border-top:1px solid var(--divider-color);vertical-align:top}
+.offers tr.th td{border-top:0;color:var(--secondary-text-color);font-size:11px}
+.offers tr.cur td{background:var(--secondary-background-color)}
+.offers .oname{display:flex;align-items:center;gap:4px}
+.offers td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.pill.small.cur{background:#E6F1FB;color:#185FA5}
+.verdict{font-size:13px;padding:8px 10px;border-radius:8px;background:var(--secondary-background-color)}
+.verdict.gain{background:#EAF3DE;color:#27500A}
 .roles td{padding:5px 4px;border-top:1px solid var(--divider-color);vertical-align:top}
 .roles td.age{text-align:right;color:var(--secondary-text-color);white-space:nowrap}
 code,pre{font-family:var(--code-font-family,ui-monospace,monospace)}

@@ -312,7 +312,9 @@
     "storage": "Opslag",
     "meter": "Netmeter",
     "forecast": "Verwachting",
-    "prefs": "Energiedashboard"
+    "prefs": "Energiedashboard",
+    "tariff": "Tarief",
+    "weather": "Weer"
   },
   "suggest": {
     "attach_bms": "{bms} koppelen aan batterij {battery}",
@@ -333,7 +335,10 @@
     "modules": "modules",
     "cells": "cellen",
     "forecast": "verwachting",
-    "tempo": "tariefkleur"
+    "tempo": "tariefkleur",
+    "tariff": "tarief",
+    "irradiance": "instraling",
+    "clouds": "bewolking"
   },
   "role": {
     "pv_power": "Zonnevermogen",
@@ -343,7 +348,11 @@
     "grid_export_energy": "Teruglevering",
     "load_power": "Huisvermogen",
     "forecast_power": "Verwacht vermogen",
-    "forecast_energy_today": "Verwachting vandaag"
+    "forecast_energy_today": "Verwachting vandaag",
+    "irradiance": "Instraling",
+    "weather": "Weer",
+    "tariff_price": "kWh-prijs",
+    "tariff_color": "Dagkleur"
   },
   "alert_kind": {
     "clipping": "Clipping",
@@ -363,5 +372,48 @@
     "battery_exchange": "meer dan 0,1 kW van de ene batterij naar de andere",
     "stale": "een gebruikte entiteit niet beschikbaar"
   },
-  "beta": "bèta"
+  "beta": "bèta",
+  "comparator": "Aanbiedingsvergelijker",
+  "comparator_hint": "12 maanden · {v} afgenomen",
+  "comparator_learning": "De vergelijker heeft {n} dagen netmetingen nodig ({d} tot nu toe).",
+  "offer": "Aanbod",
+  "avg_price": "Gem. kWh",
+  "subscription": "Vastrecht",
+  "total_year": "Per jaar",
+  "your_contract": "uw contract",
+  "regulated": "gereguleerd",
+  "market": "markt",
+  "custom_offer": "die van u",
+  "best_saving": "Overstappen naar {name} bespaart ongeveer {v} per jaar.",
+  "best_is_current": "Uw contract is het goedkoopst voor uw verbruik.",
+  "no_contract": "Contract onbekend: stel tariff: contract: in YAML in, of installeer Tarif EDF, om het verschil te zien.",
+  "scaled": "Op basis van {n} dagen metingen, omgerekend naar een jaar.",
+  "colors_estimated": "{n} dagen gewaardeerd met de seizoensmix van Tempo- of Zen Flex-dagen (kleur niet geregistreerd).",
+  "grid_info": "EDF-tarieven van {d}, incl. btw. Marktaanbiedingen zijn indicaties: controleer ze met uw contract.",
+  "grid_stale": "De ingebouwde tarieven zijn ouder dan 7 maanden: er kan intussen een herziening zijn geweest.",
+  "contract_box": "Contract",
+  "contract": "Contract",
+  "subscribed_power": "Aansluitvermogen",
+  "offpeak_hours": "Daluren",
+  "price_now": "Huidige prijs",
+  "price_entity": "Prijsentiteit",
+  "color_entity": "Entiteit dagkleur",
+  "assumed": "standaard",
+  "reference": "Productiereferentie",
+  "contract_source": {
+    "tarif_edf": "Tarif EDF",
+    "yaml": "YAML"
+  },
+  "reference_kind": {
+    "measured": "Gemeten instraling",
+    "forecast": "Zonneverwachting",
+    "weather": "Bewolking (weer)",
+    "clearsky": "Heldere hemel"
+  },
+  "reference_hint": {
+    "measured": "heldere hemel geschaald met de gemeten instraling (IEC 61724-1)",
+    "forecast": "uit de verwachtingsintegratie",
+    "weather": "heldere hemel × (1 − 0,75 N^3,4), N de bewolking",
+    "clearsky": "geen instralingssensor, verwachting of weerentiteit gevonden"
+  }
 }

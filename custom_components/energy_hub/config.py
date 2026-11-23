@@ -22,8 +22,17 @@ energy_hub:
   ignore:
     - sensor.zendure_ac_input
   tariff:
-    import: 0.2016
+    import: 0.2016              # flat price when no contract is known
     export: 0.04
+    contract: tempo             # base, hphc, tempo, zen_weekend, zen_weekend_hc, zen_flex (Tarif EDF: detected)
+    kva: 9
+    offpeak: "22:00-06:00"      # your Enedis off-peak hours
+    price: sensor.tarif_actuel_tempo_9kva_ttc
+    color: sensor.rte_tempo_couleur_actuelle
+    offers:                     # override the embedded grid, or add an offer to compare
+      zen_weekend:
+        prices: {week: 0.2285, weekend: 0.1710}
+  weather: weather.home         # cloud cover for the expected production (irradiance sensor: entities)
   installation:
     cost: 9800
     subsidy: 1140
@@ -42,6 +51,7 @@ import voluptuous as vol
 from homeassistant.helpers import config_validation as cv
 
 from .analytics.clearsky import Plane
+from .analytics.tariffs import CONTRACTS
 from .const import (
     CONF_AZIMUTH,
     CONF_BATTERIES,
@@ -58,6 +68,7 @@ from .const import (
     CONF_SHOW_PANEL,
     CONF_TARIFF,
     CONF_TILT,
+    CONF_WEATHER,
 )
 
 ROLES = (
@@ -69,6 +80,20 @@ ROLES = (
     "load_power",
     "forecast_power",
     "forecast_energy_today",
+    "irradiance",
+    "tariff_price",
+    "tariff_color",
+)
+KINDS = ("base", "hphc", "tempo", "weekend", "weekend_hphc", "flex")
+OFFPEAK_RE = r"^\s*\d{1,2}:\d{2}-\d{1,2}:\d{2}(\s*,\s*\d{1,2}:\d{2}-\d{1,2}:\d{2})*\s*$"
+
+OFFER_SCHEMA = vol.Schema(
+    {
+        vol.Optional("name"): cv.string,
+        vol.Optional("kind"): vol.In(KINDS),
+        vol.Optional("subscription"): vol.Coerce(float),
+        vol.Optional("prices", default={}): {cv.string: vol.Coerce(float)},
+    }
 )
 
 PLANE_SCHEMA = vol.Schema(
@@ -112,6 +137,12 @@ YAML_SCHEMA = vol.Schema(
                 vol.Optional("import", default=0.2016): vol.Coerce(float),
                 vol.Optional("export", default=0.04): vol.Coerce(float),
                 vol.Optional("currency", default="EUR"): cv.string,
+                vol.Optional("contract"): vol.In(CONTRACTS),
+                vol.Optional("kva"): vol.All(vol.Coerce(int), vol.Range(min=3, max=36)),
+                vol.Optional("offpeak"): vol.Match(OFFPEAK_RE),
+                vol.Optional("price"): cv.entity_id,
+                vol.Optional("color"): cv.entity_id,
+                vol.Optional("offers", default={}): {cv.slug: OFFER_SCHEMA},
             }
         ),
         vol.Optional(CONF_INSTALLATION, default={}): vol.Schema(
@@ -124,6 +155,7 @@ YAML_SCHEMA = vol.Schema(
             }
         ),
         vol.Optional(CONF_NOTIFY): cv.string,
+        vol.Optional(CONF_WEATHER): cv.entity_id,
     }
 )
 
@@ -159,6 +191,11 @@ class HubConfig:
     import_price: float = 0.2016
     export_price: float = 0.04
     currency: str = "EUR"
+    contract: str | None = None
+    kva: int | None = None
+    offpeak: str | None = None
+    offers: dict[str, dict[str, Any]] = field(default_factory=dict)
+    weather: str | None = None
     cost: float | None = None
     subsidy: float = 0.0
     commissioned: date | None = None
@@ -191,7 +228,14 @@ def parse(raw: dict[str, Any] | None, options: dict[str, Any] | None = None) -> 
         planes=[Plane(p[CONF_KWP], p[CONF_TILT], p[CONF_AZIMUTH]) for p in data[CONF_PLANES]],
         inverter_max_kw=data.get(CONF_INVERTER_MAX_KW),
         export_limit_kw=data.get(CONF_EXPORT_LIMIT_KW),
-        entities=dict(data[CONF_ENTITIES]),
+        entities={
+            **{
+                role: tariff[key]
+                for role, key in (("tariff_price", "price"), ("tariff_color", "color"))
+                if tariff.get(key)
+            },
+            **data[CONF_ENTITIES],
+        },
         batteries=[
             BatteryConfig(
                 key=key,
@@ -215,6 +259,11 @@ def parse(raw: dict[str, Any] | None, options: dict[str, Any] | None = None) -> 
         import_price=tariff["import"],
         export_price=tariff["export"],
         currency=tariff["currency"],
+        contract=tariff.get("contract"),
+        kva=tariff.get("kva"),
+        offpeak=tariff.get("offpeak"),
+        offers=dict(tariff.get("offers") or {}),
+        weather=data.get(CONF_WEATHER),
         cost=inst.get("cost"),
         subsidy=inst["subsidy"],
         commissioned=inst.get("commissioned"),

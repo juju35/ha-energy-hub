@@ -14,6 +14,7 @@ import random
 from datetime import date, datetime, timedelta
 from functools import lru_cache
 
+from .analytics import tariffs
 from .analytics.clearsky import Plane, clearsky_power
 from .history import BatteryReading, History, Reading
 from .sources import BatterySource, Installation, SourceInfo, UnitSource
@@ -51,7 +52,11 @@ def installation() -> Installation:
         "grid_import_energy": "sensor.demo_zlinky_summation_delivered",
         "grid_export_energy": "sensor.demo_zlinky_summation_received",
         "forecast_power": "sensor.demo_solcast_power_now",
+        "tariff_price": "sensor.demo_tarif_actuel_tempo_9kva_ttc",
+        "tariff_color": "sensor.demo_tarif_tempo_couleur",
+        "weather": "weather.demo_meteo_france",
     }
+    inst.tariff = {"contract": "tempo", "kva": 9}
     inst.strings = [
         UnitSource("String 1", "sensor.demo_pv_01_power"),
         UnitSource("String 2", "sensor.demo_pv_02_power"),
@@ -159,6 +164,26 @@ def installation() -> Installation:
             {"forecast": "provided"},
             ["sensor.demo_solcast_power_now"],
         ),
+        SourceInfo(
+            "tarif_edf",
+            "Tarif EDF",
+            "tarif_edf",
+            "beta",
+            "",
+            "tariff",
+            {"tariff": "provided"},
+            ["sensor.demo_tarif_actuel_tempo_9kva_ttc", "sensor.demo_tarif_tempo_couleur"],
+        ),
+        SourceInfo(
+            "weather",
+            "Météo-France",
+            "meteo_france",
+            "core",
+            "",
+            "weather",
+            {"clouds": "provided"},
+            ["weather.demo_meteo_france"],
+        ),
     ]
     inst.excluded = {"sensor.demo_zendure_ac_input": "double_count"}
     return inst
@@ -166,6 +191,25 @@ def installation() -> Installation:
 
 def _rng(day: date, salt: int = 0) -> random.Random:
     return random.Random(day.toordinal() * 7919 + salt)
+
+
+TEMPO = tariffs.offers(9)[2]
+
+
+@lru_cache(maxsize=1024)
+def tempo_color(day: date) -> str:
+    """The demo's Tempo colour of a day, drawn from the season's mix."""
+    r = _rng(day, 5).random()
+    for color, share in tariffs.expected_mix(day, "tempo").items():
+        if r < share:
+            return color
+        r -= share
+    return "blue"
+
+
+def tempo_price(local: datetime) -> float:
+    days = (local.date(), local.date() - timedelta(days=1))
+    return TEMPO.slot_price(local.date(), local.hour * 60 + local.minute, {d.isoformat(): tempo_color(d) for d in days})
 
 
 @lru_cache(maxsize=1024)
@@ -232,9 +276,12 @@ def units_now(
 
 
 def load_now(local: datetime) -> float:
-    """Home consumption, kW: a base of 0.31 kW and peaks at breakfast, lunch and dinner."""
+    """Home consumption, kW: a base of 0.31 kW, peaks at breakfast, lunch and dinner, and electric heating from
+    November to March (mornings and evenings most)."""
     h = local.hour + local.minute / 60
-    return (
+    cold = max(0.0, math.cos(2 * math.pi * (local.timetuple().tm_yday - 15) / 365) - 0.25) / 0.75
+    heating = 1.5 * cold * (1.0 if 6 <= h < 9 or 17 <= h < 23 else 0.45)
+    return heating + (
         0.31
         + 1.2 * math.exp(-(((h - 7.6) / 0.5) ** 2))
         + 0.9 * math.exp(-(((h - 12.6) / 0.4) ** 2))
@@ -359,6 +406,9 @@ class DemoPlant:
             units={k: round(v, 4) for k, v in panels.items()},
             strings={k: round(v, 4) for k, v in strings.items()},
             batteries=batteries,
+            import_price=tempo_price(local),
+            day_color=tempo_color(local.date()) if local.hour >= 6 else None,
+            reference="forecast",
         )
 
 

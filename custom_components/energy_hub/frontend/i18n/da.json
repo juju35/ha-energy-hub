@@ -312,7 +312,9 @@
     "storage": "Lager",
     "meter": "Elmåler",
     "forecast": "Prognose",
-    "prefs": "Energidashboard"
+    "prefs": "Energidashboard",
+    "tariff": "Tarif",
+    "weather": "Vejr"
   },
   "suggest": {
     "attach_bms": "Knyt {bms} til batteriet {battery}",
@@ -333,7 +335,10 @@
     "modules": "moduler",
     "cells": "celler",
     "forecast": "prognose",
-    "tempo": "tarif-farve"
+    "tempo": "tarif-farve",
+    "tariff": "tarif",
+    "irradiance": "indstråling",
+    "clouds": "skydække"
   },
   "role": {
     "pv_power": "Soleffekt",
@@ -343,7 +348,11 @@
     "grid_export_energy": "Salg til nettet",
     "load_power": "Husets effekt",
     "forecast_power": "Forventet effekt",
-    "forecast_energy_today": "Prognose i dag"
+    "forecast_energy_today": "Prognose i dag",
+    "irradiance": "Indstråling",
+    "weather": "Vejr",
+    "tariff_price": "kWh-pris",
+    "tariff_color": "Dagens farve"
   },
   "alert_kind": {
     "clipping": "Klipning",
@@ -363,5 +372,48 @@
     "battery_exchange": "mere end 0,1 kW sendt fra et batteri til et andet",
     "stale": "en brugt enhed er utilgængelig"
   },
-  "beta": "beta"
+  "beta": "beta",
+  "comparator": "Sammenligning af tilbud",
+  "comparator_hint": "12 måneder · {v} købt",
+  "comparator_learning": "Sammenligningen kræver {n} dages netmålinger ({d} indtil nu).",
+  "offer": "Tilbud",
+  "avg_price": "Gns. kWh",
+  "subscription": "Abonnement",
+  "total_year": "Om året",
+  "your_contract": "din aftale",
+  "regulated": "reguleret",
+  "market": "marked",
+  "custom_offer": "din",
+  "best_saving": "Et skifte til {name} ville spare omkring {v} om året.",
+  "best_is_current": "Din aftale er den billigste til dit forbrug.",
+  "no_contract": "Ukendt aftale: angiv tariff: contract: i YAML, eller installer Tarif EDF, for at se forskellen.",
+  "scaled": "Ud fra {n} dages målinger, omregnet til et år.",
+  "colors_estimated": "{n} dage prissat efter sæsonens blanding af Tempo- eller Zen Flex-dage (farve ikke registreret).",
+  "grid_info": "EDF-prisliste fra {d}, inkl. moms. Markedstilbud er vejledende: tjek dem i din aftale.",
+  "grid_stale": "Den indbyggede prisliste er over 7 måneder gammel: der kan være kommet en revision siden.",
+  "contract_box": "Aftale",
+  "contract": "Aftale",
+  "subscribed_power": "Abonneret effekt",
+  "offpeak_hours": "Lavlasttimer",
+  "price_now": "Pris nu",
+  "price_entity": "Prisentitet",
+  "color_entity": "Entitet for dagens farve",
+  "assumed": "standard",
+  "reference": "Produktionsreference",
+  "contract_source": {
+    "tarif_edf": "Tarif EDF",
+    "yaml": "YAML"
+  },
+  "reference_kind": {
+    "measured": "Målt indstråling",
+    "forecast": "Solprognose",
+    "weather": "Skydække (vejr)",
+    "clearsky": "Klar himmel"
+  },
+  "reference_hint": {
+    "measured": "klar himmel skaleret med den målte indstråling (IEC 61724-1)",
+    "forecast": "fra prognoseintegrationen",
+    "weather": "klar himmel × (1 − 0,75 N^3,4), N skydækket",
+    "clearsky": "ingen indstrålingssensor, prognose eller vejrentitet fundet"
+  }
 }

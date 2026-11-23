@@ -17,12 +17,14 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import dt as dt_util
 
 from . import demo
-from .analytics.clearsky import Plane, clearsky_power
+from .analytics.clearsky import CONDITION_CLOUDS, Plane, clearsky_power, cloud_factor, measured_factor
+from .analytics.tariffs import normalize_color
 from .config import HubConfig
 from .const import DOMAIN, EVENT_ALERT, NOTIFY_HUB, STALE_SECONDS, STORAGE_KEY, STORAGE_VERSION, UPDATE_SECONDS
 from .engine import build_snapshot, estimate_kwp
 from .history import BatteryReading, History, Reading
 from .sources import Installation, discover, load_profiles
+from .views import contract_offer
 
 _LOGGER = logging.getLogger(__name__)
 # Languages with a translation file of their own
@@ -205,7 +207,8 @@ class EnergyHubCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         if load is None and grid is not None and pv is not None:
             load = max(pv + grid - batt, 0.0)
         clear = self._clearsky(now)
-        forecast = role_kw("forecast_power")
+        expected, reference = self._expected(now, clear, role_kw("forecast_power"))
+        color = normalize_color(st.state) if (st := get(inst.roles.get("tariff_color") or "")) else None
         offline = any(
             entity_id in stale and ages.get(entity_id, 0) > STALE_SECONDS
             for entity_id in (inst.roles.get("pv_power"), inst.roles.get("grid_power"))
@@ -217,8 +220,12 @@ class EnergyHubCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 pv_kw=pv,
                 load_kw=load,
                 grid_kw=grid,
-                expected_kw=forecast if forecast is not None else clear,
+                expected_kw=expected,
+                reference=reference,
                 clearsky_kw=clear,
+                import_price=self._price(now, color),
+                # The Tempo day starts at 6:00: before that the colour entity still shows yesterday's.
+                day_color=color if now.hour >= 6 else None,
                 units=units or {},
                 strings=strings,
                 batteries=batteries,
@@ -227,6 +234,36 @@ class EnergyHubCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             ),
             ages,
         )
+
+    def _expected(self, now, clear: float | None, forecast: float | None) -> tuple[float | None, str]:
+        """Expected production now and its reference, best first: a measured irradiance (the clear sky scaled by
+        measured / clear-sky irradiance), the forecast integration, the weather's cloud cover (Kasten-Czeplak), the
+        clear sky alone."""
+        get = self.hass.states.get
+        inst = self.installation
+        lat, lon = self.hass.config.latitude, self.hass.config.longitude
+        if clear is not None and (ghi := _number(get(inst.roles.get("irradiance") or ""))) is not None:
+            factor = measured_factor(ghi, now, lat, lon)
+            return (clear * factor if factor is not None else clear), "measured"
+        if forecast is not None:
+            return forecast, "forecast"
+        if clear is not None and (weather := get(inst.roles.get("weather") or "")) is not None:
+            cover = weather.attributes.get("cloud_coverage")
+            clouds = cover / 100 if isinstance(cover, int | float) else CONDITION_CLOUDS.get(weather.state)
+            if clouds is not None:
+                return clear * cloud_factor(clouds), "weather"
+        return clear, "clearsky"
+
+    def _price(self, now, color: str | None) -> float:
+        """Price of the kWh drawn now: the price entity (Tarif EDF), else the contract's grid, else the flat price."""
+        if (price := _number(self.hass.states.get(self.installation.roles.get("tariff_price") or ""))) is not None:
+            return price
+        if offer := contract_offer(self.cfg, self.installation):
+            # The colour entity shows the colour in force: before 6:00, the Tempo day that started yesterday.
+            days = (now.date(), now.date() - timedelta(days=1))
+            colors = {d.isoformat(): color for d in days} if color else {}
+            return offer.slot_price(now.date(), now.hour * 60 + now.minute, colors)
+        return self.cfg.import_price
 
     def _units(self, units) -> dict[str, float]:
         get = self.hass.states.get

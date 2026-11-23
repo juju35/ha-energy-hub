@@ -312,7 +312,9 @@
     "storage": "Úložiště",
     "meter": "Elektroměr",
     "forecast": "Předpověď",
-    "prefs": "Panel energie"
+    "prefs": "Panel energie",
+    "tariff": "Tarif",
+    "weather": "Počasí"
   },
   "suggest": {
     "attach_bms": "Přiřadit {bms} k baterii {battery}",
@@ -333,7 +335,10 @@
     "modules": "moduly",
     "cells": "články",
     "forecast": "předpověď",
-    "tempo": "barva tarifu"
+    "tempo": "barva tarifu",
+    "tariff": "tarif",
+    "irradiance": "ozáření",
+    "clouds": "oblačnost"
   },
   "role": {
     "pv_power": "Výkon FVE",
@@ -343,7 +348,11 @@
     "grid_export_energy": "Dodávka do sítě",
     "load_power": "Výkon domu",
     "forecast_power": "Předpověď výkonu",
-    "forecast_energy_today": "Předpověď na dnes"
+    "forecast_energy_today": "Předpověď na dnes",
+    "irradiance": "Ozáření",
+    "weather": "Počasí",
+    "tariff_price": "Cena kWh",
+    "tariff_color": "Barva dne"
   },
   "alert_kind": {
     "clipping": "Ořezání",
@@ -363,5 +372,48 @@
     "battery_exchange": "víc než 0,1 kW posíláno z jedné baterie do druhé",
     "stale": "použitá entita nedostupná"
   },
-  "beta": "beta"
+  "beta": "beta",
+  "comparator": "Porovnání nabídek",
+  "comparator_hint": "12 měsíců · {v} odebráno",
+  "comparator_learning": "Porovnání potřebuje {n} dní měření sítě (zatím {d}).",
+  "offer": "Nabídka",
+  "avg_price": "Průměr kWh",
+  "subscription": "Paušál",
+  "total_year": "Ročně",
+  "your_contract": "vaše smlouva",
+  "regulated": "regulovaná",
+  "market": "tržní",
+  "custom_offer": "vaše",
+  "best_saving": "Přechod na {name} by ušetřil asi {v} ročně.",
+  "best_is_current": "Vaše smlouva je pro vaši spotřebu nejlevnější.",
+  "no_contract": "Smlouva neznámá: nastavte tariff: contract: v YAML nebo nainstalujte Tarif EDF, abyste viděli rozdíl.",
+  "scaled": "Na základě {n} dní měření, přepočteno na rok.",
+  "colors_estimated": "{n} dní oceněno sezónním mixem dnů Tempo nebo Zen Flex (barva nezaznamenána).",
+  "grid_info": "Ceník EDF z {d}, s DPH. Tržní nabídky jsou orientační: ověřte si je ve své smlouvě.",
+  "grid_stale": "Vestavěný ceník je starší než 7 měsíců: mezitím mohlo dojít ke změně.",
+  "contract_box": "Smlouva",
+  "contract": "Smlouva",
+  "subscribed_power": "Rezervovaný příkon",
+  "offpeak_hours": "Nízký tarif",
+  "price_now": "Aktuální cena",
+  "price_entity": "Entita ceny",
+  "color_entity": "Entita barvy dne",
+  "assumed": "výchozí",
+  "reference": "Reference výroby",
+  "contract_source": {
+    "tarif_edf": "Tarif EDF",
+    "yaml": "YAML"
+  },
+  "reference_kind": {
+    "measured": "Měřené ozáření",
+    "forecast": "Solární předpověď",
+    "weather": "Oblačnost (počasí)",
+    "clearsky": "Jasná obloha"
+  },
+  "reference_hint": {
+    "measured": "jasná obloha škálovaná měřeným ozářením (IEC 61724-1)",
+    "forecast": "z integrace předpovědi",
+    "weather": "jasná obloha × (1 − 0,75 N^3,4), N oblačnost",
+    "clearsky": "nenalezen snímač ozáření, předpověď ani entita počasí"
+  }
 }

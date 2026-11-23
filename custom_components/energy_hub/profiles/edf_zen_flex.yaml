@@ -1,0 +1,9 @@
+name: EDF Zen Flex
+platform: edf_zen_flex
+status: beta
+url: https://github.com/AuroreVgn/edf-zen-flex
+# Today's day kind: "eco" or "sobriete".
+roles:
+  tariff_color: ['edf_zen_flex_aujourdhui$']
+capabilities:
+  tariff: provided

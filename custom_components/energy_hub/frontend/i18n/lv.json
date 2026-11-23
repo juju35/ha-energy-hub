@@ -312,7 +312,9 @@
     "storage": "Uzkrāšana",
     "meter": "Skaitītājs",
     "forecast": "Prognoze",
-    "prefs": "Enerģijas panelis"
+    "prefs": "Enerģijas panelis",
+    "tariff": "Tarifs",
+    "weather": "Laikapstākļi"
   },
   "suggest": {
     "attach_bms": "Piesaistīt {bms} akumulatoram {battery}",
@@ -333,7 +335,10 @@
     "modules": "moduļi",
     "cells": "šūnas",
     "forecast": "prognoze",
-    "tempo": "tarifa krāsa"
+    "tempo": "tarifa krāsa",
+    "tariff": "tarifs",
+    "irradiance": "starojums",
+    "clouds": "mākoņainība"
   },
   "role": {
     "pv_power": "Saules jauda",
@@ -343,7 +348,11 @@
     "grid_export_energy": "Nodošana tīklā",
     "load_power": "Mājas jauda",
     "forecast_power": "Prognozētā jauda",
-    "forecast_energy_today": "Šodienas prognoze"
+    "forecast_energy_today": "Šodienas prognoze",
+    "irradiance": "Starojums",
+    "weather": "Laikapstākļi",
+    "tariff_price": "kWh cena",
+    "tariff_color": "Dienas krāsa"
   },
   "alert_kind": {
     "clipping": "Ierobežošana",
@@ -363,5 +372,48 @@
     "battery_exchange": "vairāk nekā 0,1 kW sūtīts no viena akumulatora uz otru",
     "stale": "izmantotā entītija nav pieejama"
   },
-  "beta": "beta"
+  "beta": "beta",
+  "comparator": "Piedāvājumu salīdzinājums",
+  "comparator_hint": "12 mēneši · {v} no tīkla",
+  "comparator_learning": "Salīdzinājumam vajag {n} dienu tīkla rādījumus (pagaidām {d}).",
+  "offer": "Piedāvājums",
+  "avg_price": "Vid. kWh",
+  "subscription": "Abonements",
+  "total_year": "Gadā",
+  "your_contract": "jūsu līgums",
+  "regulated": "regulēts",
+  "market": "tirgus",
+  "custom_offer": "jūsu",
+  "best_saving": "Pāreja uz {name} ietaupītu aptuveni {v} gadā.",
+  "best_is_current": "Jūsu līgums ir lētākais jūsu patēriņam.",
+  "no_contract": "Līgums nav zināms: iestatiet tariff: contract: YAML vai instalējiet Tarif EDF, lai redzētu starpību.",
+  "scaled": "Pēc {n} dienu rādījumiem, pārrēķināts uz gadu.",
+  "colors_estimated": "{n} dienas novērtētas pēc sezonas Tempo vai Zen Flex dienu sajaukuma (krāsa nav reģistrēta).",
+  "grid_info": "EDF cenrādis no {d}, ar PVN. Tirgus piedāvājumi ir orientējoši: pārbaudiet tos savā līgumā.",
+  "grid_stale": "Iebūvētais cenrādis ir vecāks par 7 mēnešiem: pa to laiku varēja būt izmaiņas.",
+  "contract_box": "Līgums",
+  "contract": "Līgums",
+  "subscribed_power": "Pieslēguma jauda",
+  "offpeak_hours": "Zemā tarifa stundas",
+  "price_now": "Pašreizējā cena",
+  "price_entity": "Cenas entītija",
+  "color_entity": "Dienas krāsas entītija",
+  "assumed": "noklusējums",
+  "reference": "Ražošanas atsauce",
+  "contract_source": {
+    "tarif_edf": "Tarif EDF",
+    "yaml": "YAML"
+  },
+  "reference_kind": {
+    "measured": "Izmērītā starojuma intensitāte",
+    "forecast": "Saules prognoze",
+    "weather": "Mākoņainība (laikapstākļi)",
+    "clearsky": "Skaidras debesis"
+  },
+  "reference_hint": {
+    "measured": "skaidras debesis, mērogotas ar izmērīto starojumu (IEC 61724-1)",
+    "forecast": "no prognozes integrācijas",
+    "weather": "skaidras debesis × (1 − 0,75 N^3,4), N mākoņainība",
+    "clearsky": "nav atrasts starojuma sensors, prognoze vai laikapstākļu entītija"
+  }
 }

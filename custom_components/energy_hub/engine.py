@@ -329,6 +329,9 @@ def build_snapshot(
 
     # ---- finances
     def gain(d: dict[str, Any]) -> float:
+        # Self-consumption valued at the price of its half hour when the contract's prices were known that day.
+        if "self_eur" in d:
+            return d["self_eur"] + d["export"] * cfg.export_price
         return savings(max(d["pv"] - d["export"], 0), d["export"], cfg.import_price, cfg.export_price).total
 
     gains_by_day = {k: gain(d) for k, d in history.days.items()}
@@ -554,8 +557,9 @@ def build_snapshot(
             "monthly": [{"m": k, "eur": _r(v, 2)} for k, v in sorted(monthly_gains.items())[-12:]],
             "calendar": views.gains_calendar(gains_by_day, today),
             "bill": views.bill(history, today, cfg.import_price, cfg.export_price),
-            "import_price": cfg.import_price,
+            "import_price": _r(reading.import_price, 4) if reading and reading.import_price else cfg.import_price,
             "export_price": cfg.export_price,
+            "comparator": views.cached_comparator(history, cfg, inst, today),
             "inverter_replacement_cost": cfg.inverter_replacement_cost,
             "inverter_lifetime_years": cfg.inverter_lifetime_years,
         },
@@ -572,5 +576,11 @@ def build_snapshot(
             "inverter": next((s.name for s in inst.sources if s.role == "pv"), None),
             "meter": next((s.name for s in inst.sources if s.role == "meter"), None),
             "forecast": next((s.name for s in inst.sources if s.role == "forecast"), None),
+        },
+        "reference": {
+            "source": reading.reference if reading else None,
+            "irradiance": inst.roles.get("irradiance"),
+            "weather": inst.roles.get("weather"),
+            "forecast": inst.roles.get("forecast_power"),
         },
     }

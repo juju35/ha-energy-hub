@@ -312,7 +312,9 @@
     "storage": "Stocare",
     "meter": "Contor",
     "forecast": "Prognoză",
-    "prefs": "Panou energie"
+    "prefs": "Panou energie",
+    "tariff": "Tarif",
+    "weather": "Meteo"
   },
   "suggest": {
     "attach_bms": "Asociază {bms} bateriei {battery}",
@@ -333,7 +335,10 @@
     "modules": "module",
     "cells": "celule",
     "forecast": "prognoză",
-    "tempo": "culoarea tarifului"
+    "tempo": "culoarea tarifului",
+    "tariff": "tarif",
+    "irradiance": "iradianță",
+    "clouds": "nebulozitate"
   },
   "role": {
     "pv_power": "Putere solară",
@@ -343,7 +348,11 @@
     "grid_export_energy": "Injecție în rețea",
     "load_power": "Puterea casei",
     "forecast_power": "Putere prognozată",
-    "forecast_energy_today": "Prognoza de azi"
+    "forecast_energy_today": "Prognoza de azi",
+    "irradiance": "Iradianță",
+    "weather": "Meteo",
+    "tariff_price": "Preț kWh",
+    "tariff_color": "Culoarea zilei"
   },
   "alert_kind": {
     "clipping": "Limitare",
@@ -363,5 +372,48 @@
     "battery_exchange": "peste 0,1 kW trimiși dintr-o baterie în alta",
     "stale": "o entitate folosită indisponibilă"
   },
-  "beta": "beta"
+  "beta": "beta",
+  "comparator": "Comparator de oferte",
+  "comparator_hint": "12 luni · {v} consumați din rețea",
+  "comparator_learning": "Comparatorul are nevoie de {n} zile de citiri ale rețelei ({d} până acum).",
+  "offer": "Ofertă",
+  "avg_price": "kWh mediu",
+  "subscription": "Abonament",
+  "total_year": "Pe an",
+  "your_contract": "contractul dvs.",
+  "regulated": "reglementat",
+  "market": "piață",
+  "custom_offer": "a dvs.",
+  "best_saving": "Trecerea la {name} ar economisi circa {v} pe an.",
+  "best_is_current": "Contractul dvs. este cel mai ieftin pentru consumul dvs.",
+  "no_contract": "Contract necunoscut: setați tariff: contract: în YAML sau instalați Tarif EDF pentru a vedea diferența.",
+  "scaled": "Pe baza a {n} zile de citiri, extrapolate la un an.",
+  "colors_estimated": "{n} zile evaluate după mixul sezonier de zile Tempo sau Zen Flex (culoare neînregistrată).",
+  "grid_info": "Grila EDF din {d}, cu TVA. Ofertele de piață sunt orientative: verificați-le în contractul dvs.",
+  "grid_stale": "Grila inclusă are peste 7 luni: între timp poate fi survenit o revizuire.",
+  "contract_box": "Contract",
+  "contract": "Contract",
+  "subscribed_power": "Putere contractată",
+  "offpeak_hours": "Ore de gol",
+  "price_now": "Preț actual",
+  "price_entity": "Entitate preț",
+  "color_entity": "Entitate culoarea zilei",
+  "assumed": "implicit",
+  "reference": "Referință de producție",
+  "contract_source": {
+    "tarif_edf": "Tarif EDF",
+    "yaml": "YAML"
+  },
+  "reference_kind": {
+    "measured": "Iradianță măsurată",
+    "forecast": "Prognoză solară",
+    "weather": "Nebulozitate meteo",
+    "clearsky": "Cer senin"
+  },
+  "reference_hint": {
+    "measured": "cer senin scalat cu iradianța măsurată (IEC 61724-1)",
+    "forecast": "din integrarea de prognoză",
+    "weather": "cer senin × (1 − 0,75 N^3,4), N nebulozitatea",
+    "clearsky": "nu s-a găsit senzor de iradianță, prognoză sau entitate meteo"
+  }
 }

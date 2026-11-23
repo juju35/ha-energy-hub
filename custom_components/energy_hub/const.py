@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Final
 
 DOMAIN: Final = "energy_hub"
-VERSION: Final = "1.3.0"
+VERSION: Final = "1.4.0"
 
 # Options of the entry (set in the UI or in YAML; YAML wins).
 CONF_DEMO: Final = "demo"
@@ -25,6 +25,7 @@ CONF_TARIFF: Final = "tariff"
 CONF_INSTALLATION: Final = "installation"
 CONF_NOTIFY: Final = "notify"
 CONF_FORECAST: Final = "forecast"
+CONF_WEATHER: Final = "weather"
 
 # Seconds between two readings of the source entities; samples are averaged into 5-minute buckets.
 UPDATE_SECONDS: Final = 30

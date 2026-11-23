@@ -312,7 +312,9 @@
     "storage": "Almacenamiento",
     "meter": "Contador",
     "forecast": "Previsión",
-    "prefs": "Panel de energía"
+    "prefs": "Panel de energía",
+    "tariff": "Tarifa",
+    "weather": "Meteorología"
   },
   "suggest": {
     "attach_bms": "Asociar {bms} a la batería {battery}",
@@ -333,7 +335,10 @@
     "modules": "módulos",
     "cells": "celdas",
     "forecast": "previsión",
-    "tempo": "color de tarifa"
+    "tempo": "color de tarifa",
+    "tariff": "tarifa",
+    "irradiance": "irradiancia",
+    "clouds": "nubosidad"
   },
   "role": {
     "pv_power": "Potencia solar",
@@ -343,7 +348,11 @@
     "grid_export_energy": "Exportación a red",
     "load_power": "Potencia de la casa",
     "forecast_power": "Previsión de potencia",
-    "forecast_energy_today": "Previsión de hoy"
+    "forecast_energy_today": "Previsión de hoy",
+    "irradiance": "Irradiancia",
+    "weather": "Meteorología",
+    "tariff_price": "Precio del kWh",
+    "tariff_color": "Color del día"
   },
   "alert_kind": {
     "clipping": "Recorte",
@@ -363,5 +372,48 @@
     "battery_exchange": "más de 0,1 kW enviados de una batería a otra",
     "stale": "una entidad usada no disponible"
   },
-  "beta": "beta"
+  "beta": "beta",
+  "comparator": "Comparador de ofertas",
+  "comparator_hint": "12 meses · {v} consumidos de la red",
+  "comparator_learning": "El comparador necesita {n} días de lecturas de red ({d} por ahora).",
+  "offer": "Oferta",
+  "avg_price": "kWh medio",
+  "subscription": "Suscripción",
+  "total_year": "Por año",
+  "your_contract": "su contrato",
+  "regulated": "regulada",
+  "market": "mercado",
+  "custom_offer": "la suya",
+  "best_saving": "Cambiar a {name} ahorraría unos {v} al año.",
+  "best_is_current": "Su contrato es el más barato para su consumo.",
+  "no_contract": "Contrato desconocido: indique tariff: contract: en YAML, o instale Tarif EDF, para ver la diferencia.",
+  "scaled": "Con {n} días de lecturas, extrapolados a un año.",
+  "colors_estimated": "{n} días valorados con la mezcla de la temporada de días Tempo o Zen Flex (color no registrado).",
+  "grid_info": "Tarifa EDF del {d}, IVA incluido. Las ofertas de mercado son referencias: compruébelas con su contrato.",
+  "grid_stale": "La tarifa incluida tiene más de 7 meses: puede haber habido una revisión desde entonces.",
+  "contract_box": "Contrato",
+  "contract": "Contrato",
+  "subscribed_power": "Potencia contratada",
+  "offpeak_hours": "Horas valle",
+  "price_now": "Precio actual",
+  "price_entity": "Entidad de precio",
+  "color_entity": "Entidad del color del día",
+  "assumed": "por defecto",
+  "reference": "Referencia de producción",
+  "contract_source": {
+    "tarif_edf": "Tarif EDF",
+    "yaml": "YAML"
+  },
+  "reference_kind": {
+    "measured": "Irradiancia medida",
+    "forecast": "Previsión solar",
+    "weather": "Nubosidad meteorológica",
+    "clearsky": "Cielo despejado"
+  },
+  "reference_hint": {
+    "measured": "cielo despejado escalado por la irradiancia medida (IEC 61724-1)",
+    "forecast": "de la integración de previsión",
+    "weather": "cielo despejado × (1 − 0,75 N^3,4), N la nubosidad",
+    "clearsky": "no se encontró sensor de irradiancia, previsión ni entidad meteorológica"
+  }
 }

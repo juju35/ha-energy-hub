@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.4.0 - 2026-11-23
+
+### Features
+- Finances: an offer comparator replays the last 12 months of grid draw, half hour by half hour, under each EDF offer (Tarif Bleu Base, Heures Creuses, Tempo; Zen Week-End, Zen Week-End Heures Creuses, Zen Flex), subscription included, and says what switching would save. The grid is EDF's, embedded and updated by release; `tariff: offers:` overrides it or adds an offer of your own.
+- Tariff: the contract and power are read from Tarif EDF, the price of the kWh now from its price entity, the day's Tempo colour from Tarif EDF or RTE Tempo and the Zen Flex day from EDF Zen Flex; YAML `tariff: contract:`, `kva:`, `offpeak:`, `price:`, `color:`.
+- Savings and the bill value each half hour at its price (Tempo colours, off-peak hours) instead of a flat price.
+- Expected production from the best reference found: a measured irradiance sensor (W/m², weather stations such as Ecowitt or WeatherFlow), then the solar forecast, then a weather entity's cloud cover (Kasten-Czeplak), then the clear sky; Settings shows which one is used. YAML `weather:` and `entities: irradiance:`.
+- Profiles: Tarif EDF, RTE Tempo, EDF Zen Flex.
+
 ## 1.3.0 - 2026-11-23
 
 ### Features

@@ -225,7 +225,7 @@ def settings_yaml(cfg, inst) -> str:
         lines.append(f"  inverter_max_kw: {cfg.inverter_max_kw:g}")
     if cfg.export_limit_kw:
         lines.append(f"  export_limit_kw: {cfg.export_limit_kw:g}")
-    roles = {k: v for k, v in inst.roles.items() if not k.startswith("forecast")}
+    roles = {k: v for k, v in inst.roles.items() if not k.startswith("forecast") and k != "weather"}
     if roles:
         lines.append("  entities:")
         lines += [f"    {role}: {entity_id}" for role, entity_id in sorted(roles.items())]
@@ -251,6 +251,14 @@ def settings_yaml(cfg, inst) -> str:
         lines.append("  ignore:")
         lines += [f"    - {e}" for e in sorted(inst.excluded)]
     lines += ["  tariff:", f"    import: {cfg.import_price:g}", f"    export: {cfg.export_price:g}"]
+    if contract := cfg.contract or inst.tariff.get("contract"):
+        lines.append(f"    contract: {contract}")
+    if kva := cfg.kva or inst.tariff.get("kva"):
+        lines.append(f"    kva: {kva}")
+    if cfg.offpeak:
+        lines.append(f'    offpeak: "{cfg.offpeak}"')
+    if inst.roles.get("weather"):
+        lines.append(f"  weather: {inst.roles['weather']}")
     if cfg.cost:
         lines += ["  installation:", f"    cost: {cfg.cost:g}", f"    subsidy: {cfg.subsidy:g}"]
         if cfg.commissioned:

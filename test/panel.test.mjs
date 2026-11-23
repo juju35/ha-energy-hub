@@ -161,3 +161,26 @@ test('without batteries nor cost the panel still renders', () => {
   assert.ok(p._batteries().includes('none'));
   assert.ok(p._finances().includes('installation: cost:'));
 });
+
+test('offer comparator, contract and production reference', () => {
+  const p = panel('en');
+  const html = p._comparator();
+  assert.match(html, /Offer comparator/);
+  assert.match(html, /Switching to Tarif Bleu · Heures Creuses would save about/);
+  assert.match(html, /your contract/);
+  assert.ok(!/undefined|NaN/.test(html));
+  p._sub = 'tariffs';
+  assert.match(p._settingsTab(), /Tarif Bleu · Tempo/);
+  assert.match(p._settingsTab(), /sensor\.demo_tarif_actuel_tempo_9kva_ttc/);
+  assert.match(p._reference(), /Solar forecast/);
+  assert.match(panel('fr')._comparator(), /Comparateur d&#39;offres/);
+
+  const data = structuredClone(snapshot);
+  data.finances.comparator = { ...data.finances.comparator, offers: [], days: 3 };
+  assert.match(panel('en', data)._comparator(), /needs 14 days of grid readings \(3 so far\)/);
+  data.finances.comparator = { ...snapshot.finances.comparator, current: null, grid_stale: true, scale: 2, colors: 100 };
+  const unknown = panel('en', data)._comparator();
+  assert.match(unknown, /Contract unknown/);
+  assert.match(unknown, /more than 7 months old/);
+  assert.match(unknown, /scaled to a year/);
+});
