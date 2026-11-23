@@ -85,8 +85,8 @@ def _save(page, path: Path) -> None:
 
     data = page.screenshot()
     if path.exists():
-        old = Image.open(path).convert("RGBA")
-        new = Image.open(io.BytesIO(data)).convert("RGBA")
+        old = Image.open(path).convert("RGB")
+        new = Image.open(io.BytesIO(data)).convert("RGB")
         if old.size == new.size and ImageChops.difference(old, new).getbbox() is None:
             return
     path.write_bytes(data)
