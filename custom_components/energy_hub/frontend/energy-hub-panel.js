@@ -1,7 +1,7 @@
 // Energy Hub — sidebar panel. Draws everything itself (no Lovelace card): the illustrated banner, which folds into a
 // sticky bar on scroll, and six tabs (Overview, Production, Batteries, Losses, Finances, Settings). The data comes from
 // the integration's snapshot (websocket `energy_hub/subscribe`, pushed every 30 seconds).
-const ENERGY_HUB_PANEL_VERSION = '1.1.0';
+const ENERGY_HUB_PANEL_VERSION = '1.2.0';
 
 const EH_ICONS = {
   'bell-outline': 'M10 21H14C14 22.1 13.1 23 12 23S10 22.1 10 21M21 19V20H3V19L5 17V11C5 7.9 7 5.2 10 4.3V4C10 2.9 10.9 2 12 2S14 2.9 14 4V4.3C17 5.2 19 7.9 19 11V17L21 19M17 11C17 8.2 14.8 6 12 6S7 8.2 7 11V18H17V11Z',
@@ -54,6 +54,9 @@ const EH_TABS = [
   ['settings', 'cog-outline'],
 ];
 
+// The other languages are files next to the panel (frontend/i18n/<lang>.json), fetched when Home Assistant uses one.
+const EH_LANGS = ['fr', 'de', 'es', 'it', 'nl', 'pt', 'pl', 'sr', 'sr-Latn', 'ro', 'da', 'sv', 'bg', 'ru', 'uk', 'hu', 'sk', 'cs', 'sl', 'lv', 'el'];
+
 const EH_I18N = {
   en: {
     title: 'Energy',
@@ -81,13 +84,13 @@ const EH_I18N = {
     full: 'Full',
     of_peak: '{v} of peak',
     solar_share: '{v} solar',
-    base_load: 'base load {v}',
     full_at: 'full at {v}',
     self_consumption: 'Self-consumption',
     self_sufficiency: 'Self-sufficiency',
     saved: 'Saved',
     losses: 'Losses',
     vs_yesterday: '{v} vs yesterday',
+    pts: 'pts',
     resale: 'resale {v}',
     of_day: '{v} · {p} of the day',
     production: 'Production',
@@ -99,7 +102,6 @@ const EH_I18N = {
     hover_hint: 'Hover the curve for details',
     inverter_max: 'Inverter max {v}',
     clipped: 'Clipped {v}',
-    now: 'now',
     alerts: {
       clipping: ['Clipping {from} – {to}', '{kwh} lost · {days} day(s) this week'],
       string_lagging: ['{name} lagging', '{pct} vs its peers for {days} days'],
@@ -139,7 +141,6 @@ const EH_I18N = {
     temperature: 'Temperature',
     estimated: 'estimated',
     measured: '{a} / {b} measured',
-    soc_24: 'State of charge · today',
     cells: 'Cells',
     voltage: 'Voltage',
     deviation: 'Deviation',
@@ -187,11 +188,7 @@ const EH_I18N = {
     no_cost: 'Set `installation: cost:` in YAML to see the payback.',
     sources: 'Sources',
     capabilities: { provided: 'provided', estimated: 'estimated by the hub', absent: 'not available' },
-    roles: 'Entities used',
-    quality: 'Data freshness',
-    last_value: 'last value',
     yaml: 'YAML',
-    copy: 'Copy',
     copied: 'Copied',
     excluded: 'Excluded',
     excluded_reason: { ignore: 'ignored in YAML', double_count: 'already counted by the inverter (double count)' },
@@ -354,305 +351,6 @@ const EH_I18N = {
     },
     beta: 'beta',
   },
-  fr: {
-    title: 'Énergie',
-    tabs: { overview: "Vue d'ensemble", production: 'Production', batteries: 'Batteries', losses: 'Pertes', finances: 'Finances', settings: 'Réglages' },
-    demo: 'Démo',
-    loading: "Chargement d'Energy Hub…",
-    not_loaded: "Energy Hub n'est pas chargé.",
-    producing: 'Production {v}',
-    battery_pill: 'Batterie {v}',
-    night: 'Nuit',
-    alert_pill: '{n} alerte(s)',
-    subline_day: '{sc} autoconsommé · batterie {soc}',
-    subline_night: 'Maison {load} · autonomie {aut}',
-    kwp: '{v} kWc',
-    solar: 'Solaire',
-    home: 'Maison',
-    battery: 'Batterie',
-    batteries_n: '{n} batteries',
-    grid: 'Réseau',
-    importing: 'Soutirage',
-    exporting: 'Injection',
-    idle: 'Repos',
-    charging: 'Charge',
-    discharging: 'Décharge',
-    full: 'Pleine',
-    of_peak: '{v} de la crête',
-    solar_share: '{v} solaire',
-    base_load: 'talon {v}',
-    full_at: 'pleine à {v}',
-    self_consumption: 'Autoconsommation',
-    self_sufficiency: 'Autoproduction',
-    saved: 'Économisé',
-    losses: 'Pertes',
-    vs_yesterday: '{v} vs hier',
-    resale: 'revente {v}',
-    of_day: '{v} · {p} du jour',
-    production: 'Production',
-    forecast: 'Prévision',
-    consumption: 'Conso',
-    battery_pct: 'Batterie %',
-    clipping: 'Écrêtage',
-    produced_of: '{a} produits · {b} prévus',
-    hover_hint: 'Survole la courbe pour le détail',
-    inverter_max: 'Pmax onduleur {v}',
-    clipped: 'Écrêté {v}',
-    now: 'maintenant',
-    alerts: {
-      clipping: ['Écrêtage {from} – {to}', '{kwh} perdus · {days} jour(s) cette semaine'],
-      string_lagging: ['{name} en retrait', '{pct} vs ses voisines depuis {days} jours'],
-      shading: ['Ombrage {unit}', 'Chaque jour clair {from} – {to} · {kwh}/jour'],
-      soiling: ['Encrassement', '{pct} perdus : un nettoyage peut être rentable'],
-      cell_drift: ['{battery} : cellule {cell}', "Seuil d'écart dans {days} jours"],
-      battery_exchange: ['Batterie vers batterie', '{kw} envoyés d\'une batterie dans une autre'],
-      stale: ['Source figée', '{entities}'],
-    },
-    yield: 'Rendement',
-    pr: 'Indice de performance',
-    pr_range: 'plage saine {v}',
-    peak_day: 'Crête du jour',
-    reached_limit: 'plafond onduleur atteint',
-    this_month: 'Ce mois',
-    of_expected: '{v} du prévu',
-    roof: 'Toit · rendement par panneau',
-    roof_hint: '% du meilleur panneau · aujourd\'hui',
-    strings: 'Strings',
-    pr_30: 'Indice de performance · 30 j',
-    rain: 'gouttes = pluie',
-    months_12: '12 mois',
-    expected_line: 'trait = attendu',
-    fleet: 'Parc',
-    net_power: 'Puissance nette',
-    n_charging: '{c} en charge · {d} en décharge',
-    autonomy: 'Autonomie',
-    autonomy_sub: 'à {v} · réserves déduites',
-    exchange: 'Échange interne',
-    to_avoid: 'à éviter',
-    none: 'aucun',
-    all: 'Toutes',
-    compare: 'Comparer',
-    health: 'État de santé',
-    cycles: 'Cycles',
-    rte: 'Rendement aller-retour',
-    temperature: 'Température',
-    estimated: 'estimé',
-    measured: '{a} / {b} mesurés',
-    soc_24: 'Charge · aujourd\'hui',
-    cells: 'Cellules',
-    voltage: 'Tension',
-    deviation: 'Écart',
-    spread: 'Écart',
-    min: 'Min',
-    max: 'Max',
-    threshold_in: 'seuil {t} dans {d} jours',
-    stable: 'stable',
-    no_cells: "Cette batterie n'expose pas ses cellules.",
-    capacity_share: 'Répartition de la capacité',
-    lost_today: "Perdu aujourd'hui",
-    this_month_lost: 'Ce mois',
-    availability: 'Disponibilité',
-    main_cause: 'Cause n° 1',
-    cascade: 'Du potentiel au produit',
-    axis_cut: 'Axe coupé pour rendre les pertes lisibles',
-    heatmap: 'Écrêtage · 30 j × heure',
-    causes_month: 'Causes · ce mois',
-    causes: { clipping: 'Écrêtage', shading: 'Ombrage', soiling: 'Encrassement', limitation: 'Bridage', unavailability: 'Indisponibilité' },
-    causes_short: { potential: 'Potentiel', clipping: 'Écrêtage', shading: 'Ombrage', soiling: 'Encrass.', limitation: 'Bridage', unavailability: 'Indispo', produced: 'Produit' },
-    potential: 'Potentiel',
-    produced: 'Produit',
-    events: 'Événements',
-    no_event: 'Aucune perte détectée.',
-    learning: 'en apprentissage · {d}/{n} jours',
-    soiling_trend: 'Encrassement',
-    degradation: 'Dégradation',
-    per_year: '{v}/an',
-    amortised: 'amorti',
-    gained_since: 'Gagné depuis la mise en service',
-    of_net_cost: 'sur {v} de coût net',
-    break_even: 'Point mort',
-    in_years: 'dans {v} ans',
-    gain_20: 'Gain net sur 20 ans',
-    projection: 'Projection',
-    price_rise: 'Hausse du prix',
-    per_year_short: '{v} %/an',
-    net_cost: 'coût net {v}',
-    inverter: 'onduleur',
-    gains_month: 'Gains par mois',
-    gains_from: "D'où viennent les gains",
-    direct: 'Autoconsommation directe',
-    battery_restored: 'Batterie restituée',
-    export: 'Revente',
-    no_cost: "Renseigne `installation: cost:` en YAML pour voir l'amortissement.",
-    sources: 'Sources',
-    capabilities: { provided: 'fourni', estimated: 'estimé par le hub', absent: 'non disponible' },
-    roles: 'Entités utilisées',
-    quality: 'Fraîcheur des données',
-    last_value: 'dernière valeur',
-    yaml: 'YAML',
-    copy: 'Copier',
-    copied: 'Copié',
-    excluded: 'Exclues',
-    excluded_reason: { ignore: 'ignorée en YAML', double_count: "déjà comptée par l'onduleur (double comptage)" },
-    health_title: 'Configuration',
-    checks: {
-      pv: 'Production détectée',
-      grid: 'Compteur réseau',
-      battery: 'Batteries',
-      forecast: 'Prévision',
-      planes: 'Orientation des panneaux',
-      tariff: "Tarifs et coût d'installation",
-    },
-    check_missing: 'manquant',
-    kwp_estimated: 'kWc estimés depuis les crêtes : renseigne `planes:` en YAML',
-    active: 'active',
-    active_n: '{n} active(s)',
-    no_notify: 'aucune',
-    inactive: 'inactive',
-    after_years: 'après {v} ans',
-    alert_rules: "Règles d'alerte",
-    alerts_label: 'Alertes',
-    azimuth: 'Azimut',
-    balancing: 'Équilibrage',
-    bill_hint: 'Avec solaire : achats réseau à {i}/kWh moins la revente à {e}/kWh. Sans : toute la consommation achetée.',
-    bill_title: 'Facture avec et sans solaire',
-    capacity: 'Capacité',
-    commissioned: 'Mise en service',
-    computed: 'calculée',
-    copy_yaml: 'Copier le YAML',
-    correlation: 'charges qui se suivent (r = {v})',
-    cost: "Coût de l'installation",
-    credit: 'crédit',
-    days_30: '30 jours',
-    diag_drift: 'Dérive de {v} mV par jour par rapport aux autres : un équilibrage ou un contrôle de cette cellule peut être nécessaire.',
-    diag_stable: 'Suit les autres cellules : rien à faire.',
-    drifting: 'En dérive',
-    event_name: 'Événement',
-    export_limit: "Limite d'injection",
-    export_price: 'Prix de revente',
-    frequency: 'Fréquence',
-    gains_calendar: 'Calendrier des gains',
-    gaps: 'trous {v}',
-    high: 'haute',
-    home_computed: 'Pas de capteur de consommation : calculée depuis la production, le réseau et les batteries.',
-    import_price: "Prix d'achat",
-    in_days: 'dans {d} jours',
-    installation_box: 'Installation',
-    inverter_cap: 'Onduleur',
-    inverter_max_short: 'Pmax onduleur',
-    inverter_replacement: "Remplacement de l'onduleur",
-    last_seen: 'dernière valeur il y a {v}',
-    learning_short: 'Pas encore assez de données.',
-    limit_kw: 'limite {v}',
-    low: 'basse',
-    measured_short: 'mesurée',
-    modules: 'Modules',
-    modules_x_cells: '{m} modules × {c} cellules',
-    n_cells: '{n} cellules',
-    n_days: '{n} jours',
-    one_day: '1 jour',
-    net_cost_label: 'Coût net',
-    no: 'non',
-    notifications: 'Notifications',
-    notify_target: 'Action de notification',
-    now_short: 'maintenant',
-    of_threshold: 'seuil {t}',
-    once_a_day: 'une fois par jour et par alerte',
-    open: 'Ouvrir',
-    panels: 'panneaux',
-    per_day: '{v} par jour',
-    plane_n: 'Pan {n}',
-    planes: 'Panneaux',
-    power: 'Puissance',
-    projection_dashed: 'pointillés : projection',
-    quality_24h: 'Qualité des données · 24 h',
-    quality_hint: 'vert : valeur lue · rouge : manquante',
-    reserve: 'réserve {v}',
-    saved_amount: '{v} économisés',
-    schematic: 'Schéma DC / AC',
-    schematic_click: 'Clique sur un élément pour voir ses capacités et les entités utilisées.',
-    schematic_hint: 'clique sur un élément',
-    soc: 'Charge',
-    soc_today: "Charge · aujourd'hui",
-    soh_3y: 'État de santé · 3 ans',
-    spread_trend: 'Écart des cellules · tendance',
-    subsidy: 'Prime',
-    suggestions: 'Suggestions',
-    tariff_box: 'Tarifs',
-    threshold: 'seuil',
-    tilt: 'Inclinaison',
-    today: "aujourd'hui",
-    weeks_6: '6 semaines',
-    with_solar: 'Avec solaire',
-    without_solar: 'Sans solaire',
-    yaml_detected: 'équivalent à la détection',
-    yaml_in_use: 'configuration.yaml en vigueur',
-    yaml_wins: "Modifie dans configuration.yaml : le bloc energy_hub: l'emporte sur la détection.",
-    yes: 'oui',
-    periods: { today: "Aujourd'hui", '7d': '7 j', '30d': '30 j', '12m': '12 mois' },
-    coupling: { dc: 'couplage DC', ac: 'couplage AC' },
-    status: { recurring: 'Récurrent', watch: 'À surveiller', resolved: 'Résolu' },
-    event: {
-      clipping: 'Écrêtage',
-      unavailability: 'Production indisponible',
-      shading: 'Ombrage {unit} · {from} – {to}',
-      string_lagging: '{name} en retrait',
-      soiling: 'Encrassement',
-      cell_drift: '{battery} : cellule {cell} en dérive',
-    },
-    subtabs: { sources: 'Sources', installation: 'Installation', tariffs: 'Tarifs', alerts: 'Alertes', yaml: 'YAML' },
-    source_role: { pv: 'Production', storage: 'Stockage', meter: 'Compteur', forecast: 'Prévision', prefs: 'Tableau Énergie' },
-    suggest: {
-      attach_bms: 'Rattacher {bms} à la batterie {battery}',
-      planes: "Indiquer l'orientation des panneaux (kWc, inclinaison, azimut)",
-      capacity: 'Indiquer la capacité de {battery}',
-      forecast: 'Ajouter une prévision de production',
-    },
-    cap: {
-      strings: 'strings',
-      optimizers: 'optimiseurs',
-      microinverters: 'micro-onduleurs',
-      pmax: 'Pmax',
-      export_limit: "limite d'injection",
-      soc: 'charge',
-      power: 'puissance',
-      soh: 'santé',
-      cycles: 'cycles',
-      modules: 'modules',
-      cells: 'cellules',
-      forecast: 'prévision',
-      tempo: 'couleur Tempo',
-    },
-    role: {
-      pv_power: 'Puissance solaire',
-      pv_energy: 'Énergie solaire',
-      grid_power: 'Puissance réseau',
-      grid_import_energy: 'Soutirage',
-      grid_export_energy: 'Injection',
-      load_power: 'Puissance maison',
-      forecast_power: 'Prévision',
-      forecast_energy_today: "Prévision du jour",
-    },
-    alert_kind: {
-      clipping: 'Écrêtage',
-      string_lagging: 'String ou panneau en retrait',
-      shading: 'Ombrage récurrent',
-      soiling: 'Encrassement',
-      cell_drift: 'Dérive de cellule',
-      battery_exchange: 'Batterie vers batterie',
-      stale: 'Source figée',
-    },
-    alert_rule: {
-      clipping: 'plus de 0,3 kWh écrêtés dans la journée',
-      string_lagging: 'sous 90 % de ses voisines pendant 3 jours',
-      shading: 'le même creux sur 10 jours clairs ou plus',
-      soiling: "plus de 3 % perdus à l'encrassement",
-      cell_drift: "écart des cellules atteignant 50 mV d'ici 14 jours",
-      battery_exchange: "plus de 0,1 kW envoyés d'une batterie dans une autre",
-      stale: 'une entité utilisée indisponible',
-    },
-    beta: 'bêta',
-  },
 };
 
 const EH_AMBER = '#BA7517';
@@ -703,6 +401,7 @@ class EnergyHubPanel extends HTMLElement {
   set hass(hass) {
     const first = !this._hass;
     this._hass = hass;
+    this._loadLang();
     if (first) this._connect();
   }
 
@@ -743,8 +442,26 @@ class EnergyHubPanel extends HTMLElement {
 
   // ---------- helpers
   get _lang() {
-    const l = (this._hass?.locale?.language || this._hass?.language || 'en').split('-')[0];
-    return EH_I18N[l] ? l : 'en';
+    const full = this._hass?.locale?.language || this._hass?.language || 'en';
+    if (EH_LANGS.includes(full)) return full;
+    const base = full.split('-')[0];
+    return EH_LANGS.includes(base) ? base : 'en';
+  }
+
+  async _loadLang() {
+    const lang = this._lang;
+    if (lang === 'en' || EH_I18N[lang] || this._loading === lang) return;
+    this._loading = lang;
+    try {
+      const res = await fetch(`/energy_hub_static/i18n/${lang}.json?v=${ENERGY_HUB_PANEL_VERSION}`);
+      if (res.ok) {
+        EH_I18N[lang] = await res.json();
+        this._render();
+      }
+    } catch (_err) {
+      // English stays
+    }
+    this._loading = null;
   }
 
   get _locale() {
@@ -993,7 +710,7 @@ class EnergyHubPanel extends HTMLElement {
     const trend = (a, b) => {
       if (a == null || b == null) return '';
       const pts = Math.round((a - b) * 100);
-      return `<span style="color:${pts >= 0 ? 'var(--success-color,#43a047)' : 'var(--error-color,#db4437)'}">${pts >= 0 ? '▲' : '▼'} ${this._t('vs_yesterday', { v: `${Math.abs(pts)} pts` })}</span>`;
+      return `<span style="color:${pts >= 0 ? 'var(--success-color,#43a047)' : 'var(--error-color,#db4437)'}">${pts >= 0 ? '▲' : '▼'} ${this._t('vs_yesterday', { v: `${Math.abs(pts)} ${this._t('pts')}` })}</span>`;
     };
     const losses = Object.entries(d.losses.today).filter(([k]) => !['potential', 'produced'].includes(k)).reduce((a, [, v]) => a + (v || 0), 0);
     const kp = (label, value, sub, color) => `<div class="kpi"><div class="k1">${ehEsc(label)}</div><div class="k2" ${color ? `style="color:${color}"` : ''}>${value}</div><div class="k3">${sub}</div></div>`;
@@ -1277,7 +994,7 @@ class EnergyHubPanel extends HTMLElement {
     if (proj.length > 1) o += `<path d="${proj.map((p, i) => `${i ? 'L' : 'M'}${X(p[0]).toFixed(1)} ${Y(p[1]).toFixed(1)}`).join(' ')}" fill="none" stroke="${EH_TEAL}" stroke-width="1.6" stroke-dasharray="4 4"/>`;
     const last = pts[pts.length - 1];
     o += `<circle cx="${X(last[0])}" cy="${Y(last[1])}" r="4" fill="${EH_TEAL}" stroke="var(--card-background-color)" stroke-width="2"/>`;
-    for (let h = 0; h <= 24; h += 6) o += `<text class="svgt" x="${X(t0 + h * 3600)}" y="124" text-anchor="middle">${this._lang === 'fr' ? `${h} h` : `${h}:00`}</text>`;
+    for (let h = 0; h <= 24; h += 6) o += `<text class="svgt" x="${X(t0 + h * 3600)}" y="124" text-anchor="${h === 24 ? 'end' : h === 0 ? 'start' : 'middle'}">${this._lang === 'fr' ? `${h} h` : `${h}:00`}</text>`;
     return `${o}</svg>`;
   }
 
@@ -1405,8 +1122,8 @@ class EnergyHubPanel extends HTMLElement {
       o += `<text class="svgt" x="${X(total) - 6}" y="${Y(end) + 16}" text-anchor="end">${ehEsc(this._t('in_days', { d: this._num(c.days_to_threshold, 0) }))}</text>`;
     }
     o += `<line x1="${X(lastK)}" x2="${X(lastK)}" y1="14" y2="110" stroke="var(--secondary-text-color)" stroke-width=".5" stroke-dasharray="3 3"/><line x1="40" x2="1160" y1="110" y2="110" stroke="var(--divider-color)"/>`;
-    o += `<text class="svgt" x="40" y="124">−30 j</text><text class="svgt" x="${X(lastK)}" y="124" text-anchor="middle">${ehEsc(this._t('today'))}</text>`;
-    return `${o.replace('−30 j', this._lang === 'fr' ? '−30 j' : '−30 d')}</svg>`;
+    o += `<text class="svgt" x="40" y="124">−${ehEsc(this._t('days_30'))}</text><text class="svgt" x="${X(lastK)}" y="124" text-anchor="middle">${ehEsc(this._t('today'))}</text>`;
+    return `${o}</svg>`;
   }
 
   // ---------- Losses

@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.2.0 - 2026-11-23
+
+### Features
+- 20 more languages for the integration and the panel: German, Spanish, Italian, Dutch, Portuguese, Polish, Serbian (Cyrillic and Latin), Romanian, Danish, Swedish, Bulgarian, Russian, Ukrainian, Hungarian, Slovak, Czech, Slovenian, Latvian and Greek. The panel ships English and fetches the other languages from `frontend/i18n/` when Home Assistant uses one (regional variants such as `pt-BR` use their base language).
+
+### Fixes
+- Panel: the trend unit, the 30-day axis label and the last hour label of the charge chart are translated and no longer clipped.
+
 ## 1.1.0 - 2026-11-23
 
 ### Features

@@ -93,9 +93,14 @@ def _save(page, path: Path) -> None:
 
 
 def _serve(html: str):
-    """Return a route handler answering with `html`."""
+    """Return a route handler answering with `html`, and with the panel's language files."""
 
     def handler(route) -> None:
+        url = route.request.url
+        if "/energy_hub_static/i18n/" in url:
+            name = url.split("/i18n/")[1].split("?")[0]
+            route.fulfill(path=str(PANEL.parent / "i18n" / name), content_type="application/json")
+            return
         route.fulfill(body=html, content_type="text/html")
 
     return handler

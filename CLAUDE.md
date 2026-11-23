@@ -74,10 +74,11 @@ This builds on other Home Assistant integrations, so keep the `## Supported inte
 
 ## Translations
 - English is the source. Keep every language in sync when a user-facing string changes.
-- 1.0.0 ships en and fr; the other languages of the ha-* repos (de, es, it, nl, pt, pl, sr, sr-Latn,
-  ro, da, sv, bg, ru, uk, hu, sk, cs, sl, lv, el) are to be added.
-- Integration strings: `custom_components/energy_hub/translations/*.json`; panel strings: `EH_I18N`
-  in the panel. Tests check that every language has the English keys and placeholders.
+- Languages to keep in sync: en, fr, de, es, it, nl, pt, pl, sr, sr-Latn, ro, da, sv, bg, ru, uk, hu, sk, cs, sl, lv, el (no Irish or Maltese).
+- Integration strings: `custom_components/energy_hub/translations/*.json`.
+- Panel strings: English in `EH_I18N.en` inside the panel; every other language in
+  `custom_components/energy_hub/frontend/i18n/<lang>.json`, fetched on demand (list in `EH_LANGS`).
+- Tests check that every language has exactly the English keys and placeholders.
 
 ## Screenshots — do not edit or commit them by hand
 The Screenshots workflow regenerates them on the PR branch and commits them as the

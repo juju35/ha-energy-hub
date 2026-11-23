@@ -1,0 +1,70 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Energy Hub",
+        "description": "Energy Hub sám najde vaše integrace fotovoltaiky, baterií a elektroměru. Zapněte demo a vyzkoušejte panel se simulovanou instalací.",
+        "data": {
+          "demo": "Režim demo (simulovaná instalace)",
+          "show_panel": "Zobrazit panel na postranním panelu"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Energy Hub je již nastaven.",
+      "single_instance_allowed": "Energy Hub je již nastaven."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Možnosti Energy Hub",
+        "description": "Blok `energy_hub:` v configuration.yaml má přednost před těmito možnostmi.",
+        "data": {
+          "demo": "Režim demo (simulovaná instalace)",
+          "show_panel": "Zobrazit panel na postranním panelu"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "self_consumption": {
+        "name": "Vlastní spotřeba"
+      },
+      "self_sufficiency": {
+        "name": "Soběstačnost"
+      },
+      "pv_energy_today": {
+        "name": "Solární energie dnes"
+      },
+      "specific_yield": {
+        "name": "Měrný výnos dnes"
+      },
+      "performance_index": {
+        "name": "Index výkonnosti"
+      },
+      "losses_today": {
+        "name": "Ztráty výroby dnes"
+      },
+      "clipping_today": {
+        "name": "Ořezání dnes"
+      },
+      "battery_soc": {
+        "name": "Nabití parku baterií"
+      },
+      "battery_power": {
+        "name": "Výkon parku baterií"
+      },
+      "battery_autonomy": {
+        "name": "Výdrž baterií"
+      },
+      "savings_today": {
+        "name": "Úspora dnes"
+      },
+      "alerts": {
+        "name": "Upozornění"
+      }
+    }
+  }
+}

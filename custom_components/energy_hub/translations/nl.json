@@ -1,0 +1,70 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Energy Hub",
+        "description": "Energy Hub vindt zelf je zonne-, batterij- en meterintegraties. Zet de demo aan om het paneel met een gesimuleerde installatie te proberen.",
+        "data": {
+          "demo": "Demomodus (gesimuleerde installatie)",
+          "show_panel": "Paneel in de zijbalk tonen"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Energy Hub is al ingesteld.",
+      "single_instance_allowed": "Energy Hub is al ingesteld."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Energy Hub-opties",
+        "description": "Een blok `energy_hub:` in configuration.yaml gaat voor deze opties.",
+        "data": {
+          "demo": "Demomodus (gesimuleerde installatie)",
+          "show_panel": "Paneel in de zijbalk tonen"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "self_consumption": {
+        "name": "Eigen verbruik"
+      },
+      "self_sufficiency": {
+        "name": "Zelfvoorziening"
+      },
+      "pv_energy_today": {
+        "name": "Zonne-energie vandaag"
+      },
+      "specific_yield": {
+        "name": "Specifieke opbrengst vandaag"
+      },
+      "performance_index": {
+        "name": "Prestatie-index"
+      },
+      "losses_today": {
+        "name": "Productieverliezen vandaag"
+      },
+      "clipping_today": {
+        "name": "Clipping vandaag"
+      },
+      "battery_soc": {
+        "name": "Lading van het batterijpark"
+      },
+      "battery_power": {
+        "name": "Vermogen van het batterijpark"
+      },
+      "battery_autonomy": {
+        "name": "Batterij-autonomie"
+      },
+      "savings_today": {
+        "name": "Besparing vandaag"
+      },
+      "alerts": {
+        "name": "Meldingen"
+      }
+    }
+  }
+}

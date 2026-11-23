@@ -1,7 +1,7 @@
 // Unit tests for the panel: the panel file is evaluated with stubs and each tab is rendered to a string from the demo
 // snapshot (test/fixtures/demo.json, written by the integration's demo plant), no browser needed.
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import vm from 'node:vm';
 
@@ -29,8 +29,12 @@ const context = {
   Intl,
 };
 vm.createContext(context);
-vm.runInContext(`${source}\nthis.e = { ehEsc, ehIcon, EH_I18N, EH_ICONS, EH_TABS, EnergyHubPanel, ENERGY_HUB_PANEL_VERSION };`, context);
+vm.runInContext(`${source}\nthis.e = { ehEsc, ehIcon, EH_I18N, EH_ICONS, EH_LANGS, EH_TABS, EnergyHubPanel, ENERGY_HUB_PANEL_VERSION };`, context);
 const E = context.e;
+// The language files the panel fetches, loaded up front
+const I18N_DIR = new URL('../custom_components/energy_hub/frontend/i18n/', import.meta.url);
+const FILES = readdirSync(I18N_DIR).filter((f) => f.endsWith('.json'));
+for (const f of FILES) E.EH_I18N[f.slice(0, -5)] = JSON.parse(readFileSync(new URL(f, I18N_DIR), 'utf8'));
 
 function panel(lang = 'en', data = snapshot) {
   const p = new E.EnergyHubPanel();
@@ -60,16 +64,30 @@ function flat(o, prefix = '') {
   return Object.entries(o).flatMap(([k, v]) => (v && typeof v === 'object' && !Array.isArray(v) ? flat(v, `${prefix}${k}.`) : [[`${prefix}${k}`, v]]));
 }
 
-test('French has the English keys and placeholders', () => {
+test('every language file has the English keys and placeholders', () => {
+  assert.deepEqual(FILES.map((f) => f.slice(0, -5)).sort(), [...E.EH_LANGS].sort());
   const en = Object.fromEntries(flat(E.EH_I18N.en));
-  const fr = Object.fromEntries(flat(E.EH_I18N.fr));
-  assert.deepEqual(Object.keys(fr).sort(), Object.keys(en).sort());
   const ph = (v) => (Array.isArray(v) ? v.join(' ') : String(v)).match(/\{\w+\}/g)?.sort() ?? [];
-  for (const k of Object.keys(en)) assert.deepEqual(ph(fr[k]), ph(en[k]), k);
+  for (const lang of E.EH_LANGS) {
+    const other = Object.fromEntries(flat(E.EH_I18N[lang]));
+    assert.deepEqual(Object.keys(other).sort(), Object.keys(en).sort(), lang);
+    for (const k of Object.keys(en)) {
+      assert.deepEqual(ph(other[k]), ph(en[k]), `${lang}.${k}`);
+      if (Array.isArray(en[k])) assert.equal(other[k].length, en[k].length, `${lang}.${k}`);
+    }
+  }
+});
+
+test('language of Home Assistant: regional and script variants', () => {
+  const p = new E.EnergyHubPanel();
+  for (const [ha, lang] of [['fr-FR', 'fr'], ['pt-BR', 'pt'], ['sr-Latn', 'sr-Latn'], ['sr', 'sr'], ['xx', 'en']]) {
+    p._hass = { locale: { language: ha } };
+    assert.equal(p._lang, lang, ha);
+  }
 });
 
 test('every tab renders the demo snapshot, in both languages', () => {
-  for (const lang of ['en', 'fr']) {
+  for (const lang of ['en', ...E.EH_LANGS]) {
     const p = panel(lang);
     for (const [tab] of E.EH_TABS) {
       p._tab = tab;

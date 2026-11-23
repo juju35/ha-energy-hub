@@ -1,0 +1,70 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Energy Hub",
+        "description": "Energy Hub hittar själv dina sol-, batteri- och mätarintegrationer. Slå på demon för att prova panelen med en simulerad anläggning.",
+        "data": {
+          "demo": "Demoläge (simulerad anläggning)",
+          "show_panel": "Visa panelen i sidofältet"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Energy Hub är redan konfigurerat.",
+      "single_instance_allowed": "Energy Hub är redan konfigurerat."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Energy Hub-alternativ",
+        "description": "Ett `energy_hub:`-block i configuration.yaml går före dessa alternativ.",
+        "data": {
+          "demo": "Demoläge (simulerad anläggning)",
+          "show_panel": "Visa panelen i sidofältet"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "self_consumption": {
+        "name": "Egenanvändning"
+      },
+      "self_sufficiency": {
+        "name": "Självförsörjning"
+      },
+      "pv_energy_today": {
+        "name": "Solenergi i dag"
+      },
+      "specific_yield": {
+        "name": "Specifikt utbyte i dag"
+      },
+      "performance_index": {
+        "name": "Prestandaindex"
+      },
+      "losses_today": {
+        "name": "Produktionsförluster i dag"
+      },
+      "clipping_today": {
+        "name": "Klippning i dag"
+      },
+      "battery_soc": {
+        "name": "Batteriparkens laddning"
+      },
+      "battery_power": {
+        "name": "Batteriparkens effekt"
+      },
+      "battery_autonomy": {
+        "name": "Batteriautonomi"
+      },
+      "savings_today": {
+        "name": "Besparing i dag"
+      },
+      "alerts": {
+        "name": "Varningar"
+      }
+    }
+  }
+}

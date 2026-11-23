@@ -1,0 +1,70 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Energy Hub",
+        "description": "Az Energy Hub magától megtalálja a napelem-, akkumulátor- és mérőintegrációidat. Kapcsold be a demót, hogy kipróbáld a panelt egy szimulált rendszerrel.",
+        "data": {
+          "demo": "Demó mód (szimulált rendszer)",
+          "show_panel": "Panel megjelenítése az oldalsávon"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Az Energy Hub már be van állítva.",
+      "single_instance_allowed": "Az Energy Hub már be van állítva."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Energy Hub beállítások",
+        "description": "A configuration.yaml `energy_hub:` blokkja elsőbbséget élvez ezekkel a beállításokkal szemben.",
+        "data": {
+          "demo": "Demó mód (szimulált rendszer)",
+          "show_panel": "Panel megjelenítése az oldalsávon"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "self_consumption": {
+        "name": "Saját fogyasztás"
+      },
+      "self_sufficiency": {
+        "name": "Önellátás"
+      },
+      "pv_energy_today": {
+        "name": "Mai napenergia"
+      },
+      "specific_yield": {
+        "name": "Mai fajlagos hozam"
+      },
+      "performance_index": {
+        "name": "Teljesítményindex"
+      },
+      "losses_today": {
+        "name": "Mai termelési veszteség"
+      },
+      "clipping_today": {
+        "name": "Mai levágás"
+      },
+      "battery_soc": {
+        "name": "Akkumulátorpark töltöttsége"
+      },
+      "battery_power": {
+        "name": "Akkumulátorpark teljesítménye"
+      },
+      "battery_autonomy": {
+        "name": "Akkumulátorok autonómiája"
+      },
+      "savings_today": {
+        "name": "Mai megtakarítás"
+      },
+      "alerts": {
+        "name": "Riasztások"
+      }
+    }
+  }
+}

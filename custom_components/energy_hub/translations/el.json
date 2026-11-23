@@ -1,0 +1,70 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Energy Hub",
+        "description": "Το Energy Hub βρίσκει μόνο του τις ενσωματώσεις ηλιακών, μπαταριών και μετρητή. Ενεργοποιήστε την επίδειξη για να δοκιμάσετε τον πίνακα με προσομοιωμένη εγκατάσταση.",
+        "data": {
+          "demo": "Λειτουργία επίδειξης (προσομοιωμένη εγκατάσταση)",
+          "show_panel": "Εμφάνιση του πίνακα στην πλαϊνή μπάρα"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Το Energy Hub έχει ήδη ρυθμιστεί.",
+      "single_instance_allowed": "Το Energy Hub έχει ήδη ρυθμιστεί."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Επιλογές Energy Hub",
+        "description": "Ένα μπλοκ `energy_hub:` στο configuration.yaml υπερισχύει αυτών των επιλογών.",
+        "data": {
+          "demo": "Λειτουργία επίδειξης (προσομοιωμένη εγκατάσταση)",
+          "show_panel": "Εμφάνιση του πίνακα στην πλαϊνή μπάρα"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "self_consumption": {
+        "name": "Ιδιοκατανάλωση"
+      },
+      "self_sufficiency": {
+        "name": "Αυτάρκεια"
+      },
+      "pv_energy_today": {
+        "name": "Ηλιακή ενέργεια σήμερα"
+      },
+      "specific_yield": {
+        "name": "Ειδική απόδοση σήμερα"
+      },
+      "performance_index": {
+        "name": "Δείκτης απόδοσης"
+      },
+      "losses_today": {
+        "name": "Απώλειες παραγωγής σήμερα"
+      },
+      "clipping_today": {
+        "name": "Αποκοπή σήμερα"
+      },
+      "battery_soc": {
+        "name": "Φόρτιση συνόλου μπαταριών"
+      },
+      "battery_power": {
+        "name": "Ισχύς συνόλου μπαταριών"
+      },
+      "battery_autonomy": {
+        "name": "Αυτονομία μπαταριών"
+      },
+      "savings_today": {
+        "name": "Εξοικονόμηση σήμερα"
+      },
+      "alerts": {
+        "name": "Ειδοποιήσεις"
+      }
+    }
+  }
+}

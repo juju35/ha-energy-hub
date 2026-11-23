@@ -35,7 +35,7 @@ Home Assistant integration and sidebar panel for **solar installations**: produc
 - **Sidebar badge** with the number of alerts, red when one is an error
 - **Demo mode**: a simulated installation (two strings, sixteen panels, three batteries, more than a year of history) to try every screen
 - Diagnostics download with the detected installation only: no location, no history of values
-- English and French
+- English, French, German, Spanish, Italian, Dutch, Portuguese, Polish, Serbian (Cyrillic and Latin), Romanian, Danish, Swedish, Bulgarian, Russian, Ukrainian, Hungarian, Slovak, Czech, Slovenian, Latvian and Greek
 
 ## Supported integrations
 
@@ -236,6 +236,28 @@ The integration and the panel follow the language of Home Assistant. Currently s
 |---|---|
 | English | `en` |
 | Français | `fr` |
+| Deutsch | `de` |
+| Español | `es` |
+| Italiano | `it` |
+| Nederlands | `nl` |
+| Português (Portugal) | `pt` |
+| Polski | `pl` |
+| Српски | `sr` |
+| Srpski (latinica) | `sr-Latn` |
+| Română | `ro` |
+| Dansk | `da` |
+| Svenska | `sv` |
+| Български | `bg` |
+| Русский | `ru` |
+| Українська | `uk` |
+| Magyar | `hu` |
+| Slovenčina | `sk` |
+| Čeština | `cs` |
+| Slovenščina | `sl` |
+| Latviešu | `lv` |
+| Ελληνικά | `el` |
+
+Brazilian Portuguese (`pt-BR`) uses the European Portuguese texts. The panel ships English and loads the other languages from `custom_components/energy_hub/frontend/i18n/` on demand.
 
 Contributions for additional languages are welcome!
 

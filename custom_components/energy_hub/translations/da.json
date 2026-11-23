@@ -1,0 +1,70 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Energy Hub",
+        "description": "Energy Hub finder selv dine sol-, batteri- og måler-integrationer. Slå demoen til for at prøve panelet med et simuleret anlæg.",
+        "data": {
+          "demo": "Demotilstand (simuleret anlæg)",
+          "show_panel": "Vis panelet i sidepanelet"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Energy Hub er allerede sat op.",
+      "single_instance_allowed": "Energy Hub er allerede sat op."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Energy Hub-indstillinger",
+        "description": "En `energy_hub:`-blok i configuration.yaml går forud for disse indstillinger.",
+        "data": {
+          "demo": "Demotilstand (simuleret anlæg)",
+          "show_panel": "Vis panelet i sidepanelet"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "self_consumption": {
+        "name": "Egetforbrug"
+      },
+      "self_sufficiency": {
+        "name": "Selvforsyning"
+      },
+      "pv_energy_today": {
+        "name": "Solenergi i dag"
+      },
+      "specific_yield": {
+        "name": "Specifikt udbytte i dag"
+      },
+      "performance_index": {
+        "name": "Ydelsesindeks"
+      },
+      "losses_today": {
+        "name": "Produktionstab i dag"
+      },
+      "clipping_today": {
+        "name": "Klipning i dag"
+      },
+      "battery_soc": {
+        "name": "Batteriflådens ladning"
+      },
+      "battery_power": {
+        "name": "Batteriflådens effekt"
+      },
+      "battery_autonomy": {
+        "name": "Batteriautonomi"
+      },
+      "savings_today": {
+        "name": "Besparelse i dag"
+      },
+      "alerts": {
+        "name": "Advarsler"
+      }
+    }
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Energy Hub",
+        "description": "Energy Hub сам проналази ваше интеграције солара, батерија и бројила. Укључите демо да бисте испробали панел са симулираном инсталацијом.",
+        "data": {
+          "demo": "Демо режим (симулирана инсталација)",
+          "show_panel": "Прикажи панел на бочној траци"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Energy Hub је већ подешен.",
+      "single_instance_allowed": "Energy Hub је већ подешен."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Опције Energy Hub",
+        "description": "Блок `energy_hub:` у configuration.yaml има предност над овим опцијама.",
+        "data": {
+          "demo": "Демо режим (симулирана инсталација)",
+          "show_panel": "Прикажи панел на бочној траци"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "self_consumption": {
+        "name": "Сопствена потрошња"
+      },
+      "self_sufficiency": {
+        "name": "Самодовољност"
+      },
+      "pv_energy_today": {
+        "name": "Соларна енергија данас"
+      },
+      "specific_yield": {
+        "name": "Специфични принос данас"
+      },
+      "performance_index": {
+        "name": "Индекс перформанси"
+      },
+      "losses_today": {
+        "name": "Губици производње данас"
+      },
+      "clipping_today": {
+        "name": "Одсецање данас"
+      },
+      "battery_soc": {
+        "name": "Напуњеност парка батерија"
+      },
+      "battery_power": {
+        "name": "Снага парка батерија"
+      },
+      "battery_autonomy": {
+        "name": "Аутономија батерија"
+      },
+      "savings_today": {
+        "name": "Уштеда данас"
+      },
+      "alerts": {
+        "name": "Упозорења"
+      }
+    }
+  }
+}
