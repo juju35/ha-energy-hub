@@ -61,6 +61,10 @@ carries the new version, updated together in one commit:
 ## README layout
 - Header order: H1, then the badge row, then the repo's **own logo** centered under the badges —
   `<p align="center"><img src=".../custom_components/energy_hub/brand/icon.png" width="120"></p>`.
+- **Work in progress**: while the profiles still wait for real installations, the animated
+  `images/wip.svg` banner sits right under the logo, in its own centered block
+  (`<p align="center"><img src=".../images/wip.svg" alt="Work in progress…" width="720"></p>`). The showcase
+  site mirrors it with `wip: true` on the project; remove both together once the project is stable.
 - **Brand logos**: under `## Supported integrations`, a centered `<p align="center">` row of the
   logos of the integrations it builds on, each linking to the integration.
 - Keep image `width`/`height` bounded so it doesn't render oversized (HACS/Marketplace).

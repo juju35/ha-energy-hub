@@ -10,6 +10,8 @@
 
 <p align="center"><img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/custom_components/energy_hub/brand/icon.png" alt="Energy Hub" width="120"></p>
 
+<p align="center"><img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/wip.svg" alt="Work in progress: every screen works in demo mode, the profiles still need real installations" width="720"></p>
+
 Home Assistant integration and sidebar panel for **solar installations**: production, self-consumption, batteries (down to the cells), panel efficiency and **production losses** (clipping, shading, soiling, export limitation), with the payback of the installation. It reads the entities of the solar, battery, meter and forecast integrations you already have, and detects most of them by itself.
 
 [![Open your Home Assistant instance and open a repository inside the Marketplace.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=juju35&repository=ha-energy-hub&category=integration)
