@@ -57,32 +57,32 @@ Energy Hub works on top of the integrations below. Each one has a detection prof
 
 | Integration | Solar | Grid / home | Battery | Detail |
 |---|---|---|---|---|
-| [Enphase Envoy](https://www.home-assistant.io/integrations/enphase_envoy) | ✓ | ✓ | ✓ | micro-inverters |
-| [Huawei Solar](https://github.com/wlcrs/huawei_solar) | ✓ | ✓ | ✓ | strings, optimizers, inverter maximum, export limit, battery modules |
-| [SolarEdge](https://www.home-assistant.io/integrations/solaredge) | ✓ | ✓ | ✓ | |
-| [SolarEdge Modbus Multi](https://github.com/WillCodeForCats/solaredge-modbus-multi) | ✓ | ✓ | ✓ | inverter maximum, export limit, state of health |
-| [Fronius](https://www.home-assistant.io/integrations/fronius) | ✓ | ✓ | ✓ | strings |
-| [SMA Solar](https://www.home-assistant.io/integrations/sma) | ✓ | ✓ | ✓ | strings |
-| [Solax Modbus](https://github.com/wills106/homeassistant-solax-modbus) (SolaX, Growatt, Sofar, Solis, AlphaESS, Qcells…) | ✓ | ✓ | ✓ | strings, inverter maximum, state of health |
-| [Solarman](https://github.com/davidrapan/ha-solarman) (Deye, Sunsynk, Sol-Ark…) | ✓ | ✓ | ✓ | strings, state of health, battery modules |
+| <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/enphase_envoy.png" alt="" width="16"> [Enphase Envoy](https://www.home-assistant.io/integrations/enphase_envoy) | ✓ | ✓ | ✓ | micro-inverters |
+| <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/huawei_solar.png" alt="" width="16"> [Huawei Solar](https://github.com/wlcrs/huawei_solar) | ✓ | ✓ | ✓ | strings, optimizers, inverter maximum, export limit, battery modules |
+| <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/solaredge.png" alt="" width="16"> [SolarEdge](https://www.home-assistant.io/integrations/solaredge) | ✓ | ✓ | ✓ | |
+| <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/solaredge.png" alt="" width="16"> [SolarEdge Modbus Multi](https://github.com/WillCodeForCats/solaredge-modbus-multi) | ✓ | ✓ | ✓ | inverter maximum, export limit, state of health |
+| <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/fronius.png" alt="" width="16"> [Fronius](https://www.home-assistant.io/integrations/fronius) | ✓ | ✓ | ✓ | strings |
+| <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/sma.png" alt="" width="16"> [SMA Solar](https://www.home-assistant.io/integrations/sma) | ✓ | ✓ | ✓ | strings |
+| <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/solax.png" alt="" width="16"> [Solax Modbus](https://github.com/wills106/homeassistant-solax-modbus) (SolaX, Growatt, Sofar, Solis, AlphaESS, Qcells…) | ✓ | ✓ | ✓ | strings, inverter maximum, state of health |
+| <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/solarman.png" alt="" width="16"> [Solarman](https://github.com/davidrapan/ha-solarman) (Deye, Sunsynk, Sol-Ark…) | ✓ | ✓ | ✓ | strings, state of health, battery modules |
 | [Victron GX](https://www.home-assistant.io/integrations/victron_gx) | ✓ | ✓ | ✓ | MPPT trackers, state of health |
-| [Tesla Powerwall](https://www.home-assistant.io/integrations/powerwall) | ✓ | ✓ | ✓ | |
+| <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/tesla.png" alt="" width="16"> [Tesla Powerwall](https://www.home-assistant.io/integrations/powerwall) | ✓ | ✓ | ✓ | |
 | [OpenDTU / AhoyDTU](https://github.com/tbnobody/OpenDTU) (MQTT) | ✓ | | | micro-inverters, export limit |
-| [Anker Solix](https://github.com/thomluther/ha-anker-solix) | ✓ | ✓ | ✓ | |
-| [EcoFlow Cloud](https://github.com/tolwi/hassio-ecoflow-cloud) | ✓ | ✓ | ✓ | state of health, cycles |
-| [Zendure](https://github.com/Zendure/Zendure-HA) | ✓ | ✓ | ✓ | state of health, battery packs |
-| [Marstek Local API](https://github.com/jaapp/ha-marstek-local-api) | | ✓ | ✓ | |
-| [Beem Energy](https://github.com/CharlesP44/Beem_Energy) | ✓ | | ✓ | |
-| [BLE Battery Management](https://github.com/patman15/BMS_BLE-HA) (JK, JBD, Daly…) | | | ✓ | **cells**, cycles |
-| [ZLinky](https://www.home-assistant.io/integrations/zha) (ZHA) | | ✓ | | Linky meter |
-| [Teleinfo](https://www.home-assistant.io/integrations/teleinfo) | | ✓ | | Linky meter |
-| [Forecast.Solar](https://www.home-assistant.io/integrations/forecast_solar) | forecast | | | |
-| [Solcast PV Forecast](https://github.com/BJReplay/ha-solcast-solar) | forecast | | | |
-| [Tarif EDF](https://github.com/delphiki/hass-tarif-edf) | | tariff | | contract, power, price now, Tempo colour |
-| [RTE Tempo](https://github.com/hekmon/rtetempo) | | tariff | | Tempo colour |
+| <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/anker.png" alt="" width="16"> [Anker Solix](https://github.com/thomluther/ha-anker-solix) | ✓ | ✓ | ✓ | |
+| <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/ecoflow.png" alt="" width="16"> [EcoFlow Cloud](https://github.com/tolwi/hassio-ecoflow-cloud) | ✓ | ✓ | ✓ | state of health, cycles |
+| <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/zendure.png" alt="" width="16"> [Zendure](https://github.com/Zendure/Zendure-HA) | ✓ | ✓ | ✓ | state of health, battery packs |
+| <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/marstek.png" alt="" width="16"> [Marstek Local API](https://github.com/jaapp/ha-marstek-local-api) | | ✓ | ✓ | |
+| <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/beem.png" alt="" width="16"> [Beem Energy](https://github.com/CharlesP44/Beem_Energy) | ✓ | | ✓ | |
+| <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/bms_ble.png" alt="" width="16"> [BLE Battery Management](https://github.com/patman15/BMS_BLE-HA) (JK, JBD, Daly…) | | | ✓ | **cells**, cycles |
+| <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/zha.png" alt="" width="16"> [ZLinky](https://www.home-assistant.io/integrations/zha) (ZHA) | | ✓ | | Linky meter |
+| <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/teleinfo.png" alt="" width="16"> [Teleinfo](https://www.home-assistant.io/integrations/teleinfo) | | ✓ | | Linky meter |
+| <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/forecast_solar.png" alt="" width="16"> [Forecast.Solar](https://www.home-assistant.io/integrations/forecast_solar) | forecast | | | |
+| <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/solcast_solar.png" alt="" width="16"> [Solcast PV Forecast](https://github.com/BJReplay/ha-solcast-solar) | forecast | | | |
+| <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/tarif_edf.png" alt="" width="16"> [Tarif EDF](https://github.com/delphiki/hass-tarif-edf) | | tariff | | contract, power, price now, Tempo colour |
+| <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/rtetempo.png" alt="" width="16"> [RTE Tempo](https://github.com/hekmon/rtetempo) | | tariff | | Tempo colour |
 | [EDF Zen Flex](https://github.com/AuroreVgn/edf-zen-flex) | | tariff | | eco / sobriety day |
-| Any weather station with an irradiance sensor ([Ecowitt](https://www.home-assistant.io/integrations/ecowitt), [WeatherFlow](https://www.home-assistant.io/integrations/weatherflow)…) | irradiance | | | detected by its `irradiance` device class |
-| Any [weather](https://www.home-assistant.io/integrations/weather) entity (Météo-France, Met.no, OpenWeatherMap, Open-Meteo…) | cloud cover | | | |
+| Any weather station with an irradiance sensor (<img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/ecowitt.png" alt="" width="16"> [Ecowitt](https://www.home-assistant.io/integrations/ecowitt), <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/weatherflow.png" alt="" width="16"> [WeatherFlow](https://www.home-assistant.io/integrations/weatherflow)…) | irradiance | | | detected by its `irradiance` device class |
+| Any <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/home_assistant.png" alt="" width="16"> [weather](https://www.home-assistant.io/integrations/weather) entity (Météo-France, Met.no, OpenWeatherMap, Open-Meteo…) | cloud cover | | | |
 
 Any other integration works through the **Energy dashboard** settings (solar production, grid import and export, battery energy are read from there) or through the `entities:` and `batteries:` YAML keys. What a source does not provide is estimated when possible (state of health from full charges, cycles from the energy discharged, kWp from the production peaks) and marked as such in the panel.
 
