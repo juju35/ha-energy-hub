@@ -22,12 +22,12 @@ Home Assistant integration and sidebar panel for **solar installations**: produc
 ## Features
 
 - **Energy Hub sidebar panel** (no dashboard to build): an illustrated banner that follows the sun, the battery level and the alerts, folding into a compact bar on scroll, and six tabs
-  - **Overview**: live energy flow between solar, home, batteries and grid; self-consumption, self-sufficiency, savings and losses of the day with their trend; the day's curve (production, forecast, consumption, battery %, inverter maximum, clipping periods); the current alerts
+  - **Overview**: live energy flow between solar, home, batteries and grid; self-consumption, self-sufficiency, savings and losses of the day with their trend; the production chart over today, 7 days, 30 days or 12 months (forecast, consumption, battery %, inverter maximum, clipping hatched); the current alerts
   - **Production**: specific yield, performance index, peak, month total; **per-panel yield on a roof drawing** (micro-inverters, optimizers) and per-string comparison; 30-day performance index with rainy days; 12 months against expected
-  - **Batteries**: any number of batteries of any brand as one fleet (charge, net power, autonomy, battery-to-battery exchange), each battery's health, cycles, round-trip efficiency and temperature, and the **cells** (voltage or deviation heat map, spread trend and days to the threshold)
-  - **Losses**: from potential to produced (cascade), clipping heat map over 30 days, causes of the month, events
-  - **Finances**: share paid back, gains since commissioning, break-even date with a price-rise slider, gains by month and where they come from
-  - **Settings**: configuration check, detected sources with what each provides or what the hub estimates, entities used and their freshness, excluded entities (double counts), and the equivalent YAML to copy
+  - **Batteries**: any number of batteries of any brand as one fleet (charge, net power, autonomy, battery-to-battery exchange), each battery drawn with its level, its health over 3 years and charge of the day with their projections, its modules, and the **cells** as a modules × cells heat map (deviation, voltage, temperature, balancing), each cell's 30-day drift and the spread projected to the threshold
+  - **Losses**: from potential to produced (cascade), clipping heat map over 30 days, causes of the month, events with their status (recurring, to watch, resolved)
+  - **Finances**: share paid back, gains since commissioning, break-even date with a price-rise slider, gains calendar, the bill with and without solar, gains by month and where they come from
+  - **Settings**: sources with what each provides or what the hub estimates, attachment suggestions, data quality of the last 24 hours; a clickable DC/AC layout and the configuration checks with their actions; tariffs; alert rules; the equivalent YAML to copy
 - **Loss detection based on the PV monitoring literature** (see [How it works](#how-it-works)): clipping, recurring shading per panel, soiling, string mismatch, degradation, export limitation, unavailability
 - **Automatic detection** of the installation from the Energy dashboard settings and from 21 integration profiles; YAML to override anything
 - 12 **sensors** (self-consumption, self-sufficiency, solar energy today, specific yield, performance index, losses, clipping, fleet charge and power, autonomy, savings, alerts) for your own dashboards and automations
@@ -148,6 +148,8 @@ energy_hub:
       cycles: sensor.battery_cycles
       temperature: sensor.battery_temperature
       cells: sensor.jk_bms_cell_voltage_*   # glob of the cell voltage sensors
+      cell_temperatures: sensor.jk_bms_cell_temperature_*
+      cells_per_module: 16        # draws the cells as modules × cells
   ignore:                         # entities never read (a double count, for example)
     - sensor.zendure_ac_input
   tariff:
@@ -187,12 +189,15 @@ The **Settings** tab shows the YAML equivalent to what is detected, ready to cop
 | Light | Dark |
 |---|---|
 | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/light-overview.png" alt="overview" width="480"> | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/dark-overview.png" alt="overview dark" width="480"> |
+| <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/light-overview-30d.png" alt="overview 30 days" width="480"> | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/dark-overview-30d.png" alt="overview 30 days dark" width="480"> |
 | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/light-production.png" alt="production" width="480"> | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/dark-production.png" alt="production dark" width="480"> |
 | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/light-batteries.png" alt="batteries" width="480"> | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/dark-batteries.png" alt="batteries dark" width="480"> |
 | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/light-cells.png" alt="cells" width="480"> | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/dark-cells.png" alt="cells dark" width="480"> |
 | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/light-losses.png" alt="losses" width="480"> | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/dark-losses.png" alt="losses dark" width="480"> |
 | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/light-finances.png" alt="finances" width="480"> | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/dark-finances.png" alt="finances dark" width="480"> |
 | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/light-settings.png" alt="settings" width="480"> | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/dark-settings.png" alt="settings dark" width="480"> |
+| <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/light-settings-installation.png" alt="settings installation" width="480"> | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/dark-settings-installation.png" alt="settings installation dark" width="480"> |
+| <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/light-settings-alerts.png" alt="settings alerts" width="480"> | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/screenshots/dark-settings-alerts.png" alt="settings alerts dark" width="480"> |
 
 ## How it works
 

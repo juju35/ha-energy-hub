@@ -144,6 +144,8 @@ class EnergyHubCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         stale: list[str] = []
         for entity_id in inst.entity_ids():
             state = get(entity_id)
+            if state is None or state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+                stale.append(entity_id)
             if state is None:
                 continue
             age = now - state.last_reported if hasattr(state, "last_reported") else now - state.last_updated
@@ -188,6 +190,8 @@ class EnergyHubCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     temperature=_number(get(b.temperature)) if b.temperature else None,
                     capacity_kwh=cap,
                     cells=cells,
+                    cell_temps=[v for v in (_number(get(e)) for e in b.cell_temperatures) if v is not None],
+                    cells_per_module=b.cells_per_module,
                 )
             )
         batt = sum(b.power_kw or 0.0 for b in batteries)
@@ -198,11 +202,11 @@ class EnergyHubCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             load = max(pv + grid - batt, 0.0)
         clear = self._clearsky(now)
         forecast = role_kw("forecast_power")
-        for entity_id in (inst.roles.get("pv_power"), inst.roles.get("grid_power")):
-            if entity_id and ages.get(entity_id, 0) > STALE_SECONDS and get(entity_id) is not None:
-                state = get(entity_id)
-                if state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
-                    stale.append(entity_id)
+        offline = any(
+            entity_id in stale and ages.get(entity_id, 0) > STALE_SECONDS
+            for entity_id in (inst.roles.get("pv_power"), inst.roles.get("grid_power"))
+            if entity_id
+        )
         return (
             Reading(
                 t=now.timestamp(),
@@ -214,7 +218,8 @@ class EnergyHubCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 units=units or {},
                 strings=strings,
                 batteries=batteries,
-                stale=stale,
+                stale=sorted(stale),
+                offline=offline,
             ),
             ages,
         )

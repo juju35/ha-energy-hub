@@ -30,6 +30,12 @@ class BatteryReading:
     temperature: float | None = None
     capacity_kwh: float | None = None
     cells: list[float] = field(default_factory=list)
+    # Optional, when the BMS gives them: one temperature per cell, the cells being balanced, the cells per module.
+    cell_temps: list[float] = field(default_factory=list)
+    balancing: list[int] = field(default_factory=list)
+    cells_per_module: int | None = None
+    # Modules of the battery, when the integration exposes them: name, soc, voltage, temperature.
+    modules: list[dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass(slots=True)
@@ -45,7 +51,9 @@ class Reading:
     units: dict[str, float] = field(default_factory=dict)
     strings: dict[str, float] = field(default_factory=dict)
     batteries: list[BatteryReading] = field(default_factory=list)
+    # Entities read without a usable value (unavailable, unknown, gone), and whether production or grid is off-line.
     stale: list[str] = field(default_factory=list)
+    offline: bool = False
 
     @property
     def battery_kw(self) -> float:
@@ -74,6 +82,7 @@ def _empty_day(day: str) -> dict[str, Any]:
         "soc_min": {},
         "soc_max": {},
         "soh": {},
+        "cells_v": {},
         "seconds": 0.0,
     }
 
@@ -155,7 +164,7 @@ class History:
                     continue
                 side = "batt_in" if b.power_kw > 0 else "batt_out"
                 record[side][b.key] = record[side].get(b.key, 0.0) + abs(b.power_kw) * h
-            if reading.stale and reading.expected_kw:
+            if reading.offline and reading.expected_kw:
                 record["unavailable"] += reading.expected_kw * h
         if reading.pv_kw is not None and reading.pv_kw > record["peak"]:
             record["peak"] = reading.pv_kw
@@ -169,6 +178,8 @@ class History:
             if len(b.cells) > 1:
                 spread = (max(b.cells) - min(b.cells)) * 1000
                 record["cells_spread"][b.key] = max(record["cells_spread"].get(b.key, 0.0), spread)
+                # The last voltages of the day, for each cell's 30-day curve and drift.
+                record.setdefault("cells_v", {})[b.key] = [round(v, 4) for v in b.cells]
         return self._bucket(reading)
 
     def _bucket(self, reading: Reading) -> bool:
@@ -195,6 +206,12 @@ class History:
         if socs:
             cap = sum(b.capacity_kwh for b in socs)
             values["soc"] = sum(b.soc * b.capacity_kwh for b in socs) / cap
+        for b in reading.batteries:
+            if b.soc is not None:
+                values[f"soc:{b.key}"] = b.soc
+        # Entities without a fresh value during the bucket, for the data quality of the last 24 hours.
+        if reading.stale:
+            acc.setdefault("stale", set()).update(reading.stale)
         for k, v in values.items():
             if v is not None:
                 s = acc["sum"].setdefault(k, [0.0, 0])
@@ -213,6 +230,8 @@ def _close(acc: dict[str, Any]) -> dict[str, Any]:
     row: dict[str, Any] = {"t": acc["t"]}
     for k, (total, n) in acc["sum"].items():
         row[k] = round(total / n, 4)
+    if acc.get("stale"):
+        row["stale"] = sorted(acc["stale"])
     return row
 
 

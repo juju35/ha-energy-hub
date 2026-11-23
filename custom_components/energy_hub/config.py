@@ -91,6 +91,8 @@ BATTERY_SCHEMA = vol.Schema(
         vol.Optional("cycles"): cv.entity_id,
         vol.Optional("temperature"): cv.entity_id,
         vol.Optional("cells"): cv.string,
+        vol.Optional("cell_temperatures"): cv.string,
+        vol.Optional("cells_per_module"): vol.All(vol.Coerce(int), vol.Range(min=1)),
     }
 )
 
@@ -139,6 +141,8 @@ class BatteryConfig:
     cycles: str | None = None
     temperature: str | None = None
     cells: str | None = None
+    cell_temperatures: str | None = None
+    cells_per_module: int | None = None
 
 
 @dataclass(slots=True)
@@ -201,6 +205,8 @@ def parse(raw: dict[str, Any] | None, options: dict[str, Any] | None = None) -> 
                 cycles=b.get("cycles"),
                 temperature=b.get("temperature"),
                 cells=b.get("cells"),
+                cell_temperatures=b.get("cell_temperatures"),
+                cells_per_module=b.get("cells_per_module"),
             )
             for key, b in data[CONF_BATTERIES].items()
         ],

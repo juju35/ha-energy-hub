@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Final
 
 DOMAIN: Final = "energy_hub"
-VERSION: Final = "1.0.0"
+VERSION: Final = "1.1.0"
 
 # Options of the entry (set in the UI or in YAML; YAML wins).
 CONF_DEMO: Final = "demo"

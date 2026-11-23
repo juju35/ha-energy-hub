@@ -103,6 +103,8 @@ class BatterySource:
     discharge_energy: str | None = None
     cells: list[str] = field(default_factory=list)
     cells_attribute: str | None = None
+    cell_temperatures: list[str] = field(default_factory=list)
+    cells_per_module: int | None = None
 
 
 @dataclass(slots=True)
@@ -128,6 +130,8 @@ class Installation:
     batteries: list[BatterySource] = field(default_factory=list)
     sources: list[SourceInfo] = field(default_factory=list)
     excluded: dict[str, str] = field(default_factory=dict)
+    # What the detection could not decide alone (a BMS to attach to a battery…), shown in the Settings tab.
+    suggestions: list[dict[str, Any]] = field(default_factory=list)
 
     def entity_ids(self) -> set[str]:
         ids = set(self.roles.values())
@@ -135,7 +139,7 @@ class Installation:
             ids |= {e for e in (u.power, u.voltage, u.current) if e}
         for b in self.batteries:
             ids |= {e for e in (b.soc, b.power, b.soh, b.cycles, b.temperature, b.capacity_entity) if e}
-            ids |= set(b.cells)
+            ids |= set(b.cells) | set(b.cell_temperatures)
         return ids
 
 
@@ -316,10 +320,32 @@ def _merge_battery(cfg: BatteryConfig, inst: Installation, all_entity_ids: list[
     if cfg.cells:
         battery.cells = sorted(fnmatch.filter(all_entity_ids, cfg.cells), key=_natural)
         battery.cells_attribute = None
+    if cfg.cell_temperatures:
+        battery.cell_temperatures = sorted(fnmatch.filter(all_entity_ids, cfg.cell_temperatures), key=_natural)
+    if cfg.cells_per_module:
+        battery.cells_per_module = cfg.cells_per_module
 
 
 def _natural(text: str) -> list[Any]:
     return [int(t) if t.isdigit() else t for t in re.split(r"(\d+)", text)]
+
+
+def _suggest_bms(inst: Installation) -> None:
+    """A BMS seen as a battery of its own while a battery has no cells: probably the same battery. Suggested only;
+    the engine adds how well their charges follow each other."""
+    targets = [b for b in inst.batteries if b.platform != "bms_ble" and not b.cells]
+    for bms in (b for b in inst.batteries if b.platform == "bms_ble" and b.cells):
+        for target in targets:
+            inst.suggestions.append(
+                {
+                    "kind": "attach_bms",
+                    "bms": bms.name,
+                    "bms_key": bms.key,
+                    "battery": target.name,
+                    "battery_key": target.key,
+                    "yaml": f"energy_hub:\n  batteries:\n    {target.key}:\n      cells: {bms.cells[0]}\n",
+                }
+            )
 
 
 def discover(
@@ -347,5 +373,6 @@ def discover(
     for entry in entries:
         if entry.platform == "zendure_ha" and entry.entity_id.endswith("ac_input") and inst.roles.get("pv_power"):
             inst.excluded.setdefault(entry.entity_id, "double_count")
+    _suggest_bms(inst)
     _LOGGER.debug("Energy Hub installation: %s", inst)
     return inst

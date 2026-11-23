@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.1.0 - 2026-11-23
+
+### Features
+- Banner: alert bell with its count; the collapsed bar keeps a condensed status pill; on narrow screens Refresh moves to Settings.
+- Overview: period selector (Today, 7 days, 30 days, 12 months) and clipping drawn hatched.
+- Batteries: the selected battery drawn with its level and reserve, autonomy and capacity tiles, charge of the day with its projection, state of health over 3 years with its projection, modules, cells as a modules × cells heat map (deviation, voltage, temperature) with balancing dots and drifting cells outlined, cell detail with its 30-day curve and drift diagnosis, spread trend projected to the threshold.
+- Losses: events with their status (recurring, to watch, resolved), dates, days and energy.
+- Finances: gains calendar over 6 weeks and the bill with and without solar.
+- Settings: sub-tabs Sources, Installation, Tariffs, Alerts and YAML; clickable DC/AC layout with each element's capabilities and entities; attachment suggestions (a BMS to its battery, with how well their charges match); data quality of the last 24 hours; configuration checks with an action each.
+- YAML: `cell_temperatures` and `cells_per_module` for a battery.
+
 ## 1.0.0 - 2026-11-23
 
 ### Features

@@ -91,10 +91,38 @@ test('a battery and its cells', () => {
   const p = panel('en');
   p._battery = 'maison';
   const html = p._batteries();
-  assert.match(html, /Cells · 16/);
+  assert.match(html, /Cells · 48/);
+  assert.match(html, /3 modules × 16 cells/);
   assert.match(html, /threshold 50 mV in \d+ days/);
+  assert.match(html, /State of health · 3 years/);
+  assert.match(html, /baldot/);
+  p._cell = 23;
+  assert.match(p._batteries(), /Drifts -?\d/);
   p._battery = 'garage';
   assert.match(p._batteries(), /does not report its cells/);
+});
+
+test('periods, events, calendar, bill and settings sub-tabs', () => {
+  const p = panel('en');
+  for (const period of ['7d', '30d', '12m']) {
+    p._period = period;
+    assert.ok(!/undefined|NaN/.test(p._curve()), period);
+  }
+  assert.match(p._events(), /Recurring/);
+  assert.match(p._events(), /Resolved/);
+  assert.match(p._finances(), /Gains calendar/);
+  assert.match(p._finances(), /Without solar/);
+  for (const sub of ['sources', 'installation', 'tariffs', 'alerts', 'yaml']) {
+    p._sub = sub;
+    const html = p._settingsTab();
+    assert.ok(!/undefined|NaN/.test(html), `${sub}: ${html.match(/.{40}(undefined|NaN).{40}/)?.[0]}`);
+  }
+  p._sub = 'installation';
+  p._node = 'battery:garage';
+  assert.match(p._settingsTab(), /AC-coupled/);
+  p._sub = 'sources';
+  assert.match(p._settingsTab(), /Attach Balcon BMS to the Balcon battery/);
+  assert.match(p._settingsTab(), /Data quality · 24 h/);
 });
 
 test('break-even moves with the price rise', () => {
