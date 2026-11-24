@@ -93,6 +93,9 @@ class BatterySource:
     soc: str | None = None
     power: str | None = None
     charge_positive: bool = True
+    # Sources with an unsigned battery power give charge and discharge as two positive sensors instead.
+    charge_power: str | None = None
+    discharge_power: str | None = None
     capacity_kwh: float | None = None
     capacity_entity: str | None = None
     reserve: float = 10.0
@@ -140,7 +143,20 @@ class Installation:
         for u in [*self.strings, *self.units]:
             ids |= {e for e in (u.power, u.voltage, u.current) if e}
         for b in self.batteries:
-            ids |= {e for e in (b.soc, b.power, b.soh, b.cycles, b.temperature, b.capacity_entity) if e}
+            ids |= {
+                e
+                for e in (
+                    b.soc,
+                    b.power,
+                    b.charge_power,
+                    b.discharge_power,
+                    b.soh,
+                    b.cycles,
+                    b.temperature,
+                    b.capacity_entity,
+                )
+                if e
+            }
             ids |= set(b.cells) | set(b.cell_temperatures)
         return ids
 
@@ -224,6 +240,8 @@ def _apply_profile(
                 soc=soc,
                 power=_first(profile.battery.get("power", []), ids),
                 charge_positive=profile.signs.get("battery_power", "charge_positive") == "charge_positive",
+                charge_power=_first(profile.battery.get("charge_power", []), ids),
+                discharge_power=_first(profile.battery.get("discharge_power", []), ids),
                 capacity_entity=_first(profile.battery.get("capacity", []), ids),
                 soh=_first(profile.battery.get("soh", []), ids),
                 cycles=_first(profile.battery.get("cycles", []), ids),
@@ -235,7 +253,20 @@ def _apply_profile(
                 battery.cells = [cells]
                 battery.cells_attribute = "cell_voltages"
             inst.batteries.append(battery)
-            used += [e for e in (battery.soc, battery.power, battery.soh, battery.cycles) if e]
+            if battery.charge_power and battery.discharge_power:
+                battery.power = None
+            used += [
+                e
+                for e in (
+                    battery.soc,
+                    battery.power,
+                    battery.charge_power,
+                    battery.discharge_power,
+                    battery.soh,
+                    battery.cycles,
+                )
+                if e
+            ]
     if not used:
         return None
     caps = profile.capabilities

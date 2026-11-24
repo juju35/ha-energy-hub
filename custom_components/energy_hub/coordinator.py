@@ -174,6 +174,10 @@ class EnergyHubCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             p = power_kw(get(b.power)) if b.power else None
             if p is not None and not b.charge_positive:
                 p = -p
+            if p is None and b.charge_power and b.discharge_power:
+                charge, discharge = power_kw(get(b.charge_power)), power_kw(get(b.discharge_power))
+                if charge is not None and discharge is not None:
+                    p = abs(charge) - abs(discharge)
             cap = b.capacity_kwh
             if cap is None and b.capacity_entity:
                 cap = _number(get(b.capacity_entity))

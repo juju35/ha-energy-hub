@@ -200,3 +200,48 @@ async def test_tarif_edf_irradiance_and_weather_are_detected(hass: HomeAssistant
     snap = coordinator.data
     assert snap["finances"]["comparator"]["contract"] == "tempo"
     assert snap["reference"]["irradiance"] == "sensor.solar_radiation"
+
+
+async def test_hoymiles_battery_power_from_charge_and_discharge(hass: HomeAssistant) -> None:
+    """Hoymiles S-Miles Home: an unsigned battery power, the direction from the charge / discharge sensors."""
+    from homeassistant.helpers import device_registry as dr
+    from homeassistant.helpers import entity_registry as er
+    from homeassistant.util import dt as dt_util
+
+    hass.config.latitude, hass.config.longitude = 48.11, -1.68
+    hub = MockConfigEntry(domain="hoymiles_home")
+    hub.add_to_hass(hass)
+    device = dr.async_get(hass).async_get_or_create(
+        config_entry_id=hub.entry_id, identifiers={("hoymiles_home", "station_1")}, name="S-Miles Home 1"
+    )
+    reg = er.async_get(hass)
+    values = {
+        "pv_power": "800",
+        "load_power": "300",
+        "grid_power": "0",
+        "battery_power": "500",
+        "battery_charge_power": "0",
+        "battery_discharge_power": "500",
+        "battery_state_of_charge": "62",
+    }
+    for key, value in values.items():
+        object_id = f"s_miles_home_1_{key}"
+        reg.async_get_or_create("sensor", "hoymiles_home", key, suggested_object_id=object_id, device_id=device.id)
+        hass.states.async_set(
+            f"sensor.{object_id}", value, {"unit_of_measurement": "%" if key.endswith("of_charge") else "W"}
+        )
+    entry = MockConfigEntry(domain=DOMAIN, unique_id=DOMAIN, options={"demo": False, "show_panel": False})
+    entry.add_to_hass(hass)
+    assert await async_setup_component(hass, DOMAIN, {DOMAIN: {"planes": [{"kwp": 1.6}]}})
+    await hass.async_block_till_done()
+    coordinator = entry.runtime_data
+    inst = coordinator.installation
+    assert inst.roles["pv_power"] == "sensor.s_miles_home_1_pv_power"
+    assert inst.roles["load_power"] == "sensor.s_miles_home_1_load_power"
+    (battery,) = inst.batteries
+    assert battery.soc == "sensor.s_miles_home_1_battery_state_of_charge"
+    assert battery.power is None
+    assert battery.charge_power == "sensor.s_miles_home_1_battery_charge_power"
+    reading, _ = coordinator._read(dt_util.now())
+    assert reading.batteries[0].power_kw == -0.5
+    assert reading.batteries[0].soc == 62

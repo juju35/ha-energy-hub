@@ -272,6 +272,9 @@ def quality(buckets: list[dict[str, Any]], inst: Installation, now: datetime) ->
     ids: list[tuple[str, str]] = [(role, e) for role, e in sorted(inst.roles.items())]
     for b in inst.batteries:
         ids += [(f"{b.key}.soc", b.soc), (f"{b.key}.power", b.power)] if b.soc and b.power else []
+        if b.soc and b.charge_power and b.discharge_power:
+            ids += [(f"{b.key}.soc", b.soc), (f"{b.key}.charge_power", b.charge_power)]
+            ids += [(f"{b.key}.discharge_power", b.discharge_power)]
     out = []
     slot_len = 86400 / QUALITY_SLOTS
     for role, entity_id in ids:

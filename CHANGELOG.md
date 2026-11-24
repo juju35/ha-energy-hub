@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.0 - 2026-11-24
+
+### Features
+- Profile: Hoymiles S-Miles Home (`hoymiles_home`, HiBattery and other S-Miles batteries) — PV, home load and grid power, total yield, PV1/PV2… per micro-inverter, battery state of charge, temperature and daily charge / discharge energy (#11).
+- Batteries whose power is an unsigned magnitude: a profile can give `charge_power` and `discharge_power`, two positive sensors, and the hub signs the battery power from them.
+
 ## 1.4.1 - 2026-11-24
 
 ### Maintenance

@@ -1,0 +1,32 @@
+name: Hoymiles S-Miles Home
+platform: hoymiles_home
+status: beta
+url: https://github.com/Phil-0805/hoymiles-home-assistant
+# Station device "S-Miles Home <id>": live PV, load, grid and battery figures from the S-Miles cloud.
+roles:
+  pv_power: ['_pv_power$']
+  pv_energy: ['_total_energy$']
+  load_power: ['_load_power$']
+  grid_power: ['_grid_power$']
+# PV1, PV2… of each micro-inverter, from the five-minute module charts.
+units:
+  power: ['_pv(\d+)_power$']
+  voltage: ['_pv(\d+)_voltage$']
+  current: ['_pv(\d+)_current$']
+# HiBattery and other S-Miles batteries: power.bat is an unsigned magnitude, so the direction comes from the
+# separate charge and discharge power sensors.
+battery:
+  soc: ['_battery_state_of_charge$']
+  charge_power: ['_battery_charge_power$']
+  discharge_power: ['_battery_discharge_power$']
+  temperature: ['_battery_temperature$']
+  charge_energy: ['_battery_energy_charged_today$']
+  discharge_energy: ['_battery_energy_discharged_today$']
+signs:
+  grid_power: import_positive
+capabilities:
+  microinverters: provided
+  soc: provided
+  soh: estimated
+  cycles: estimated
+  cells: absent

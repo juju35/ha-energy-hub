@@ -50,6 +50,7 @@ Home Assistant integration and sidebar panel for **solar installations**: produc
 <a href="https://www.home-assistant.io/integrations/sma"><img src="https://brands.home-assistant.io/sma/icon.png" alt="SMA" height="40"></a>
 <a href="https://www.home-assistant.io/integrations/powerwall"><img src="https://brands.home-assistant.io/powerwall/icon.png" alt="Tesla Powerwall" height="40"></a>
 <a href="https://www.home-assistant.io/integrations/victron_gx"><img src="https://brands.home-assistant.io/victron_gx/icon.png" alt="Victron" height="40"></a>
+<a href="https://github.com/Phil-0805/hoymiles-home-assistant"><img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/hoymiles.png" alt="Hoymiles" height="40"></a>
 <a href="https://www.home-assistant.io/integrations/forecast_solar"><img src="https://brands.home-assistant.io/forecast_solar/icon.png" alt="Forecast.Solar" height="40"></a>
 </p>
 
@@ -67,6 +68,7 @@ Energy Hub works on top of the integrations below. Each one has a detection prof
 | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/solarman.png" alt="" width="16"> [Solarman](https://github.com/davidrapan/ha-solarman) (Deye, Sunsynk, Sol-Ark…) | ✓ | ✓ | ✓ | strings, state of health, battery modules |
 | [Victron GX](https://www.home-assistant.io/integrations/victron_gx) | ✓ | ✓ | ✓ | MPPT trackers, state of health |
 | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/tesla.png" alt="" width="16"> [Tesla Powerwall](https://www.home-assistant.io/integrations/powerwall) | ✓ | ✓ | ✓ | |
+| <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/hoymiles.png" alt="" width="16"> [Hoymiles S-Miles Home](https://github.com/Phil-0805/hoymiles-home-assistant) (HiBattery…) | ✓ | ✓ | ✓ | micro-inverters |
 | [OpenDTU / AhoyDTU](https://github.com/tbnobody/OpenDTU) (MQTT) | ✓ | | | micro-inverters, export limit |
 | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/anker.png" alt="" width="16"> [Anker Solix](https://github.com/thomluther/ha-anker-solix) | ✓ | ✓ | ✓ | |
 | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/ecoflow.png" alt="" width="16"> [EcoFlow Cloud](https://github.com/tolwi/hassio-ecoflow-cloud) | ✓ | ✓ | ✓ | state of health, cycles |
