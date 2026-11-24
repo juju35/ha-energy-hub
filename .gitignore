@@ -6,3 +6,5 @@
 __pycache__/
 node_modules/
 report/
+# Assembled from src/<stem>/ by scripts/build-frontend.mjs (not committed)
+custom_components/energy_hub/frontend/energy-hub-panel.js

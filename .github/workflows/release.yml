@@ -46,12 +46,16 @@ jobs:
         with:
           fetch-depth: 0
 
+      # The frontend files are assembled from src/ (scripts/build-frontend.mjs); they are not committed.
+      - name: Build the frontend
+        uses: ./.github/actions/build-frontend
+
       - name: Read version
         id: version
         run: |
           VERSION="$(jq -r .version custom_components/energy_hub/manifest.json)"
           grep -q "^VERSION: Final = \"$VERSION\"" custom_components/energy_hub/const.py
-          grep -q "ENERGY_HUB_PANEL_VERSION = '$VERSION'" custom_components/energy_hub/frontend/energy-hub-panel.js
+          grep -rq "ENERGY_HUB_PANEL_VERSION = '$VERSION'" src/energy-hub-panel
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           if git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then
             echo "exists=true" >> "$GITHUB_OUTPUT"

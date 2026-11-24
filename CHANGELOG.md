@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.1 - 2026-11-24
+
+### Maintenance
+- The frontend source is split into ES modules: `src/energy-hub-panel/` (entry `src/energy-hub-panel/index.js`), cut at its sections (the English strings in `strings.js`; the other languages stay `frontend/i18n/<lang>.json`, fetched on demand). `scripts/build-frontend.mjs` assembles them, in their original order, into `custom_components/energy_hub/frontend/energy-hub-panel.js`, no longer committed; the tests, the screenshots and the release build them first. The release zip is unchanged.
+
 ## 1.4.0 - 2026-11-23
 
 ### Features

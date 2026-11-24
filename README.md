@@ -241,7 +241,10 @@ Every 30 seconds the integration reads the detected entities (powers converted t
 
 ## Development
 
+The frontend source is split into ES modules under `src/energy-hub-panel/` (entry `src/energy-hub-panel/index.js`). `node scripts/build-frontend.mjs` (or `npm run build`) assembles them into `custom_components/energy_hub/frontend/energy-hub-panel.js`, not committed: build before the tests, the screenshots and the release. Modules share one scope once assembled, so top-level names stay unique; a new module must be listed in its `index.js`.
+
 ```bash
+npm ci && npm run build          # assembles the panel from src/ (not committed)
 pip install -r requirements_test.txt && pytest
 node --test test/*.test.mjs
 python scripts/screenshots.py --refresh-fixture   # after a change of the demo or the snapshot (needs Home Assistant)
@@ -251,7 +254,7 @@ python scripts/screenshots.py   # renders every tab, light and dark, from test/f
 
 ### Releasing
 
-1. Bump the version in `custom_components/energy_hub/manifest.json`, `VERSION` in `const.py` and `ENERGY_HUB_PANEL_VERSION` in the panel
+1. Bump the version in `custom_components/energy_hub/manifest.json`, `VERSION` in `const.py` and `ENERGY_HUB_PANEL_VERSION` in `src/energy-hub-panel/core.js`
 2. Add a `## <version>` section at the top of [CHANGELOG.md](https://github.com/juju35/ha-energy-hub/blob/main/CHANGELOG.md)
 3. Merge to `main`: the **Release** workflow creates the tag and the GitHub release with the changelog section as notes
 

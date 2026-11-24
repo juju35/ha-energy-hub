@@ -19,6 +19,7 @@
 ## Before opening a PR — run the checks locally
 CI mirrors these; running them first avoids round-trips:
 ```sh
+npm ci && node scripts/build-frontend.mjs   # assembles the frontend files (not committed) the checks below read
 pre-commit run -a
 vulture custom_components .vulture_whitelist.py --min-confidence 60
 npx --yes jscpd@5.4.2 .
@@ -39,7 +40,7 @@ carries the new version, updated together in one commit:
 1. `CHANGELOG.md` → add a "## X.Y.Z - YYYY-MM-DD" section at the top (`### Features` | `Fixes` | `Performance` | `Maintenance`).
 2. `custom_components/energy_hub/manifest.json` → `"version": "X.Y.Z"`.
 3. `custom_components/energy_hub/const.py` → `VERSION: Final = "X.Y.Z"`.
-4. `custom_components/energy_hub/frontend/energy-hub-panel.js` → `ENERGY_HUB_PANEL_VERSION = 'X.Y.Z'`.
+4. `src/energy-hub-panel/core.js` → `ENERGY_HUB_PANEL_VERSION = 'X.Y.Z'` (assembled into `custom_components/energy_hub/frontend/energy-hub-panel.js`).
 - Bump rule: `fix` → patch, `feat` → minor, breaking change → major.
 - The PR/commit title carries the version in parentheses, e.g. `feat: new option (X.Y.Z)`.
 
@@ -53,7 +54,7 @@ carries the new version, updated together in one commit:
 - `sources.py` detects the installation (Energy dashboard prefs → profiles → YAML, YAML wins);
   `history.py` integrates readings into buckets, bins and daily records; `engine.py` builds the
   snapshot the panel and the sensors read; `demo.py` simulates an installation.
-- The panel (`frontend/energy-hub-panel.js`) is one vanilla custom element, MDI paths inlined,
+- The panel (`frontend/energy-hub-panel.js`, assembled from `src/energy-hub-panel/`) is one vanilla custom element, MDI paths inlined,
   en/fr strings inside; it only renders the snapshot (no computation beyond the payback slider).
 - After a change of the demo or of the snapshot's shape: `python scripts/screenshots.py --refresh-fixture`
   (a test fails while `test/fixtures/demo.json` is stale).
@@ -75,6 +76,16 @@ carries the new version, updated together in one commit:
 
 ## Supported integrations
 This builds on other Home Assistant integrations, so keep the `## Supported integrations` section (title verbatim) listing the HA integrations it works on top of, with a link to each, in step with `profiles/`.
+
+## Source layout
+- The hand-written frontend is split into ES modules: `src/energy-hub-panel/` (entry `src/energy-hub-panel/index.js`). `scripts/build-frontend.mjs` (`scripts/bundle.mjs`)
+  assembles each into `custom_components/energy_hub/frontend/energy-hub-panel.js`, the classic script Home Assistant serves: modules concatenated in
+  the order of the entry file, import lines removed, `export` keywords dropped. The assembled files are **not
+  committed** (`.gitignore`): build them before the tests, the screenshots and the release zip.
+  Smaller frontend files (under ~40 KB) stay hand-written in `custom_components/energy_hub/frontend/`.
+- Modules share one scope once assembled, so keep top-level names unique across modules; a new module must be listed
+  in its `index.js`.
+- Strings: English in `src/energy-hub-panel/strings.js` (`EH_I18N`); the other languages stay JSON files in `custom_components/energy_hub/frontend/i18n/<lang>.json` (committed, fetched on demand).
 
 ## Translations
 - English is the source. Keep every language in sync when a user-facing string changes.

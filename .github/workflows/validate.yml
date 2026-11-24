@@ -35,7 +35,7 @@ jobs:
         run: |
           VERSION="$(jq -r .version custom_components/energy_hub/manifest.json)"
           grep -q "^VERSION: Final = \"$VERSION\"" custom_components/energy_hub/const.py || { echo "::error file=custom_components/energy_hub/const.py::version $VERSION not found in custom_components/energy_hub/const.py"; exit 1; }
-          grep -q "ENERGY_HUB_PANEL_VERSION = '$VERSION'" custom_components/energy_hub/frontend/energy-hub-panel.js || { echo "::error file=custom_components/energy_hub/frontend/energy-hub-panel.js::version $VERSION not found in custom_components/energy_hub/frontend/energy-hub-panel.js"; exit 1; }
+          grep -rq "ENERGY_HUB_PANEL_VERSION = '$VERSION'" src/energy-hub-panel || { echo "::error file=src/energy-hub-panel/core.js::version $VERSION not found in src/energy-hub-panel"; exit 1; }
           grep -q "^## $VERSION " CHANGELOG.md || { echo "::error file=CHANGELOG.md::no '## $VERSION' entry in CHANGELOG.md"; exit 1; }
           echo "Version $VERSION everywhere"
 
@@ -55,6 +55,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # The frontend files are assembled from src/ (scripts/build-frontend.mjs); they are not committed.
+      - name: Build the frontend
+        uses: ./.github/actions/build-frontend
 
       # Latest Home Assistant: releases since 2026.3 need Python 3.14 (3.13 would resolve to 2026.2).
       - name: Set up Python
@@ -87,6 +91,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      # The frontend files are assembled from src/ (scripts/build-frontend.mjs); they are not committed.
+      - name: Build the frontend
+        uses: ./.github/actions/build-frontend
+
       - name: Set up Python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
@@ -107,10 +115,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Set up Node
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: "22"
+      # The frontend files are assembled from src/ (scripts/build-frontend.mjs); they are not committed.
+      - name: Build the frontend
+        uses: ./.github/actions/build-frontend
 
       - name: Run panel tests
         run: node --test test/*.test.mjs
