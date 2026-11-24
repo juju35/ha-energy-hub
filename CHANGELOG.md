@@ -3,8 +3,8 @@
 ## 1.6.0 - 2026-11-24
 
 ### Features
-- Profile: Indevolt solar batteries (`indevolt`, GEN1 BK1600/BK2500 and GEN2 PG2000) — PV power and total production, AC output as the home load, meter power, state of charge, battery power, temperature, rated capacity and total charge / discharge energy; the battery packs (SFA/PFA) stay out of the battery list.
-- Profile: Denky D4 read as a Linky meter (`denky_d4`, Tasmota Teleinfo driver) — grid power, imported and exported energy from the TIC items and the ENERGY totals.
+- Profile: Indevolt solar batteries (`indevolt`, GEN1 BK1600/BK2500 and GEN2 PG2000), from the core integration or the INDEVOLT custom one — PV power and total production, the DC inputs as strings, meter power, state of charge, battery power, temperature, cycles, rated capacity and total charge / discharge energy; the battery packs stay out of the battery list and the home load is derived (the AC output is what the device feeds the house).
+- Profile: Denky D4 read as a Linky meter (`denky_d4`, Tasmota Teleinfo driver) — grid power from SINSTS or PAPP, imported energy from EAST, BASE or Tasmota's ENERGY total (off-peak meters included), exported energy from EAIT.
 
 ## 1.5.0 - 2026-11-24
 

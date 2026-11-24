@@ -1,28 +1,35 @@
 name: Indevolt
 platform: indevolt
 status: beta
-url: https://github.com/INDEVOLT/homeassistant-indevolt
-# Solar battery + meter gateway (GEN1: BK1600 / BK2500, GEN2: PG2000 series).
-# Entity ids follow the sensor names of the integration:
-#   GEN1 -> dc_input_power1, GEN2 -> dc_input_power_1 (with a space in the name).
-# Battery packs (Battery SOC-Pack1, Battery Temp-Pack1, ...) live on their own
-# devices and are deliberately excluded: only the master SOC is matched.
+url: https://www.home-assistant.io/integrations/indevolt
+# Solar battery + meter gateway (GEN1: BK1600 / BK2500, GEN2: PG2000 series), from the core integration (one device,
+# translated names: dc_output_power, battery_soc, main_soc, battery_pack_1_soc…) or the INDEVOLT custom integration
+# (github.com/INDEVOLT/homeassistant-indevolt: total_dc_output_power, battery_soc_total, battery_soc_mb, packs on their
+# own devices). Every pattern is anchored at the end, so the pack sensors (battery_pack_1_soc, battery_soc_pack1…) are
+# never taken for the battery itself.
+# The AC output is what the device feeds the house, not the home load: the load is derived from PV, grid and battery.
 roles:
-  pv_power: ['total_dc_output_power$', 'dc_input_power_?1$']
+  pv_power: ['dc_output_power$']
   pv_energy: ['cumulative_production$']
-  load_power: ['total_ac_output_power$']
   grid_power: ['meter_power$']
+# DC inputs 1 to 4 (dc_input_power_1 on GEN2 and in the core integration, dc_input_power1 on the GEN1 custom one).
+strings:
+  power: ['dc_input_power_?(\d)$']
+  voltage: ['dc_input_voltage_?(\d)$']
+  current: ['dc_input_current_?(\d)$']
 battery:
-  soc: ['battery_soc_total$', 'battery_soc_mb$', 'battery_soc$']
+  soc: ['battery_soc_total$', 'battery_soc$', 'main_soc$', 'battery_soc_mb$']
   power: ['battery_power$']
-  temperature: ['battery_temp_mb$', 'battery_temp$']
+  temperature: ['main_temperature$', 'battery_temp_mb$']
+  cycles: ['equivalent_full_cycles$', 'main_cycles$']
   charge_energy: ['battery_total_charging_energy$']
   discharge_energy: ['battery_total_discharging_energy$']
   capacity: ['rated_capacity$']
 signs:
   grid_power: import_positive
 capabilities:
+  strings: provided
   soc: provided
-  soh: absent
-  cycles: absent
+  soh: estimated
+  cycles: provided
   cells: absent

@@ -245,3 +245,100 @@ async def test_hoymiles_battery_power_from_charge_and_discharge(hass: HomeAssist
     reading, _ = coordinator._read(dt_util.now())
     assert reading.batteries[0].power_kw == -0.5
     assert reading.batteries[0].soc == 62
+
+
+def _registry_sensors(hass: HomeAssistant, platform: str, device_name: str, values: dict[str, str], prefix: str):
+    """One device of `platform` carrying a sensor per object id suffix, with its state."""
+    from homeassistant.helpers import device_registry as dr
+    from homeassistant.helpers import entity_registry as er
+
+    hub = MockConfigEntry(domain=platform)
+    hub.add_to_hass(hass)
+    device = dr.async_get(hass).async_get_or_create(
+        config_entry_id=hub.entry_id, identifiers={(platform, device_name)}, name=device_name
+    )
+    reg = er.async_get(hass)
+    for key, value in values.items():
+        object_id = f"{prefix}_{key}"
+        reg.async_get_or_create("sensor", platform, object_id, suggested_object_id=object_id, device_id=device.id)
+        unit = (
+            "%" if "soc" in key else "kWh" if "energy" in key or key.endswith(("east", "eait", "hchc", "hchp")) else "W"
+        )
+        hass.states.async_set(f"sensor.{object_id}", value, {"unit_of_measurement": unit})
+
+
+async def _setup_real(hass: HomeAssistant) -> MockConfigEntry:
+    hass.config.latitude, hass.config.longitude = 48.11, -1.68
+    entry = MockConfigEntry(domain=DOMAIN, unique_id=DOMAIN, options={"demo": False, "show_panel": False})
+    entry.add_to_hass(hass)
+    assert await async_setup_component(hass, DOMAIN, {DOMAIN: {"planes": [{"kwp": 1.6}]}})
+    await hass.async_block_till_done()
+    return entry
+
+
+async def test_indevolt_core_integration(hass: HomeAssistant) -> None:
+    """Indevolt (core integration, one device): the pack SOC is not the battery, the home load is derived."""
+    from homeassistant.util import dt as dt_util
+
+    values = {
+        "dc_output_power": "800",
+        "dc_input_power_1": "420",
+        "dc_input_power_2": "380",
+        "cumulative_production": "1234.5",
+        "ac_output_power": "500",
+        "meter_power": "200",
+        "battery_power": "300",
+        "battery_soc": "62",
+        "main_soc": "61",
+        "battery_pack_1_soc": "63",
+        "main_temperature": "24",
+        "equivalent_full_cycles": "57",
+        "rated_capacity": "2",
+    }
+    _registry_sensors(hass, "indevolt", "Indevolt PG2000", values, "pg2000")
+    coordinator = (await _setup_real(hass)).runtime_data
+    inst = coordinator.installation
+    assert inst.roles["pv_power"] == "sensor.pg2000_dc_output_power"
+    assert inst.roles["pv_energy"] == "sensor.pg2000_cumulative_production"
+    assert inst.roles["grid_power"] == "sensor.pg2000_meter_power"
+    assert "load_power" not in inst.roles  # the AC output is not the home load
+    assert [s.power for s in inst.strings] == ["sensor.pg2000_dc_input_power_1", "sensor.pg2000_dc_input_power_2"]
+    (battery,) = inst.batteries
+    assert battery.soc == "sensor.pg2000_battery_soc"
+    assert battery.temperature == "sensor.pg2000_main_temperature"
+    assert battery.cycles == "sensor.pg2000_equivalent_full_cycles"
+    reading, _ = coordinator._read(dt_util.now())
+    assert abs(reading.load_kw - 0.7) < 1e-9  # 0.8 PV + 0.2 grid - 0.3 charging
+
+
+async def test_indevolt_custom_integration_packs_stay_out(hass: HomeAssistant) -> None:
+    """Indevolt custom integration (GEN2): the packs live on their own devices and are not counted as batteries."""
+    main = {"total_dc_output_power": "600", "meter_power": "0", "battery_soc_total": "55", "battery_soc_mb": "54"}
+    _registry_sensors(hass, "indevolt", "PG2000 (SN1)", main, "pg2000_sn1")
+    pack = {"battery_soc_pack1": "56", "battery_temp_pack1": "22"}
+    _registry_sensors(hass, "indevolt", "SFA/PFA Battery Pack 1 (SN2)", pack, "sfa_pfa_battery_pack_1_sn2")
+    inst = (await _setup_real(hass)).runtime_data.installation
+    assert inst.roles["pv_power"] == "sensor.pg2000_sn1_total_dc_output_power"
+    (battery,) = inst.batteries
+    assert battery.soc == "sensor.pg2000_sn1_battery_soc_total"
+
+
+async def test_denky_d4_as_linky_meter(hass: HomeAssistant) -> None:
+    """Denky D4 (Tasmota Teleinfo): SINSTS before PAPP, EAST before the ENERGY total; other Tasmota devices ignored."""
+    denky = {"tic_sinsts": "900", "tic_papp": "910", "tic_east": "15234", "tic_eait": "12", "energy_total": "15234"}
+    _registry_sensors(hass, "tasmota", "Denky D4", denky, "denky_d4")
+    _registry_sensors(hass, "tasmota", "Garage plug", {"energy_total": "42", "energy_power": "60"}, "garage_plug")
+    inst = (await _setup_real(hass)).runtime_data.installation
+    assert inst.roles["grid_power"] == "sensor.denky_d4_tic_sinsts"
+    assert inst.roles["grid_import_energy"] == "sensor.denky_d4_tic_east"
+    assert inst.roles["grid_export_energy"] == "sensor.denky_d4_tic_eait"
+    assert not any("garage_plug" in e for e in inst.roles.values())
+
+
+async def test_denky_d4_off_peak_meter_uses_the_energy_total(hass: HomeAssistant) -> None:
+    """A Denky on an HC/HP meter in historical mode: the import is Tasmota's total, not the off-peak index alone."""
+    denky = {"tic_papp": "700", "tic_hchc": "8000", "tic_hchp": "6000", "energy_total": "14000"}
+    _registry_sensors(hass, "tasmota", "teleinfo-garage", denky, "teleinfo_garage")
+    inst = (await _setup_real(hass)).runtime_data.installation
+    assert inst.roles["grid_power"] == "sensor.teleinfo_garage_tic_papp"
+    assert inst.roles["grid_import_energy"] == "sensor.teleinfo_garage_energy_total"

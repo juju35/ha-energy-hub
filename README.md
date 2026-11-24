@@ -31,7 +31,7 @@ Home Assistant integration and sidebar panel for **solar installations**: produc
   - **Finances**: share paid back, gains since commissioning, break-even date with a price-rise slider, gains calendar, the bill with and without solar, gains by month and where they come from, and an **offer comparator** that replays 12 months of your real grid draw under each EDF offer
   - **Settings**: sources with what each provides or what the hub estimates, attachment suggestions, data quality of the last 24 hours; a clickable DC/AC layout and the configuration checks with their actions; tariffs; alert rules; the equivalent YAML to copy
 - **Loss detection based on the PV monitoring literature** (see [How it works](#how-it-works)): clipping, recurring shading per panel, soiling, string mismatch, degradation, export limitation, unavailability
-- **Automatic detection** of the installation from the Energy dashboard settings and from 24 integration profiles; YAML to override anything
+- **Automatic detection** of the installation from the Energy dashboard settings and from 27 integration profiles; YAML to override anything
 - **Expected production from what Home Assistant already knows**: a measured irradiance sensor, the solar forecast, or a weather entity's cloud cover, with no network call of its own
 - 12 **sensors** (self-consumption, self-sufficiency, solar energy today, specific yield, performance index, losses, clipping, fleet charge and power, autonomy, savings, alerts) for your own dashboards and automations
 - `energy_hub_alert` **event** and **notifications** in Home Assistant's language (once a day per alert): through [Notify Hub](https://github.com/juju35/ha-notify-hub) when it is installed, or to the notify action or entity of your choice
@@ -49,6 +49,7 @@ Home Assistant integration and sidebar panel for **solar installations**: produc
 <a href="https://www.home-assistant.io/integrations/fronius"><img src="https://brands.home-assistant.io/fronius/icon.png" alt="Fronius" height="40"></a>
 <a href="https://www.home-assistant.io/integrations/sma"><img src="https://brands.home-assistant.io/sma/icon.png" alt="SMA" height="40"></a>
 <a href="https://www.home-assistant.io/integrations/powerwall"><img src="https://brands.home-assistant.io/powerwall/icon.png" alt="Tesla Powerwall" height="40"></a>
+<a href="https://www.home-assistant.io/integrations/indevolt"><img src="https://brands.home-assistant.io/indevolt/icon.png" alt="Indevolt" height="40"></a>
 <a href="https://www.home-assistant.io/integrations/victron_gx"><img src="https://brands.home-assistant.io/victron_gx/icon.png" alt="Victron" height="40"></a>
 <a href="https://github.com/Phil-0805/hoymiles-home-assistant"><img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/hoymiles.png" alt="Hoymiles" height="40"></a>
 <a href="https://www.home-assistant.io/integrations/forecast_solar"><img src="https://brands.home-assistant.io/forecast_solar/icon.png" alt="Forecast.Solar" height="40"></a>
@@ -75,11 +76,11 @@ Energy Hub works on top of the integrations below. Each one has a detection prof
 | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/zendure.png" alt="" width="16"> [Zendure](https://github.com/Zendure/Zendure-HA) | ✓ | ✓ | ✓ | state of health, battery packs |
 | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/marstek.png" alt="" width="16"> [Marstek Local API](https://github.com/jaapp/ha-marstek-local-api) | | ✓ | ✓ | |
 | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/beem.png" alt="" width="16"> [Beem Energy](https://github.com/CharlesP44/Beem_Energy) | ✓ | | ✓ | |
-| [Indevolt](https://github.com/INDEVOLT/homeassistant-indevolt) (BK1600, PG2000…) | ✓ | ✓ | ✓ | solar battery, grid meter |
+| <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/indevolt.png" alt="" width="16"> [Indevolt](https://www.home-assistant.io/integrations/indevolt) (BK1600, PG2000…, also the [custom integration](https://github.com/INDEVOLT/homeassistant-indevolt)) | ✓ | ✓ | ✓ | strings, grid meter, cycles |
 | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/bms_ble.png" alt="" width="16"> [BLE Battery Management](https://github.com/patman15/BMS_BLE-HA) (JK, JBD, Daly…) | | | ✓ | **cells**, cycles |
 | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/zha.png" alt="" width="16"> [ZLinky](https://www.home-assistant.io/integrations/zha) (ZHA) | | ✓ | | Linky meter |
 | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/teleinfo.png" alt="" width="16"> [Teleinfo](https://www.home-assistant.io/integrations/teleinfo) | | ✓ | | Linky meter |
-| [Denky D4](https://github.com/hallard/Denky-D4) (Tasmota) | | ✓ | | Linky meter |
+| <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/tasmota.png" alt="" width="16"> [Denky D4](https://github.com/hallard/Denky-D4) ([Tasmota](https://www.home-assistant.io/integrations/tasmota) Teleinfo) | | ✓ | | Linky meter |
 | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/forecast_solar.png" alt="" width="16"> [Forecast.Solar](https://www.home-assistant.io/integrations/forecast_solar) | forecast | | | |
 | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/solcast_solar.png" alt="" width="16"> [Solcast PV Forecast](https://github.com/BJReplay/ha-solcast-solar) | forecast | | | |
 | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/tarif_edf.png" alt="" width="16"> [Tarif EDF](https://github.com/delphiki/hass-tarif-edf) | | tariff | | contract, power, price now, Tempo colour |

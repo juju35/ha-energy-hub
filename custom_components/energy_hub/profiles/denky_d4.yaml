@@ -2,15 +2,15 @@ name: Denky D4 (Tasmota)
 platform: tasmota
 status: beta
 url: https://github.com/hallard/Denky-D4
-# Denky D4 runs the Tasmota Teleinfo driver (xnrg_15_teleinfo) on a Linky meter.
-# Tasmota publishes one sensor per teleinfo label, so entity ids end with the
-# label name: sensor.<device>_papp, _sinsts, _east, _eait, _hchc, _hchp, _base.
-# SINSTS is the signed apparent power (import > 0, export < 0), PAPP is unsigned:
-# SINSTS is matched first and PAPP is the fallback for meters that only send PAPP.
+# Denky D4 runs the Tasmota Teleinfo driver (xnrg_15_teleinfo) on a Linky meter. The Tasmota integration creates one
+# sensor per TIC label (sensor.<device>_tic_papp, _tic_sinsts, _tic_east, _tic_eait, _tic_base…) plus the ENERGY ones
+# (_energy_total, _energy_power). SINSTS (standard mode) and PAPP (historical mode) are both the apparent power drawn,
+# never negative: the export direction is not visible on the grid power.
+# ENERGY Total is the drawn index Tasmota computes in every mode (HCHC + HCHP included), the fallback after EAST / BASE.
 match_device: ['denky', 'teleinfo', 'linky', 'papp', 'sinsts', 'east', 'eait']
 roles:
   grid_power: ['_sinsts$', '_papp$']
-  grid_import_energy: ['_east$', '_hchc$', '_base$']
+  grid_import_energy: ['_east$', '_base$', '_energy_total$']
   grid_export_energy: ['_eait$']
 signs:
   grid_power: import_positive
