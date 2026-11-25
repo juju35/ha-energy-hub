@@ -20,7 +20,16 @@ from . import demo
 from .analytics.clearsky import CONDITION_CLOUDS, Plane, clearsky_power, cloud_factor, measured_factor
 from .analytics.tariffs import normalize_color
 from .config import MULTI_ROLES, ROLES, HubConfig
-from .const import DOMAIN, EVENT_ALERT, NOTIFY_HUB, STALE_SECONDS, STORAGE_KEY, STORAGE_VERSION, UPDATE_SECONDS
+from .const import (
+    CONF_ENTITIES,
+    DOMAIN,
+    EVENT_ALERT,
+    NOTIFY_HUB,
+    STALE_SECONDS,
+    STORAGE_KEY,
+    STORAGE_VERSION,
+    UPDATE_SECONDS,
+)
 from .engine import build_snapshot, estimate_kwp
 from .history import BatteryReading, History, Reading
 from .sources import Installation, discover, load_profiles, role_entities
@@ -151,7 +160,9 @@ class EnergyHubCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "all": list(ROLES),
             "multi": list(MULTI_ROLES),
             "detected": sorted(role for role in ROLES if inst.roles.get(role) and role not in self.cfg.entities),
-            "configured": self.cfg.entities,
+            # Only what the options hold: the YAML entities stay in configuration.yaml, so saving the panel's
+            # form never copies them into the options (where they would then win over later YAML edits).
+            "configured": dict(self.config_entry.options.get(CONF_ENTITIES) or {}),
             "excluded": inst.excluded,
             "signs": inst.signs,
         }
@@ -235,12 +246,17 @@ class EnergyHubCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             load = max(pv + grid - batt, 0.0)
         clear = self._clearsky(now)
         expected, reference = self._expected(now, clear, role_kw("forecast_power"))
-        color = normalize_color(st.state) if (st := get(inst.roles.get("tariff_color") or "")) else None
-        offline = any(
-            entity_id in stale and ages.get(entity_id, 0) > STALE_SECONDS
-            for entity_id in (inst.roles.get("pv_power"), inst.roles.get("grid_power"))
-            if entity_id
-        )
+        color = normalize_color(st.state) if (st := self._role_state("tariff_color")) else None
+
+        def role_offline(role: str) -> bool:
+            """Stale for too long: any entity of an added-up role (the sum is incomplete), every entity otherwise
+            (a fallback that still answers keeps the role online)."""
+            down = [e in stale and ages.get(e, 0) > STALE_SECONDS for e in role_entities(inst, role)]
+            if not down:
+                return False
+            return any(down) if role in MULTI_ROLES else all(down)
+
+        offline = role_offline("pv_power") or role_offline("grid_power")
         return (
             Reading(
                 t=now.timestamp(),
@@ -269,7 +285,7 @@ class EnergyHubCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         get = self.hass.states.get
         inst = self.installation
         lat, lon = self.hass.config.latitude, self.hass.config.longitude
-        if clear is not None and (ghi := _number(get(inst.roles.get("irradiance") or ""))) is not None:
+        if clear is not None and (ghi := _number(self._role_state("irradiance"))) is not None:
             factor = measured_factor(ghi, now, lat, lon)
             return (clear * factor if factor is not None else clear), "measured"
         if forecast is not None:
@@ -283,7 +299,7 @@ class EnergyHubCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     def _price(self, now, color: str | None) -> float:
         """Price of the kWh drawn now: the price entity (Tarif EDF), else the contract's grid, else the flat price."""
-        if (price := _number(self.hass.states.get(self.installation.roles.get("tariff_price") or ""))) is not None:
+        if (price := _number(self._role_state("tariff_price"))) is not None:
             return price
         if offer := contract_offer(self.cfg, self.installation):
             # The colour entity shows the colour in force: before 6:00, the Tempo day that started yesterday.
@@ -291,6 +307,14 @@ class EnergyHubCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             colors = {d.isoformat(): color for d in days} if color else {}
             return offer.slot_price(now.date(), now.hour * 60 + now.minute, colors)
         return self.cfg.import_price
+
+    def _role_state(self, role: str) -> State | None:
+        """The state of the first entity of the role that answers (the alternative-source fallback)."""
+        for entity_id in role_entities(self.installation, role):
+            state = self.hass.states.get(entity_id)
+            if state is not None and state.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN, ""):
+                return state
+        return None
 
     def _units(self, units) -> dict[str, float]:
         get = self.hass.states.get

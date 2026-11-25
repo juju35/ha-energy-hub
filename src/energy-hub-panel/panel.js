@@ -47,12 +47,14 @@ export class EnergyHubPanel extends HTMLElement {
     this._unsub = null;
   }
 
-  async _connect() {
+  async _connect(quiet = false) {
     try {
       this._unsub = this._hass.connection.subscribeMessage(
         (data) => {
           this._data = data;
-          this._render();
+          // Typing in the Entities form: wait for the field to lose focus, or the 30-second push would wipe it.
+          if (this.shadowRoot.activeElement?.classList?.contains('entin')) this._renderLater = true;
+          else this._render();
         },
         { type: 'energy_hub/subscribe' },
       );
@@ -60,9 +62,27 @@ export class EnergyHubPanel extends HTMLElement {
       this._settings = await this._hass.callWS({ type: 'energy_hub/settings' });
       this._render();
     } catch (err) {
+      if (quiet) throw err;
       this._error = err?.message || String(err);
       this._render();
     }
+  }
+
+  async _resubscribe() {
+    this._unsub?.then((u) => u()).catch(() => {});
+    this._unsub = null;
+    // The reload takes a moment: retry until the new coordinator answers (about 15 s at most).
+    for (let i = 0; i < 15; i += 1) {
+      await new Promise((r) => setTimeout(r, 1000));
+      try {
+        await this._connect(true);
+        return;
+      } catch (_err) {
+        this._unsub = null;
+      }
+    }
+    this._error = 'Energy Hub did not come back after the reload';
+    this._render();
   }
 
   // ---------- helpers
@@ -1015,10 +1035,10 @@ export class EnergyHubPanel extends HTMLElement {
     const detected = e.roles || {};
     const rows = roles
       .map((role) => {
-        const cur = chosen[role] || [];
+        const cur = this._entDraft?.[role] ?? (chosen[role] || []).join(', ');
         const auto = detected[role] || [];
         const many = (e.multi || []).includes(role);
-        return `<div class="entrow"><label class="a1">${ehEsc(this._roleLabel(role))}</label><input class="entin" data-erole="${ehEsc(role)}" value="${ehEsc(cur.join(', '))}" placeholder="${ehEsc(auto.join(', '))}" spellcheck="false" autocomplete="off"><span class="t3">${ehEsc(this._t(many ? 'entities_multi' : 'entities_one'))}</span></div>`;
+        return `<div class="entrow"><label class="a1">${ehEsc(this._roleLabel(role))}</label><input class="entin" data-erole="${ehEsc(role)}" value="${ehEsc(cur)}" placeholder="${ehEsc(auto.join(', '))}" spellcheck="false" autocomplete="off"><span class="t3">${ehEsc(this._t(many ? 'entities_multi' : 'entities_one'))}</span></div>`;
       })
       .join('');
     const bar = `<div class="entbar"><button class="copy" data-action="save-entities">${ehIcon('check', 14)} ${ehEsc(this._t('entities_save'))}</button><span class="hint">${ehEsc(this._t('entities_format'))}</span></div>`;
@@ -1293,6 +1313,20 @@ export class EnergyHubPanel extends HTMLElement {
         // kept as is
       }
     });
+    for (const el of root.querySelectorAll('[data-erole]')) {
+      el.addEventListener('input', () => {
+        this._entDraft = { ...this._entDraft, [el.dataset.erole]: el.value };
+      });
+      el.addEventListener('blur', () => {
+        // Moving to the next field keeps the focus inside the form: render only once it really leaves.
+        setTimeout(() => {
+          if (this._renderLater && !this.shadowRoot.activeElement?.classList?.contains('entin')) {
+            this._renderLater = false;
+            this._render();
+          }
+        }, 0);
+      });
+    }
     root.querySelector('[data-action="save-entities"]')?.addEventListener('click', async (ev) => {
       const btn = ev.currentTarget;
       const roles = {};
@@ -1306,12 +1340,15 @@ export class EnergyHubPanel extends HTMLElement {
       try {
         await this._hass.callWS({ type: 'energy_hub/set_entities', roles });
         btn.textContent = this._t('entities_saved');
-        this._data = await this._hass.callWS({ type: 'energy_hub/snapshot' });
-        setTimeout(() => this._render(), 1200);
+        this._entDraft = null;
+        this._renderLater = false;
       } catch (_err) {
         btn.textContent = this._t('entities_failed');
         btn.disabled = false;
+        return;
       }
+      // Saving reloads the integration: the subscription belonged to the old coordinator, take a new one.
+      await this._resubscribe();
     });
     root.querySelector('[data-action="menu"]')?.addEventListener('click', () => this.dispatchEvent(new Event('hass-toggle-menu', { bubbles: true, composed: true })));
     this._bindCurve();
