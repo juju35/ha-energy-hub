@@ -37,9 +37,9 @@ from .analytics.mismatch import score_units
 from .analytics.shading import MIN_CLEAR_DAYS, recurring_shading
 from .analytics.soiling import MIN_DAYS as SOILING_DAYS
 from .analytics.soiling import soiling_srr
-from .config import HubConfig
+from .config import MULTI_ROLES, ROLES, HubConfig
 from .history import History, Reading
-from .sources import DEFAULT_CAPACITY_KWH, Installation
+from .sources import DEFAULT_CAPACITY_KWH, Installation, role_entities
 
 # Thresholds of the alerts.
 CLIPPING_ALERT_KWH = 0.3
@@ -567,6 +567,13 @@ def build_snapshot(
         "sources": [asdict(s) for s in inst.sources],
         "roles": inst.roles,
         "excluded": inst.excluded,
+        # The Settings form: the entities in use per role; the coordinator adds the ones chosen in the options.
+        "entities": {
+            "roles": {role: role_entities(inst, role) for role in ROLES if inst.roles.get(role)},
+            "all": list(ROLES),
+            "multi": list(MULTI_ROLES),
+            "configured": {},
+        },
         "ages": ages or {},
         "quality": views.quality(history.buckets + buckets[-1:], inst, now),
         "suggestions": views.suggestions(inst, kwp_estimated, items, history.buckets),

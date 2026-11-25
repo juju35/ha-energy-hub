@@ -143,6 +143,21 @@ test('periods, events, calendar, bill and settings sub-tabs', () => {
   assert.match(p._settingsTab(), /Data quality · 24 h/);
 });
 
+test('the entities form: detected entity as placeholder, chosen ones as value, a typed draft wins', () => {
+  const p = panel();
+  p._sub = 'sources';
+  let html = p._settingsTab();
+  assert.match(html, /data-erole="pv_power"/);
+  assert.match(html, /placeholder="sensor\.demo_inverter_input_power"/);
+  assert.match(html, /added up/);
+  p._data.entities.configured = { grid_power: ['sensor.zlinky_power', 'sensor.meter_power'] };
+  html = p._settingsTab();
+  assert.match(html, /data-erole="grid_power"[^>]*value="sensor\.zlinky_power, sensor\.meter_power"/);
+  p._entDraft = { grid_power: 'sensor.typed' };
+  assert.match(p._settingsTab(), /data-erole="grid_power"[^>]*value="sensor\.typed"/);
+  assert.deepEqual([...p._unknownEntities('sensor.a, sensor.b')], ['sensor.a', 'sensor.b']);
+});
+
 test('break-even moves with the price rise', () => {
   const p = panel('en');
   const slow = p._breakEven(0);

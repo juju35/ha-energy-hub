@@ -66,5 +66,4 @@ async def test_the_panel_edits_the_options_not_the_yaml(hass: HomeAssistant) -> 
         options={CONF_ENTITIES: {"pv_power": ["sensor.pv_a"]}},
         yaml={"entities": {"grid_power": "sensor.yaml_grid"}},
     )
-    payload = coordinator._entities_payload()
-    assert payload["configured"] == {"pv_power": ["sensor.pv_a"]}
+    assert coordinator._configured_entities() == {"pv_power": ["sensor.pv_a"]}

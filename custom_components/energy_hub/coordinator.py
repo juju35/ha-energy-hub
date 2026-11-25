@@ -19,7 +19,7 @@ from homeassistant.util import dt as dt_util
 from . import demo
 from .analytics.clearsky import CONDITION_CLOUDS, Plane, clearsky_power, cloud_factor, measured_factor
 from .analytics.tariffs import normalize_color
-from .config import MULTI_ROLES, ROLES, HubConfig
+from .config import MULTI_ROLES, HubConfig
 from .const import (
     CONF_ENTITIES,
     DOMAIN,
@@ -148,21 +148,14 @@ class EnergyHubCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         snapshot = await self.hass.async_add_executor_job(
             build_snapshot, self.history, self.installation, self.cfg, reading, now, ages, self.demo
         )
-        snapshot["entities"] = self._entities_payload()
+        snapshot["entities"]["configured"] = self._configured_entities()
         await self._async_alerts(snapshot)
         return snapshot
 
-    def _entities_payload(self) -> dict[str, Any]:
-        """What the Settings tab needs to edit the roles: the entities in use and the ones chosen in the options."""
-        inst = self.installation
-        return {
-            "roles": {role: role_entities(inst, role) for role in ROLES if inst.roles.get(role)},
-            "all": list(ROLES),
-            "multi": list(MULTI_ROLES),
-            # Only what the options hold: the YAML entities stay in configuration.yaml, so saving the panel's
-            # form never copies them into the options (where they would then win over later YAML edits).
-            "configured": dict(self.config_entry.options.get(CONF_ENTITIES) or {}),
-        }
+    def _configured_entities(self) -> dict[str, list[str]]:
+        """The entities chosen in the options, for the Settings form. Only those: the YAML entities stay in
+        configuration.yaml, so saving the form never copies them into the options (where they would win)."""
+        return dict(self.config_entry.options.get(CONF_ENTITIES) or {})
 
     # ---- reading the states
     def _read(self, now) -> tuple[Reading, dict[str, float]]:
