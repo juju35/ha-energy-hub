@@ -184,6 +184,7 @@ pre{background:var(--secondary-background-color);border-radius:8px;padding:10px 
 .entrow{display:grid;grid-template-columns:130px minmax(0,1fr) 84px;gap:8px;align-items:center;padding:3px 0}
 .entin{font:inherit;font-size:12px;padding:5px 8px;border:1px solid var(--divider-color);border-radius:8px;background:var(--card-background-color);color:var(--primary-text-color);min-width:0}
 .entin:focus{outline:2px solid var(--primary-color);outline-offset:-1px}
+.entin.bad{border-color:var(--error-color,#db4437)}
 .entbar{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}
 @media (max-width:600px){.entrow{grid-template-columns:minmax(0,1fr)}}
 a.copy{text-decoration:none}@media (max-width:600px){.round.refresh{display:none}.refresh-inline{display:flex}.grid3{grid-template-columns:repeat(2,minmax(0,1fr))}.battrow{grid-template-columns:minmax(0,1fr)}.qrow{grid-template-columns:minmax(0,1fr) 70px}.qrow .qbar{grid-column:1/-1;grid-row:2}.qrow.axis .qaxis{grid-column:1/-1}.cellrow{grid-template-columns:minmax(0,1fr)}

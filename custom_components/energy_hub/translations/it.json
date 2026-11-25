@@ -27,7 +27,7 @@
       },
       "entities": {
         "title": "Entità per ruolo",
-        "description": "Scegli l'entità di ogni ruolo. Un campo vuoto mantiene il rilevamento automatico. Sono ammesse più entità: i ruoli solari si sommano, gli altri usano la prima che risponde, così si dichiara una fonte alternativa.",
+        "description": "Scegli l'entità di ogni ruolo. Un campo vuoto mantiene il rilevamento automatico. Sono ammesse più entità: la potenza solare si somma, gli altri usano la prima che risponde, così si dichiara una fonte alternativa.",
         "data": {
           "pv_power": "Potenza solare (più entità si sommano)",
           "pv_energy": "Energia solare",

@@ -27,7 +27,7 @@
       },
       "entities": {
         "title": "Entiteter per roll",
-        "description": "Välj entiteten bakom varje roll. Ett tomt fält behåller den automatiska identifieringen. Flera entiteter tillåts: solrollerna summeras, de övriga använder den första som svarar – så anger du en alternativ källa.",
+        "description": "Välj entiteten bakom varje roll. Ett tomt fält behåller den automatiska identifieringen. Flera entiteter tillåts: soleffekten summeras, de övriga använder den första som svarar – så anger du en alternativ källa.",
         "data": {
           "pv_power": "Solproduktion (flera summeras)",
           "pv_energy": "Solenergi",

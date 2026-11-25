@@ -27,7 +27,7 @@
       },
       "entities": {
         "title": "Entities per role",
-        "description": "Pick the entity behind each role. Leave a role empty to keep the automatic detection. Several entities are allowed: the solar roles add them up, the other roles keep the first one that answers, which is how an alternative data source is declared.",
+        "description": "Pick the entity behind each role. Leave a role empty to keep the automatic detection. Several entities are allowed: the solar power adds them up, the other roles keep the first one that answers, which is how an alternative data source is declared.",
         "data": {
           "pv_power": "Solar production power (several entities are added up)",
           "pv_energy": "Solar production energy",

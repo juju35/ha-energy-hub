@@ -420,7 +420,7 @@
   "entities_hint": "Vyberte entitu pre každú rolu. Prázdne pole ponechá automatickú detekciu.",
   "entities_multi": "sčítavajú sa",
   "entities_one": "odpovedá prvá",
-  "entities_format": "Viac entít oddelených čiarkou. Solárne roly sa sčítavajú, pri ostatných vyhráva prvá, ktorá odpovie – tak sa deklaruje alternatívny zdroj.",
+  "entities_format": "Viac entít oddelených čiarkou. Solárny výkon sa sčítava, pri ostatných vyhráva prvá, ktorá odpovie – tak sa deklaruje alternatívny zdroj.",
   "entities_save": "Uložiť",
   "entities_saved": "Uložené",
   "entities_failed": "Zlyhalo"

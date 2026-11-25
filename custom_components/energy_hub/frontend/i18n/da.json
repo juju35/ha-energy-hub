@@ -420,7 +420,7 @@
   "entities_hint": "Vælg entiteten bag hver rolle. Et tomt felt beholder den automatiske registrering.",
   "entities_multi": "summeres",
   "entities_one": "første svarer",
-  "entities_format": "Flere entiteter adskilt af kommaer. Sol-rollerne summeres; for de øvrige vinder den første, der svarer – så angiver du en alternativ kilde.",
+  "entities_format": "Flere entiteter adskilt af kommaer. Solcelleeffekten summeres; for de øvrige vinder den første, der svarer – så angiver du en alternativ kilde.",
   "entities_save": "Gem",
   "entities_saved": "Gemt",
   "entities_failed": "Mislykkedes"

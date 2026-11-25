@@ -27,7 +27,7 @@
       },
       "entities": {
         "title": "Entités par rôle",
-        "description": "Choisissez l'entité derrière chaque rôle. Laissez un rôle vide pour garder la détection automatique. Plusieurs entités sont possibles : les rôles solaires les additionnent, les autres gardent la première qui répond, ce qui permet de déclarer une source de données alternative.",
+        "description": "Choisissez l'entité derrière chaque rôle. Laissez un rôle vide pour garder la détection automatique. Plusieurs entités sont possibles : la puissance solaire les additionne, les autres gardent la première qui répond, ce qui permet de déclarer une source de données alternative.",
         "data": {
           "pv_power": "Puissance de production solaire (plusieurs entités sont additionnées)",
           "pv_energy": "Énergie de production solaire",

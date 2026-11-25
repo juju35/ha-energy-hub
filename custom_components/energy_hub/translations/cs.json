@@ -27,7 +27,7 @@
       },
       "entities": {
         "title": "Entity pro roli",
-        "description": "Vyberte entitu pro každou roli. Prázdné pole ponechá automatickou detekci. Lze zadat více entit: solární role se sčítají, ostatní použijí první, která odpoví – tak se deklaruje alternativní zdroj.",
+        "description": "Vyberte entitu pro každou roli. Prázdné pole ponechá automatickou detekci. Lze zadat více entit: solární výkon se sčítá, ostatní použijí první, která odpoví – tak se deklaruje alternativní zdroj.",
         "data": {
           "pv_power": "Výkon FVE (více se sčítá)",
           "pv_energy": "Energie FVE",

@@ -236,7 +236,7 @@ export const EH_I18N = {
     entities_hint: 'Choose the entity behind each role. An empty field keeps the automatic detection.',
     entities_multi: 'added up',
     entities_one: 'first answers',
-    entities_format: 'Several entities: separated by commas. Solar roles add them up; for the other roles the first one that answers wins, which is how an alternative source is declared.',
+    entities_format: 'Several entities: separated by commas. Solar power adds them up; for the other roles the first one that answers wins, which is how an alternative source is declared.',
     entities_save: 'Save',
     entities_saved: 'Saved',
     entities_failed: 'Failed',

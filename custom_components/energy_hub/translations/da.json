@@ -27,7 +27,7 @@
       },
       "entities": {
         "title": "Entiteter pr. rolle",
-        "description": "Vælg entiteten bag hver rolle. Et tomt felt beholder den automatiske registrering. Flere entiteter er tilladt: sol-rollerne summeres, de øvrige bruger den første, der svarer – så angiver du en alternativ kilde.",
+        "description": "Vælg entiteten bag hver rolle. Et tomt felt beholder den automatiske registrering. Flere entiteter er tilladt: solcelleeffekten summeres, de øvrige bruger den første, der svarer – så angiver du en alternativ kilde.",
         "data": {
           "pv_power": "Solproduktion (flere summeres)",
           "pv_energy": "Solenergi",

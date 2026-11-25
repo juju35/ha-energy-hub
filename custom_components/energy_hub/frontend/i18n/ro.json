@@ -420,7 +420,7 @@
   "entities_hint": "Alegeți entitatea pentru fiecare rol. Un câmp gol păstrează detectarea automată.",
   "entities_multi": "însumate",
   "entities_one": "răspunde prima",
-  "entities_format": "Mai multe entități separate prin virgule. Rolurile solare se însumează; la celelalte câștigă prima care răspunde — așa se declară o sursă alternativă.",
+  "entities_format": "Mai multe entități separate prin virgule. Puterea solară se însumează; la celelalte câștigă prima care răspunde — așa se declară o sursă alternativă.",
   "entities_save": "Salvează",
   "entities_saved": "Salvat",
   "entities_failed": "Eșec"

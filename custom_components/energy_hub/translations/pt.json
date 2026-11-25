@@ -27,7 +27,7 @@
       },
       "entities": {
         "title": "Entidades por função",
-        "description": "Escolha a entidade de cada função. Um campo vazio mantém a deteção automática. Várias entidades são aceites: as funções solares somam-se e as restantes usam a primeira que responde, é assim que se declara uma fonte alternativa.",
+        "description": "Escolha a entidade de cada função. Um campo vazio mantém a deteção automática. Várias entidades são aceites: a potência solar soma-se e as restantes usam a primeira que responde, é assim que se declara uma fonte alternativa.",
         "data": {
           "pv_power": "Potência solar (várias são somadas)",
           "pv_energy": "Energia solar",

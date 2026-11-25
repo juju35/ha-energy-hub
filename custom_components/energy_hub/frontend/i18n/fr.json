@@ -420,7 +420,7 @@
   "entities_hint": "Choisissez l'entité derrière chaque rôle. Un champ vide garde la détection automatique.",
   "entities_multi": "additionnées",
   "entities_one": "la première répond",
-  "entities_format": "Plusieurs entités : séparées par des virgules. Les rôles solaires les additionnent ; pour les autres rôles la première qui répond gagne, c'est ainsi qu'on déclare une source alternative.",
+  "entities_format": "Plusieurs entités : séparées par des virgules. La puissance solaire les additionne ; pour les autres rôles la première qui répond gagne, c'est ainsi qu'on déclare une source alternative.",
   "entities_save": "Enregistrer",
   "entities_saved": "Enregistré",
   "entities_failed": "Échec"

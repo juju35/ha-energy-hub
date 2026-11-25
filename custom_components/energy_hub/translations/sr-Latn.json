@@ -27,7 +27,7 @@
       },
       "entities": {
         "title": "Entiteti po ulogama",
-        "description": "Izaberite entitet za svaku ulogu. Prazno polje zadržava automatsko prepoznavanje. Dozvoljeno je više entiteta: solarne uloge se sabiraju, ostale koriste prvi koji odgovori — tako se zadaje alternativni izvor.",
+        "description": "Izaberite entitet za svaku ulogu. Prazno polje zadržava automatsko prepoznavanje. Dozvoljeno je više entiteta: solarna snaga se sabira, ostale koriste prvi koji odgovori — tako se zadaje alternativni izvor.",
         "data": {
           "pv_power": "Snaga solara (više se sabira)",
           "pv_energy": "Energija solara",

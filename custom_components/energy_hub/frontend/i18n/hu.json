@@ -420,7 +420,7 @@
   "entities_hint": "Válassza ki az egyes szerepek entitását. Az üres mező megtartja az automatikus felismerést.",
   "entities_multi": "összeadva",
   "entities_one": "az első válaszol",
-  "entities_format": "Több entitás vesszővel elválasztva. A napló szerepek összeadódnak, a többinél az első válaszoló nyer – így ad meg alternatív forrást.",
+  "entities_format": "Több entitás vesszővel elválasztva. A napelemes teljesítmény összeadódik, a többinél az első válaszoló nyer – így ad meg alternatív forrást.",
   "entities_save": "Mentés",
   "entities_saved": "Mentve",
   "entities_failed": "Sikertelen"

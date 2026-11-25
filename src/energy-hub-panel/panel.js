@@ -68,6 +68,15 @@ export class EnergyHubPanel extends HTMLElement {
     }
   }
 
+  /** Entity ids typed in a field that this Home Assistant does not know (outlined, still savable as a fallback). */
+  _unknownEntities(value) {
+    const states = this._hass?.states || {};
+    return value
+      .split(/[\s,]+/)
+      .filter(Boolean)
+      .filter((id) => !states[id]);
+  }
+
   async _resubscribe() {
     this._unsub?.then((u) => u()).catch(() => {});
     this._unsub = null;
@@ -1038,7 +1047,7 @@ export class EnergyHubPanel extends HTMLElement {
         const cur = this._entDraft?.[role] ?? (chosen[role] || []).join(', ');
         const auto = detected[role] || [];
         const many = (e.multi || []).includes(role);
-        return `<div class="entrow"><label class="a1">${ehEsc(this._roleLabel(role))}</label><input class="entin" data-erole="${ehEsc(role)}" value="${ehEsc(cur)}" placeholder="${ehEsc(auto.join(', '))}" spellcheck="false" autocomplete="off"><span class="t3">${ehEsc(this._t(many ? 'entities_multi' : 'entities_one'))}</span></div>`;
+        return `<div class="entrow"><label class="a1">${ehEsc(this._roleLabel(role))}</label><input class="entin" data-erole="${ehEsc(role)}" aria-label="${ehEsc(this._roleLabel(role))}" value="${ehEsc(cur)}" placeholder="${ehEsc(auto.join(', '))}" spellcheck="false" autocomplete="off"><span class="t3">${ehEsc(this._t(many ? 'entities_multi' : 'entities_one'))}</span></div>`;
       })
       .join('');
     const bar = `<div class="entbar"><button class="copy" data-action="save-entities">${ehIcon('check', 14)} ${ehEsc(this._t('entities_save'))}</button><span class="hint">${ehEsc(this._t('entities_format'))}</span></div>`;
@@ -1314,8 +1323,11 @@ export class EnergyHubPanel extends HTMLElement {
       }
     });
     for (const el of root.querySelectorAll('[data-erole]')) {
+      const check = () => el.classList.toggle('bad', this._unknownEntities(el.value).length > 0);
+      check();
       el.addEventListener('input', () => {
         this._entDraft = { ...this._entDraft, [el.dataset.erole]: el.value };
+        check();
       });
       el.addEventListener('blur', () => {
         // Moving to the next field keeps the focus inside the form: render only once it really leaves.
@@ -1342,8 +1354,9 @@ export class EnergyHubPanel extends HTMLElement {
         btn.textContent = this._t('entities_saved');
         this._entDraft = null;
         this._renderLater = false;
-      } catch (_err) {
+      } catch (err) {
         btn.textContent = this._t('entities_failed');
+        btn.title = err?.message || '';
         btn.disabled = false;
         return;
       }

@@ -27,7 +27,7 @@
       },
       "entities": {
         "title": "Entități pe rol",
-        "description": "Alegeți entitatea pentru fiecare rol. Un câmp gol păstrează detectarea automată. Sunt permise mai multe entități: rolurile solare se însumează, celelalte o folosesc pe prima care răspunde — așa se declară o sursă alternativă.",
+        "description": "Alegeți entitatea pentru fiecare rol. Un câmp gol păstrează detectarea automată. Sunt permise mai multe entități: puterea solară se însumează, celelalte o folosesc pe prima care răspunde — așa se declară o sursă alternativă.",
         "data": {
           "pv_power": "Putere solară (mai multe se însumează)",
           "pv_energy": "Energie solară",

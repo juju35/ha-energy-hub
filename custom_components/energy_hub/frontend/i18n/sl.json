@@ -420,7 +420,7 @@
   "entities_hint": "Izberite entiteto za vsako vlogo. Prazno polje ohrani samodejno zaznavanje.",
   "entities_multi": "seštevajo se",
   "entities_one": "odgovori prva",
-  "entities_format": "Več entitet, ločenih z vejico. Sončne vloge se seštevajo, pri drugih zmaga prva, ki odgovori – tako določite nadomestni vir.",
+  "entities_format": "Več entitet, ločenih z vejico. Sončna moč se sešteva, pri drugih zmaga prva, ki odgovori – tako določite nadomestni vir.",
   "entities_save": "Shrani",
   "entities_saved": "Shranjeno",
   "entities_failed": "Ni uspelo"

@@ -420,7 +420,7 @@
   "entities_hint": "Elija la entidad de cada rol. Un campo vacío mantiene la detección automática.",
   "entities_multi": "sumadas",
   "entities_one": "responde la primera",
-  "entities_format": "Varias entidades separadas por comas. Los roles solares se suman; en los demás gana la primera que responde, así se declara una fuente alternativa.",
+  "entities_format": "Varias entidades separadas por comas. La potencia solar se suma; en los demás gana la primera que responde, así se declara una fuente alternativa.",
   "entities_save": "Guardar",
   "entities_saved": "Guardado",
   "entities_failed": "Error"

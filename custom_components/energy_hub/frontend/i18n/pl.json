@@ -420,7 +420,7 @@
   "entities_hint": "Wybierz encję dla każdej roli. Puste pole zachowuje automatyczne wykrywanie.",
   "entities_multi": "sumowane",
   "entities_one": "pierwsza odpowiada",
-  "entities_format": "Wiele encji oddzielonych przecinkami. Role słoneczne są sumowane; w pozostałych wygrywa pierwsza, która odpowie – tak deklaruje się źródło alternatywne.",
+  "entities_format": "Wiele encji oddzielonych przecinkami. Moc fotowoltaiczna jest sumowana; w pozostałych wygrywa pierwsza, która odpowie – tak deklaruje się źródło alternatywne.",
   "entities_save": "Zapisz",
   "entities_saved": "Zapisano",
   "entities_failed": "Błąd"

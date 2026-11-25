@@ -420,7 +420,7 @@
   "entities_hint": "Scegli l'entità di ogni ruolo. Un campo vuoto mantiene il rilevamento automatico.",
   "entities_multi": "sommate",
   "entities_one": "risponde la prima",
-  "entities_format": "Più entità separate da virgole. I ruoli solari si sommano; negli altri vince la prima che risponde, così si dichiara una fonte alternativa.",
+  "entities_format": "Più entità separate da virgole. La potenza solare si somma; negli altri vince la prima che risponde, così si dichiara una fonte alternativa.",
   "entities_save": "Salva",
   "entities_saved": "Salvato",
   "entities_failed": "Errore"

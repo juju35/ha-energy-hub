@@ -27,7 +27,7 @@
       },
       "entities": {
         "title": "Entitäten je Rolle",
-        "description": "Wählen Sie die Entität hinter jeder Rolle. Ein leeres Feld behält die automatische Erkennung. Mehrere Entitäten sind erlaubt: Solarrollen werden addiert, bei den anderen zählt die erste, die antwortet – so wird eine alternative Quelle angegeben.",
+        "description": "Wählen Sie die Entität hinter jeder Rolle. Ein leeres Feld behält die automatische Erkennung. Mehrere Entitäten sind erlaubt: die Solarleistung wird addiert, bei den anderen zählt die erste, die antwortet – so wird eine alternative Quelle angegeben.",
         "data": {
           "pv_power": "PV-Leistung (mehrere werden addiert)",
           "pv_energy": "PV-Energie",

@@ -153,18 +153,15 @@ class EnergyHubCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         return snapshot
 
     def _entities_payload(self) -> dict[str, Any]:
-        """What the Settings tab needs to edit the roles: chosen entities, alternatives, and the candidates."""
+        """What the Settings tab needs to edit the roles: the entities in use and the ones chosen in the options."""
         inst = self.installation
         return {
             "roles": {role: role_entities(inst, role) for role in ROLES if inst.roles.get(role)},
             "all": list(ROLES),
             "multi": list(MULTI_ROLES),
-            "detected": sorted(role for role in ROLES if inst.roles.get(role) and role not in self.cfg.entities),
             # Only what the options hold: the YAML entities stay in configuration.yaml, so saving the panel's
             # form never copies them into the options (where they would then win over later YAML edits).
             "configured": dict(self.config_entry.options.get(CONF_ENTITIES) or {}),
-            "excluded": inst.excluded,
-            "signs": inst.signs,
         }
 
     # ---- reading the states

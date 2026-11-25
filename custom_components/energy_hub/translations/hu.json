@@ -27,7 +27,7 @@
       },
       "entities": {
         "title": "Entitások szerepenként",
-        "description": "Válassza ki az egyes szerepek entitását. Az üres mező megtartja az automatikus felismerést. Több entitás is megadható: a napló szerepek összeadódnak, a többi az első válaszolót használja – így ad meg alternatív forrást.",
+        "description": "Válassza ki az egyes szerepek entitását. Az üres mező megtartja az automatikus felismerést. Több entitás is megadható: a napelemes teljesítmény összeadódik, a többi az első válaszolót használja – így ad meg alternatív forrást.",
         "data": {
           "pv_power": "Napló teljesítmény (több összeadva)",
           "pv_energy": "Napló energia",

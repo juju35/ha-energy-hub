@@ -420,7 +420,7 @@
   "entities_hint": "Izaberite entitet za svaku ulogu. Prazno polje zadržava automatsko prepoznavanje.",
   "entities_multi": "sabiraju se",
   "entities_one": "prvi odgovara",
-  "entities_format": "Više entiteta odvojenih zapetom. Solarne uloge se sabiraju, kod ostalih pobeđuje prvi koji odgovori — tako se zadaje alternativni izvor.",
+  "entities_format": "Više entiteta odvojenih zapetom. Solarna snaga se sabira, kod ostalih pobeđuje prvi koji odgovori — tako se zadaje alternativni izvor.",
   "entities_save": "Sačuvaj",
   "entities_saved": "Sačuvano",
   "entities_failed": "Greška"

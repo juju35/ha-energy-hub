@@ -27,7 +27,7 @@
       },
       "entities": {
         "title": "Encje dla ról",
-        "description": "Wybierz encję dla każdej roli. Puste pole zachowuje automatyczne wykrywanie. Dozwolonych jest kilka encji: role słoneczne są sumowane, pozostałe biorą pierwszą, która odpowie – tak deklaruje się źródło alternatywne.",
+        "description": "Wybierz encję dla każdej roli. Puste pole zachowuje automatyczne wykrywanie. Dozwolonych jest kilka encji: moc fotowoltaiczna jest sumowana, pozostałe biorą pierwszą, która odpowie – tak deklaruje się źródło alternatywne.",
         "data": {
           "pv_power": "Moc PV (kilka encji jest sumowanych)",
           "pv_energy": "Energia PV",

@@ -27,7 +27,7 @@
       },
       "entities": {
         "title": "Entidades por rol",
-        "description": "Elija la entidad de cada rol. Un campo vacío mantiene la detección automática. Se admiten varias entidades: los roles solares se suman y los demás usan la primera que responde, así se declara una fuente alternativa.",
+        "description": "Elija la entidad de cada rol. Un campo vacío mantiene la detección automática. Se admiten varias entidades: la potencia solar se suma y los demás usan la primera que responde, así se declara una fuente alternativa.",
         "data": {
           "pv_power": "Potencia solar (varias se suman)",
           "pv_energy": "Energía solar",

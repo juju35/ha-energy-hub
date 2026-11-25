@@ -27,7 +27,7 @@
       },
       "entities": {
         "title": "Entītijas pa lomām",
-        "description": "Izvēlieties entītiju katrai lomai. Tukšs lauks saglabā automātisko noteikšanu. Atļautas vairākas entītijas: saules lomas summējas, pārējās izmanto pirmo, kas atbild – tā norāda alternatīvu avotu.",
+        "description": "Izvēlieties entītiju katrai lomai. Tukšs lauks saglabā automātisko noteikšanu. Atļautas vairākas entītijas: saules jauda summējas, pārējās izmanto pirmo, kas atbild – tā norāda alternatīvu avotu.",
         "data": {
           "pv_power": "Saules jauda (vairākas summējas)",
           "pv_energy": "Saules enerģija",

@@ -27,7 +27,7 @@
       },
       "entities": {
         "title": "Entiteiten per rol",
-        "description": "Kies de entiteit achter elke rol. Een leeg veld houdt de automatische detectie. Meerdere entiteiten mogen: solarrollen worden opgeteld, bij de andere telt de eerste die antwoordt – zo geeft u een alternatieve bron op.",
+        "description": "Kies de entiteit achter elke rol. Een leeg veld houdt de automatische detectie. Meerdere entiteiten mogen: het zonnevermogen wordt opgeteld, bij de andere telt de eerste die antwoordt – zo geeft u een alternatieve bron op.",
         "data": {
           "pv_power": "PV-vermogen (meerdere worden opgeteld)",
           "pv_energy": "PV-energie",

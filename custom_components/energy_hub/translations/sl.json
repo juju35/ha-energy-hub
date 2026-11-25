@@ -27,7 +27,7 @@
       },
       "entities": {
         "title": "Entitete po vlogi",
-        "description": "Izberite entiteto za vsako vlogo. Prazno polje ohrani samodejno zaznavanje. Dovoljenih je več entitet: sončne vloge se seštevajo, druge uporabijo prvo, ki odgovori – tako določite nadomestni vir.",
+        "description": "Izberite entiteto za vsako vlogo. Prazno polje ohrani samodejno zaznavanje. Dovoljenih je več entitet: sončna moč se sešteva, druge uporabijo prvo, ki odgovori – tako določite nadomestni vir.",
         "data": {
           "pv_power": "Moč SE (več se jih sešteje)",
           "pv_energy": "Energija SE",
