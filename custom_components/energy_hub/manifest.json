@@ -4,6 +4,7 @@
   "after_dependencies": [
     "energy"
   ],
+  "categories": ["energy.solar_batteries", "energy.meters_monitoring"],
   "codeowners": [
     "@juju35"
   ],
