@@ -128,6 +128,10 @@ Copy `custom_components/energy_hub/` to `/config/custom_components/energy_hub/`,
 
 Every key is optional; what is given in YAML wins over the detection and over the options.
 
+**Where to put it**: the `energy_hub:` block is a top-level key of Home Assistant's own `configuration.yaml` (in `/config/`, next to `default_config:`), never a file of the integration (`custom_components/energy_hub/` is replaced at each update). It can also live in a [package](https://www.home-assistant.io/docs/configuration/packages/) once packages are enabled under `homeassistant:`, for example `packages/energy_hub.yaml` starting with `energy_hub:`.
+
+The block is read **at startup only**: check the configuration (**Developer tools → YAML → Check configuration**), then **restart** Home Assistant; reloading the YAML or the integration is not enough. A block that does not validate is reported in **Settings → System → Logs** (`Invalid config for 'energy_hub'`). Once it is read, the **Settings** tab of the panel shows *configuration.yaml in use*.
+
 ```yaml
 energy_hub:
   demo: false                     # simulated installation, to try the panel
