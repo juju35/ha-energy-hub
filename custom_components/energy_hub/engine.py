@@ -150,6 +150,10 @@ def build_snapshot(
     # ---- today's curve and clipping
     buckets = history.today_buckets(day_start)
     curve = [{k: b.get(k) for k in ("t", "pv", "exp", "cs", "load", "grid", "batt", "soc")} for b in buckets]
+    keys = [c.key for c in inst.consumers]
+    for row, b in zip(curve, buckets, strict=True):
+        if cons := {k: b[f"c:{k}"] for k in keys if b.get(f"c:{k}") is not None}:
+            row["c"] = cons
     samples = [(b["t"], b.get("pv") or 0.0) for b in buckets]
     expected = [max(b.get("exp") or 0.0, b.get("cs") or 0.0) if b.get("exp") is None else b["exp"] for b in buckets]
     peaks = [d["peak"] for k, d in sorted(history.days.items())[-30:] if d.get("peak")]
@@ -472,6 +476,7 @@ def build_snapshot(
             "self_sufficiency": _r(self_sufficiency(ybal), 3),
         },
         "curve": curve,
+        "consumers": views.consumers(inst, rec, reading),
         "periods": views.periods(history, today),
         "production": {
             "strings": strings,

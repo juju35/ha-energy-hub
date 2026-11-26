@@ -423,5 +423,9 @@
   "entities_format": "Mai multe entități separate prin virgule. Puterea solară se însumează; la celelalte câștigă prima care răspunde — așa se declară o sursă alternativă.",
   "entities_save": "Salvează",
   "entities_saved": "Salvat",
-  "entities_failed": "Eșec"
+  "entities_failed": "Eșec",
+  "consumers_box": "Consumatori mari",
+  "contract_price": "prețul contractului",
+  "own_meter": "contor propriu",
+  "main_meter": "contor principal"
 }

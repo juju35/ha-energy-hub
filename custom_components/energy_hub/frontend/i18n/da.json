@@ -423,5 +423,9 @@
   "entities_format": "Flere entiteter adskilt af kommaer. Solcelleeffekten summeres; for de øvrige vinder den første, der svarer – så angiver du en alternativ kilde.",
   "entities_save": "Gem",
   "entities_saved": "Gemt",
-  "entities_failed": "Mislykkedes"
+  "entities_failed": "Mislykkedes",
+  "consumers_box": "Storforbrugere",
+  "contract_price": "aftalepris",
+  "own_meter": "egen måler",
+  "main_meter": "hovedmåler"
 }

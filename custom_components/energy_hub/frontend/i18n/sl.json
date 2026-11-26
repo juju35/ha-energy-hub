@@ -423,5 +423,9 @@
   "entities_format": "Več entitet, ločenih z vejico. Sončna moč se sešteva, pri drugih zmaga prva, ki odgovori – tako določite nadomestni vir.",
   "entities_save": "Shrani",
   "entities_saved": "Shranjeno",
-  "entities_failed": "Ni uspelo"
+  "entities_failed": "Ni uspelo",
+  "consumers_box": "Veliki porabniki",
+  "contract_price": "pogodbena cena",
+  "own_meter": "lastni števec",
+  "main_meter": "glavni števec"
 }

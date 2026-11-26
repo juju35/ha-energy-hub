@@ -423,5 +423,9 @@
   "entities_format": "Meerdere entiteiten, kommagescheiden. Het zonnevermogen wordt opgeteld; bij de andere wint de eerste die antwoordt – zo geeft u een alternatieve bron op.",
   "entities_save": "Opslaan",
   "entities_saved": "Opgeslagen",
-  "entities_failed": "Mislukt"
+  "entities_failed": "Mislukt",
+  "consumers_box": "Grootverbruikers",
+  "contract_price": "contractprijs",
+  "own_meter": "eigen meter",
+  "main_meter": "hoofdmeter"
 }

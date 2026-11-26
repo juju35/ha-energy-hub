@@ -21,6 +21,15 @@ energy_hub:
       cells: sensor.jk_bms_cell_*
   ignore:
     - sensor.zendure_ac_input
+  consumers:                    # large consumers drawn apart in the curve and the flow
+    wallbox:
+      name: EV charger
+      power: sensor.wallbox_power
+      kind: ev_charger            # ev_charger, heat_pump, climate, water_heater, other (icon and colour)
+    heat_pump:
+      energy: sensor.heat_pump_energy   # power derived from the energy when no power sensor is given
+      import_price: 0.24          # its own price per kWh drawn from the grid
+      separate_meter: true        # on its own meter: no solar reaches it, outside the main contract
   tariff:
     import: 0.2016              # flat price when no contract is known
     export: 0.04
@@ -55,6 +64,7 @@ from .analytics.tariffs import CONTRACTS
 from .const import (
     CONF_AZIMUTH,
     CONF_BATTERIES,
+    CONF_CONSUMERS,
     CONF_DEMO,
     CONF_ENTITIES,
     CONF_EXPORT_LIMIT_KW,
@@ -138,6 +148,29 @@ BATTERY_SCHEMA = vol.Schema(
     }
 )
 
+CONSUMER_KINDS = ("ev_charger", "heat_pump", "climate", "water_heater", "other")
+
+
+def _power_or_energy(value: dict[str, Any]) -> dict[str, Any]:
+    if not value.get("power") and not value.get("energy"):
+        raise vol.Invalid("a consumer needs a power or an energy entity")
+    return value
+
+
+CONSUMER_SCHEMA = vol.All(
+    vol.Schema(
+        {
+            vol.Optional("name"): cv.string,
+            vol.Optional("power"): cv.entity_id,
+            vol.Optional("energy"): cv.entity_id,
+            vol.Optional("kind", default="other"): vol.In(CONSUMER_KINDS),
+            vol.Optional("import_price"): vol.All(vol.Coerce(float), vol.Range(min=0)),
+            vol.Optional("separate_meter", default=False): cv.boolean,
+        }
+    ),
+    _power_or_energy,
+)
+
 YAML_SCHEMA = vol.Schema(
     {
         vol.Optional(CONF_DEMO): cv.boolean,
@@ -148,6 +181,7 @@ YAML_SCHEMA = vol.Schema(
         vol.Optional(CONF_ENTITIES, default={}): {vol.In(ROLES): vol.Any(cv.entity_id, [cv.entity_id])},
         vol.Optional(CONF_BATTERIES, default={}): {cv.slug: BATTERY_SCHEMA},
         vol.Optional(CONF_IGNORE, default=[]): [cv.entity_id],
+        vol.Optional(CONF_CONSUMERS, default={}): {cv.slug: CONSUMER_SCHEMA},
         vol.Optional(CONF_FORECAST, default=[]): [cv.entity_id],
         vol.Optional(CONF_TARIFF, default={}): vol.Schema(
             {
@@ -195,6 +229,18 @@ class BatteryConfig:
 
 
 @dataclass(slots=True)
+class ConsumerConfig:
+    key: str
+    name: str
+    power: str | None = None
+    energy: str | None = None
+    kind: str = "other"
+    # Price of the kWh it draws from the grid (None: the contract's), and whether it has its own meter.
+    import_price: float | None = None
+    separate_meter: bool = False
+
+
+@dataclass(slots=True)
 class HubConfig:
     demo: bool = False
     show_panel: bool = True
@@ -205,6 +251,7 @@ class HubConfig:
     entities: dict[str, list[str]] = field(default_factory=dict)
     batteries: list[BatteryConfig] = field(default_factory=list)
     ignore: set[str] = field(default_factory=set)
+    consumers: list[ConsumerConfig] = field(default_factory=list)
     forecast: list[str] = field(default_factory=list)
     import_price: float = 0.2016
     export_price: float = 0.04
@@ -280,6 +327,18 @@ def parse(raw: dict[str, Any] | None, options: dict[str, Any] | None = None) -> 
             for key, b in data[CONF_BATTERIES].items()
         ],
         ignore=set(data[CONF_IGNORE]),
+        consumers=[
+            ConsumerConfig(
+                key=key,
+                name=c.get("name", key.replace("_", " ").capitalize()),
+                power=c.get("power"),
+                energy=c.get("energy"),
+                kind=c.get("kind", "other"),
+                import_price=c.get("import_price"),
+                separate_meter=c.get("separate_meter", False),
+            )
+            for key, c in data[CONF_CONSUMERS].items()
+        ],
         forecast=list(data[CONF_FORECAST]),
         import_price=tariff["import"],
         export_price=tariff["export"],

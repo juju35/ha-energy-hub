@@ -1,7 +1,7 @@
 // ── energy-hub-panel ─────────────────────────────────────────────────────────
 import { EH_ICONS, EH_TABS, ENERGY_HUB_PANEL_VERSION } from "./core.js";
 import { EH_I18N, EH_LANGS } from "./strings.js";
-import { EH_AMBER, EH_BLUE, EH_GREEN, EH_RED, EH_TEAL, EH_VIOLET, ehEsc, ehIcon, ehTicks } from "./colours-helpers.js";
+import { EH_AMBER, EH_BLUE, EH_CONSUMER_STYLE, EH_GREEN, EH_RED, EH_TEAL, EH_VIOLET, ehEsc, ehIcon, ehTicks } from "./colours-helpers.js";
 import { EH_CSS } from "./styles.js";
 
 export class EnergyHubPanel extends HTMLElement {
@@ -345,7 +345,20 @@ export class EnergyHubPanel extends HTMLElement {
     const battState = batt > 0.05 ? this._t('charging') : batt < -0.05 ? this._t('discharging') : fleet?.soc >= 99 ? this._t('full') : this._t('idle');
     const full = items.length === 1 && items[0].hours_to_full != null ? this._t('full_at', { v: this._time(Date.now() / 1000 + items[0].hours_to_full * 3600) }) : '';
     const socBar = fleet?.soc != null ? `<div class="soc"><div style="width:${fleet.soc}%"></div></div>` : '';
-    let o = '<svg class="flow" viewBox="0 0 680 228" role="img" aria-label="Energy flow">';
+    // Large consumers under the home: the four drawing the most now (then today), each fed from the home.
+    const cons = this._consumers().slice().sort((a, b) => (b.kw || 0) - (a.kw || 0) || (b.kwh || 0) - (a.kwh || 0)).slice(0, 4);
+    let o = `<svg class="flow" viewBox="0 0 680 ${cons.length ? 296 : 228}" role="img" aria-label="Energy flow">`;
+    if (cons.length) {
+      const mw = 150;
+      const gap = 12;
+      const left = 340 - (cons.length * mw + (cons.length - 1) * gap) / 2;
+      cons.forEach((c, i) => {
+        const x = left + i * (mw + gap);
+        const cx = x + mw / 2;
+        o += flowPath(`M340 218 C340 236 ${cx} 230 ${cx} 248`, c.kw || 0, c.color);
+        o += `<foreignObject x="${x}" y="248" width="${mw}" height="44"><div xmlns="http://www.w3.org/1999/xhtml" class="node cnode" title="${ehEsc(c.name)}"><div class="pa" style="background:${c.color}22;color:${c.color}">${ehIcon(c.icon, 15)}</div><div class="tt"><div class="t1">${ehEsc(c.name)}</div><div class="t2">${this._kw(c.kw || 0)}</div></div></div></foreignObject>`;
+      });
+    }
     o += flowPath('M340 72 L340 156', pvHome, EH_GREEN);
     if (fleet) o += flowPath('M285 46 C185 46 120 84 120 156', batt, EH_TEAL, batt < 0);
     o += flowPath('M395 46 C495 46 560 84 560 156', grid, grid < 0 ? EH_BLUE : '#888780', grid > 0);
@@ -355,6 +368,16 @@ export class EnergyHubPanel extends HTMLElement {
     o += node(250, 156, 'home-lightning-bolt-outline', '#EAF3DE', '#3B6D11', this._t('home'), this._kw(load), load > 0 ? this._t('solar_share', { v: this._pct(Math.min(pvHome / load, 1)) }) : '');
     o += node(470, 156, 'transmission-tower', '#E6F1FB', '#185FA5', `${this._t('grid')} · ${grid < -0.02 ? this._t('exporting') : grid > 0.02 ? this._t('importing') : this._t('idle')}`, this._kw(grid), '');
     return `${o}</svg>`;
+  }
+
+  // The large consumers of the snapshot, each with its colour and icon.
+  _consumers() {
+    const seen = {};
+    return (this._data.consumers || []).map((c) => {
+      const [shades, icon] = EH_CONSUMER_STYLE[c.kind] || EH_CONSUMER_STYLE.other;
+      const n = (seen[c.kind] = (seen[c.kind] ?? -1) + 1);
+      return { ...c, color: shades[n % shades.length], icon };
+    });
   }
 
   _kpis() {
@@ -381,6 +404,8 @@ export class EnergyHubPanel extends HTMLElement {
     const period = this._period;
     const seg = `<div class="seg">${['today', '7d', '30d', '12m'].map((p) => `<button class="${period === p ? 'on' : ''}" data-period="${p}">${ehEsc(this._t(`periods.${p}`))}</button>`).join('')}</div>`;
     const chip = (c, label, dash) => `<span class="chip"><span style="width:14px;border-top:2px ${dash ? 'dashed' : 'solid'} ${c}"></span>${ehEsc(label)}</span>`;
+    const cons = this._consumers();
+    const consChips = cons.map((c) => `<span class="chip"><span style="width:12px;height:10px;border-radius:2px;background:${c.color};opacity:.7"></span>${ehEsc(c.name)}</span>`).join('');
     const hatchChip = `<span class="chip"><svg width="14" height="10" aria-hidden="true"><rect width="14" height="10" fill="url(#ehhatch)" stroke="${EH_RED}" stroke-width=".6"/></svg>${ehEsc(this._t('clipping'))}</span>`;
     const hatchDef = `<defs><pattern id="ehhatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="${EH_RED}" fill-opacity=".08"/><line x1="0" y1="0" x2="0" y2="5" stroke="${EH_RED}" stroke-width="1.6" stroke-opacity=".7"/></pattern></defs>`;
     if (period !== 'today') {
@@ -402,9 +427,17 @@ export class EnergyHubPanel extends HTMLElement {
         const cx = x0 + step * (i + 0.5);
         const pvTop = Y(r.pv || 0);
         const label = period === '12m' ? new Date(`${r.d}-01T12:00`).toLocaleString(this._locale, { month: 'short' }) : new Date(`${r.d}T12:00`).toLocaleString(this._locale, period === '7d' ? { weekday: 'short' } : { day: 'numeric' });
-        o += `<g><title>${ehEsc(label)} · ${ehEsc(this._t('production'))} ${this._kwh(r.pv)} · ${ehEsc(this._t('forecast'))} ${this._kwh(r.exp)} · ${ehEsc(this._t('consumption'))} ${this._kwh(r.load)}${r.clipped ? ` · ${ehEsc(this._t('clipped', { v: this._kwh(r.clipped) }))}` : ''}</title>`;
+        o += `<g><title>${ehEsc(label)} · ${ehEsc(this._t('production'))} ${this._kwh(r.pv)} · ${ehEsc(this._t('forecast'))} ${this._kwh(r.exp)} · ${ehEsc(this._t('consumption'))} ${this._kwh(r.load)}${cons.filter((c) => r.c?.[c.key]).map((c) => ` · ${ehEsc(c.name)} ${this._kwh(r.c[c.key])}`).join('')}${r.clipped ? ` · ${ehEsc(this._t('clipped', { v: this._kwh(r.clipped) }))}` : ''}</title>`;
         o += `<rect x="${(cx - bw / 2).toFixed(1)}" y="${pvTop.toFixed(1)}" width="${bw.toFixed(1)}" height="${(190 - pvTop).toFixed(1)}" rx="2" fill="#FAC775" stroke="${EH_AMBER}" stroke-width=".6"/>`;
         if (r.clipped > 0.01) o += `<rect x="${(cx - bw / 2).toFixed(1)}" y="${Y((r.pv || 0) + r.clipped).toFixed(1)}" width="${bw.toFixed(1)}" height="${(pvTop - Y((r.pv || 0) + r.clipped)).toFixed(1)}" fill="url(#ehhatch)" stroke="${EH_RED}" stroke-width=".6"/>`;
+        // The large consumers' energies, stacked in a narrow bar inside the production bar.
+        let base = 0;
+        for (const c of cons) {
+          const v = r.c?.[c.key] || 0;
+          if (v <= 0) continue;
+          o += `<rect x="${(cx - bw * 0.2).toFixed(1)}" y="${Y(base + v).toFixed(1)}" width="${(bw * 0.4).toFixed(1)}" height="${(Y(base) - Y(base + v)).toFixed(1)}" fill="${c.color}" fill-opacity=".75"/>`;
+          base += v;
+        }
         if (r.exp) o += `<line x1="${(cx - bw / 2 - 2).toFixed(1)}" x2="${(cx + bw / 2 + 2).toFixed(1)}" y1="${Y(r.exp).toFixed(1)}" y2="${Y(r.exp).toFixed(1)}" stroke="var(--secondary-text-color)" stroke-width="1.4" stroke-dasharray="3 2"/>`;
         o += '</g>';
         if (r.load != null) loadPts.push(`${cx.toFixed(1)} ${Y(r.load).toFixed(1)}`);
@@ -415,7 +448,7 @@ export class EnergyHubPanel extends HTMLElement {
       o += '</svg>';
       const total = rows.reduce((a, r) => a + (r.pv || 0), 0);
       const totalExp = rows.reduce((a, r) => a + (r.exp || 0), 0);
-      const legend = `${chip(EH_AMBER, this._t('production'))}${chip('var(--secondary-text-color)', this._t('forecast'), true)}${chip(EH_VIOLET, this._t('consumption'))}${rows.some((r) => r.clipped > 0.01) ? hatchChip : ''}`;
+      const legend = `${chip(EH_AMBER, this._t('production'))}${chip('var(--secondary-text-color)', this._t('forecast'), true)}${chip(EH_VIOLET, this._t('consumption'))}${consChips}${rows.some((r) => r.clipped > 0.01) ? hatchChip : ''}`;
       this._curveMeta = null;
       return this._box(this._t('production'), '', `<div class="hd sub">${seg}<span class="hint">${ehEsc(this._t('produced_of', { a: this._kwh(total), b: this._kwh(totalExp) }))}</span></div><div class="legend">${legend}</div>${o}`);
     }
@@ -451,6 +484,20 @@ export class EnergyHubPanel extends HTMLElement {
       const bottom = seg2.map((r) => `${X(r.t).toFixed(1)} ${Y(r.pv).toFixed(1)}`).reverse();
       o += `<path d="M${top.join(' L')} L${bottom.join(' L')} Z" fill="url(#ehhatch)" stroke="${EH_RED}" stroke-width=".8"/>`;
     }
+    // The large consumers, stacked from the axis under the consumption line: what is left above them is the
+    // rest of the home.
+    if (cons.length && inRange.some((r) => r.c)) {
+      const below = inRange.map(() => 0);
+      for (const c of cons) {
+        const above = inRange.map((r, i) => below[i] + Math.max(r.c?.[c.key] || 0, 0));
+        if (above.some((v, i) => v - below[i] > 0.01)) {
+          const top = inRange.map((r, i) => `${X(r.t).toFixed(1)} ${Y(above[i]).toFixed(1)}`);
+          const bottom = inRange.map((r, i) => `${X(r.t).toFixed(1)} ${Y(below[i]).toFixed(1)}`).reverse();
+          o += `<path d="M${top.join(' L')} L${bottom.join(' L')} Z" fill="${c.color}" fill-opacity=".45"/>`;
+        }
+        for (let i = 0; i < above.length; i++) below[i] = above[i];
+      }
+    }
     if (pv) o += `<path d="${pv}" fill="none" stroke="${EH_AMBER}" stroke-width="2"/>`;
     const exp = line('exp');
     if (exp) o += `<path d="${exp}" fill="none" stroke="var(--secondary-text-color)" stroke-width="1.3" stroke-dasharray="4 4"/>`;
@@ -466,7 +513,7 @@ export class EnergyHubPanel extends HTMLElement {
       o += `<text class="svgt" x="${X(t)}" y="208" text-anchor="middle">${this._lang === 'fr' ? `${h} h` : `${h}:00`}</text>`;
     }
     o += `<line class="hov" x1="0" x2="0" y1="30" y2="190" stroke="var(--secondary-text-color)" stroke-width=".5" style="display:none"/><rect class="hit" x="${x0}" y="30" width="${x1 - x0}" height="160" fill="transparent"/></svg>`;
-    const legend = `${chip(EH_AMBER, this._t('production'))}${chip('var(--secondary-text-color)', this._t('forecast'), true)}${chip(EH_VIOLET, this._t('consumption'))}${chip(EH_TEAL, this._t('battery_pct'))}${chip(EH_RED, 'Pmax', true)}${clipped.length ? hatchChip : ''}`;
+    const legend = `${chip(EH_AMBER, this._t('production'))}${chip('var(--secondary-text-color)', this._t('forecast'), true)}${chip(EH_VIOLET, this._t('consumption'))}${consChips}${chip(EH_TEAL, this._t('battery_pct'))}${chip(EH_RED, 'Pmax', true)}${clipped.length ? hatchChip : ''}`;
     this._curveMeta = { t0, t1, x0, x1, max, rows: inRange };
     return this._box(this._t('production'), '', `<div class="hd sub">${seg}<span class="hint">${ehEsc(this._t('produced_of', { a: this._kwh(d.today.pv_kwh), b: this._kwh(d.today.expected_kwh) }))}</span></div><div class="legend">${legend}</div><div class="curvewrap">${o}<div class="tip"></div></div><div class="hint">${ehEsc(this._t('hover_hint'))}</div>`);
   }
@@ -1210,6 +1257,12 @@ export class EnergyHubPanel extends HTMLElement {
       `<table class="roles">${row(this._t('contract'), C.contract ? ehEsc(offerName) : ehEsc(this._t('no_contract')))}${row(this._t('subscribed_power'), `${C.kva ?? '–'} kVA${assumed(C.kva_assumed)}`)}${row(this._t('offpeak_hours'), `${ehEsc(C.offpeak || '–')}${assumed(C.offpeak_assumed)}`)}${row(this._t('price_now'), `${this._eur(F.import_price, 4)} /kWh`)}${row(this._t('price_entity'), ent('tariff_price'))}${row(this._t('color_entity'), ent('tariff_color'))}</table>${this._snip(`energy_hub:\n  tariff:\n    contract: ${C.contract || 'hphc'}\n    kva: ${C.kva || 6}\n    offpeak: "${C.offpeak || '22:00-06:00'}"\n`)}`,
     );
     o += this._box(this._t('tariff_box'), d.currency, `<table class="roles">${C.contract ? '' : row(this._t('import_price'), `${this._eur(t.import ?? F.import_price, 4)} /kWh`)}${row(this._t('export_price'), `${this._eur(t.export ?? F.export_price, 4)} /kWh`)}</table>${this._snip(`energy_hub:\n  tariff:\n    import: ${t.import ?? F.import_price}\n    export: ${t.export ?? F.export_price}\n    currency: ${d.currency}\n`)}`);
+    // Large consumers: their own price of the kWh drawn, and their meter.
+    const cons = this._consumers();
+    if (cons.length) {
+      const crow = (c) => `<tr><td><span style="color:${c.color}">●</span> ${ehEsc(c.name)}</td><td>${c.import_price != null ? `${this._eur(c.import_price, 4)} /kWh` : ehEsc(this._t('contract_price'))}</td><td>${ehEsc(this._t(c.separate_meter ? 'own_meter' : 'main_meter'))}</td></tr>`;
+      o += this._box(this._t('consumers_box'), '', `<table class="roles">${cons.map(crow).join('')}</table>${this._snip(`energy_hub:\n  consumers:\n    ${cons[0].key}:\n      import_price: ${cons[0].import_price ?? 0.24}\n      separate_meter: ${cons[0].separate_meter ? 'true' : 'false'}\n`)}`);
+    }
     o += this._box(this._t('installation_box'), '', `<table class="roles">${row(this._t('cost'), inst.cost != null ? this._eur(inst.cost, 0) : '–')}${row(this._t('subsidy'), inst.subsidy != null ? this._eur(inst.subsidy, 0) : '–')}${row(this._t('net_cost_label'), F.net_cost != null ? this._eur(F.net_cost, 0) : '–')}${row(this._t('commissioned'), inst.commissioned ? new Date(`${inst.commissioned}T12:00`).toLocaleDateString(this._locale, { day: 'numeric', month: 'long', year: 'numeric' }) : '–')}${row(this._t('inverter_replacement'), `${this._eur(F.inverter_replacement_cost, 0)} · ${this._t('after_years', { v: this._num(F.inverter_lifetime_years, 0) })}`)}</table>${this._snip(`energy_hub:\n  installation:\n    cost: ${inst.cost ?? 9000}\n    subsidy: ${inst.subsidy ?? 0}\n    commissioned: ${inst.commissioned ?? '2024-01-01'}\n`)}`);
     return o + `<div class="hint">${ehEsc(this._t('yaml_wins'))}</div>`;
   }
@@ -1386,7 +1439,7 @@ export class EnergyHubPanel extends HTMLElement {
       hov.setAttribute('x2', x);
       hov.style.display = '';
       const clipped = this._data.inverter_max_kw && best.exp != null && best.pv != null && best.exp > this._data.inverter_max_kw && best.pv >= 0.97 * this._data.inverter_max_kw;
-      tip.innerHTML = `<b>${this._time(best.t)}</b><br>${ehEsc(this._t('production'))} ${this._kw(best.pv)}<br>${ehEsc(this._t('forecast'))} ${this._kw(best.exp)}<br>${ehEsc(this._t('consumption'))} ${this._kw(best.load)}${best.soc != null ? `<br>${ehEsc(this._t('battery'))} ${this._num(best.soc, 0)} %` : ''}${clipped ? `<br><span style="color:${EH_RED}">${ehEsc(this._t('clipped', { v: this._kw(best.exp - best.pv) }))}</span>` : ''}`;
+      tip.innerHTML = `<b>${this._time(best.t)}</b><br>${ehEsc(this._t('production'))} ${this._kw(best.pv)}<br>${ehEsc(this._t('forecast'))} ${this._kw(best.exp)}<br>${ehEsc(this._t('consumption'))} ${this._kw(best.load)}${this._consumers().filter((c) => best.c?.[c.key] > 0.01).map((c) => `<br><span style="color:${c.color}">●</span> ${ehEsc(c.name)} ${this._kw(best.c[c.key])}`).join('')}${best.soc != null ? `<br>${ehEsc(this._t('battery'))} ${this._num(best.soc, 0)} %` : ''}${clipped ? `<br><span style="color:${EH_RED}">${ehEsc(this._t('clipped', { v: this._kw(best.exp - best.pv) }))}</span>` : ''}`;
       tip.style.display = 'block';
       const px = (x * r.width) / 680;
       tip.style.left = `${px > r.width / 2 ? px - tip.offsetWidth - 10 : px + 10}px`;

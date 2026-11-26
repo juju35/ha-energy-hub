@@ -31,7 +31,7 @@ from .const import (
     UPDATE_SECONDS,
 )
 from .engine import build_snapshot, estimate_kwp
-from .history import BatteryReading, History, Reading
+from .history import BatteryReading, ConsumerReading, History, Reading
 from .sources import Installation, discover, load_profiles, role_entities
 from .views import contract_offer
 
@@ -42,6 +42,10 @@ TRANSLATED = frozenset(p.stem for p in (Path(__file__).parent / "translations").
 type EnergyHubConfigEntry = ConfigEntry[EnergyHubCoordinator]
 
 POWER_FACTORS = {"W": 0.001, "kW": 1.0, "MW": 1000.0, "mW": 1e-6}
+ENERGY_FACTORS = {"Wh": 0.001, "kWh": 1.0, "MWh": 1000.0}
+# A consumer known by its energy only: its power is the slope between two changes of the energy, and 0 once the
+# energy has not moved for this long.
+ENERGY_IDLE_SECONDS = 900
 SAVE_DELAY = 300
 # Installation re-detected this often (a new integration, a renamed entity).
 DISCOVER_SECONDS = 3600
@@ -67,6 +71,14 @@ def power_kw(state: State | None) -> float | None:
     return value / 1000 if abs(value) > 100 else value
 
 
+def energy_kwh(state: State | None) -> float | None:
+    """An energy state in kWh, whatever its unit."""
+    value = _number(state)
+    if value is None:
+        return None
+    return value * ENERGY_FACTORS.get(state.attributes.get("unit_of_measurement"), 1.0)
+
+
 class EnergyHubCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     config_entry: EnergyHubConfigEntry
 
@@ -83,6 +95,8 @@ class EnergyHubCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._plant: demo.DemoPlant | None = None
         self._last_t: float | None = None
         self._notified: dict[str, str] = {}
+        # Last energy seen per consumer known by its energy only: {key: (timestamp, kWh, kW)}.
+        self._energy_seen: dict[str, tuple[float, float, float | None]] = {}
         self.reading: Reading | None = None
 
     @property
@@ -234,6 +248,10 @@ class EnergyHubCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             grid = load + batt - pv
         if load is None and grid is not None and pv is not None:
             load = max(pv + grid - batt, 0.0)
+        consumers = self._consumers(now.timestamp())
+        if load is not None:
+            # A consumer on its own meter is not seen by the main meter: added to the home's consumption.
+            load += sum(c.kw or 0.0 for c in consumers.values() if c.separate_meter)
         clear = self._clearsky(now)
         expected, reference = self._expected(now, clear, role_kw("forecast_power"))
         color = normalize_color(st.state) if (st := self._role_state("tariff_color")) else None
@@ -262,11 +280,30 @@ class EnergyHubCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 units=units or {},
                 strings=strings,
                 batteries=batteries,
+                consumers=consumers,
                 stale=sorted(stale),
                 offline=offline,
             ),
             ages,
         )
+
+    def _consumers(self, t: float) -> dict[str, ConsumerReading]:
+        """Each large consumer's power now: its power entity, else the slope of its energy entity."""
+        get = self.hass.states.get
+        out: dict[str, ConsumerReading] = {}
+        for c in self.installation.consumers:
+            kw = power_kw(get(c.power)) if c.power else None
+            if kw is None and c.energy and (kwh := energy_kwh(get(c.energy))) is not None:
+                seen = self._energy_seen.get(c.key)
+                if seen is None or kwh < seen[1]:
+                    self._energy_seen[c.key] = (t, kwh, None)
+                elif kwh > seen[1]:
+                    kw = (kwh - seen[1]) * 3600 / max(t - seen[0], 1.0)
+                    self._energy_seen[c.key] = (t, kwh, kw)
+                else:
+                    kw = 0.0 if t - seen[0] > ENERGY_IDLE_SECONDS else seen[2]
+            out[c.key] = ConsumerReading(kw, c.import_price, c.separate_meter)
+        return out
 
     def _expected(self, now, clear: float | None, forecast: float | None) -> tuple[float | None, str]:
         """Expected production now and its reference, best first: a measured irradiance (the clear sky scaled by

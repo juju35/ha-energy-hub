@@ -41,6 +41,10 @@ export const EH_CSS = `
 main{padding:12px 16px 32px;max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
 .flow{width:100%;max-width:760px;margin:0 auto;display:block}
 .node{background:var(--card-background-color);border:1px solid var(--divider-color);border-radius:14px;padding:8px 10px;display:flex;gap:9px;align-items:center;height:100%;box-sizing:border-box}
+.node.cnode{border-radius:12px;padding:4px 8px;gap:7px}
+.node.cnode .pa{width:28px;height:28px}
+.node.cnode .tt{min-width:0}
+.node.cnode .t1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pa{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .pa.sm{width:24px;height:24px}
 .tt{min-width:0;flex:1}

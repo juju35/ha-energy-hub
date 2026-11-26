@@ -12,7 +12,7 @@ from typing import Any
 
 from .analytics import tariffs, theil_sen
 from .config import HubConfig
-from .history import BatteryReading, History
+from .history import BatteryReading, History, Reading
 from .sources import Installation
 
 # Platforms whose battery sits on the inverter's DC bus (hybrid inverters); the others are AC-coupled.
@@ -39,12 +39,39 @@ def _r(value: float | None, digits: int = 2) -> float | None:
 
 
 # ---- periods of the overview chart
+def consumers(inst: Installation, record: dict[str, Any], reading: Reading | None) -> list[dict[str, Any]]:
+    """The large consumers: now, and today's energy, solar share and cost."""
+    days = record.get("consumers") or {}
+    out = []
+    for c in inst.consumers:
+        kwh, solar, eur = days.get(c.key, (0.0, 0.0, 0.0))
+        now = reading.consumers.get(c.key) if reading else None
+        out.append(
+            {
+                "key": c.key,
+                "name": c.name,
+                "kind": c.kind,
+                "kw": _r(now.kw, 3) if now else None,
+                "kwh": _r(kwh),
+                "solar_share": _r(solar / kwh, 3) if kwh > 0.01 else None,
+                "eur": _r(eur),
+                "import_price": c.import_price,
+                "separate_meter": c.separate_meter,
+                "power": c.power,
+                "energy": c.energy,
+            }
+        )
+    return out
+
+
 def periods(history: History, today: date) -> dict[str, list[dict[str, Any]]]:
     """Daily rows of the last 7 and 30 days, and monthly rows of the last 12 months (kWh)."""
     keys = sorted(k for k in history.days if k <= today.isoformat())
 
     def row(key: str, d: dict[str, Any]) -> dict[str, Any]:
+        cons = {k: _r(v[0], 2) for k, v in (d.get("consumers") or {}).items()}
         return {
+            **({"c": cons} if cons else {}),
             "d": key,
             "pv": _r(d["pv"], 2),
             "exp": _r(d.get("expected"), 2),
@@ -55,6 +82,7 @@ def periods(history: History, today: date) -> dict[str, list[dict[str, Any]]]:
         }
 
     months: dict[str, dict[str, float]] = {}
+    month_c: dict[str, dict[str, float]] = {}
     for key in keys:
         d = history.days[key]
         m = months.setdefault(
@@ -66,10 +94,20 @@ def periods(history: History, today: date) -> dict[str, list[dict[str, Any]]]:
         m["import"] += d.get("import", 0.0)
         m["export"] += d.get("export", 0.0)
         m["clipped"] += d.get("clipped", 0.0)
+        for k, v in (d.get("consumers") or {}).items():
+            month_cons = month_c.setdefault(key[:7], {})
+            month_cons[k] = month_cons.get(k, 0.0) + v[0]
     return {
         "7d": [row(k, history.days[k]) for k in keys[-7:]],
         "30d": [row(k, history.days[k]) for k in keys[-30:]],
-        "12m": [{"d": k, **{kk: _r(v, 1) for kk, v in m.items()}} for k, m in sorted(months.items())[-12:]],
+        "12m": [
+            {
+                "d": k,
+                **{kk: _r(v, 1) for kk, v in m.items()},
+                **({"c": {kk: _r(v, 1) for kk, v in month_c[k].items()}} if k in month_c else {}),
+            }
+            for k, m in sorted(months.items())[-12:]
+        ],
     }
 
 

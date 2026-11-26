@@ -3,7 +3,9 @@
 Two strings of 3 kWp on a south roof, an inverter clipping at 4.6 kW, string 2 lagging, panel P15 shaded
 every afternoon by a chimney, soiling that builds up between rains, 0.5 %/year of degradation, three batteries of
 three brands (one of 3 modules of 16 cells read by a BMS, whose cell 8 of module 2 drifts) and a Linky meter that
-drops out for a quarter of an hour at night. Every value is deterministic for a given
+drops out for a quarter of an hour at night. Two large consumers: an EV charger on its own meter and
+price, charging from 6:00 to 8:00 (Monday to Saturday), and a heat pump (heating in winter, hot water every
+early afternoon). Every value is deterministic for a given
 time, so screenshots and tests are reproducible. Names are neutral.
 """
 
@@ -16,8 +18,8 @@ from functools import lru_cache
 
 from .analytics import tariffs
 from .analytics.clearsky import Plane, clearsky_power
-from .history import BatteryReading, History, Reading
-from .sources import BatterySource, Installation, SourceInfo, UnitSource
+from .history import BatteryReading, ConsumerReading, History, Reading
+from .sources import BatterySource, ConsumerSource, Installation, SourceInfo, UnitSource
 
 # Two strings of 8 panels on the same south roof: strings and panels can then be compared with each other.
 PLANES = [Plane(3.28, 30, 190), Plane(3.28, 30, 190)]
@@ -40,6 +42,8 @@ METER_GAP = (3 * 60 + 10, 3 * 60 + 25)
 METER = "sensor.demo_zlinky_apparent_power"
 # State of health lost per year since commissioning (the house battery is the oldest and the most cycled).
 SOH_PER_YEAR = {"maison": 1.25, "garage": 0.3, "balcon": 0.6}
+EV_KW = 3.7
+EV_PRICE = 0.1848
 
 
 def installation() -> Installation:
@@ -185,6 +189,18 @@ def installation() -> Installation:
             ["weather.demo_meteo_france"],
         ),
     ]
+    inst.consumers = [
+        ConsumerSource(
+            "wallbox",
+            "EV charger",
+            "yaml",
+            power="sensor.demo_wallbox_power",
+            kind="ev_charger",
+            import_price=EV_PRICE,
+            separate_meter=True,
+        ),
+        ConsumerSource("heat_pump", "Heat pump", "energy", energy="sensor.demo_heat_pump_energy", kind="heat_pump"),
+    ]
     inst.excluded = {"sensor.demo_zendure_ac_input": "double_count"}
     return inst
 
@@ -276,18 +292,30 @@ def units_now(
 
 
 def load_now(local: datetime) -> float:
-    """Home consumption, kW: a base of 0.31 kW, peaks at breakfast, lunch and dinner, and electric heating from
-    November to March (mornings and evenings most)."""
+    """Home consumption on the main meter, kW, without the large consumers: a base of 0.31 kW and peaks at
+    breakfast, lunch and dinner."""
     h = local.hour + local.minute / 60
-    cold = max(0.0, math.cos(2 * math.pi * (local.timetuple().tm_yday - 15) / 365) - 0.25) / 0.75
-    heating = 1.5 * cold * (1.0 if 6 <= h < 9 or 17 <= h < 23 else 0.45)
-    return heating + (
+    return (
         0.31
         + 1.2 * math.exp(-(((h - 7.6) / 0.5) ** 2))
         + 0.9 * math.exp(-(((h - 12.6) / 0.4) ** 2))
         + 1.8 * math.exp(-(((h - 19.4) / 0.7) ** 2))
         + 0.05 * math.sin(local.minute / 3)
     )
+
+
+def heat_pump_now(local: datetime) -> float:
+    """The heat pump, kW: heating from November to March (mornings and evenings most), hot water every day
+    from 13:00 to 13:50."""
+    h = local.hour + local.minute / 60
+    cold = max(0.0, math.cos(2 * math.pi * (local.timetuple().tm_yday - 15) / 365) - 0.25) / 0.75
+    heating = 1.5 * cold * (1.0 if 6 <= h < 9 or 17 <= h < 23 else 0.45)
+    return heating + (1.1 if 13 <= h < 13 + 50 / 60 else 0.0)
+
+
+def ev_now(local: datetime) -> float:
+    """The EV charger, kW: from 6:00 to 8:00, Monday to Saturday."""
+    return EV_KW if local.weekday() < 6 and 6 <= local.hour < 8 else 0.0
 
 
 DEMO_EPOCH = date(2026, 1, 1)
@@ -333,7 +361,10 @@ class DemoPlant:
     def step(self, local: datetime, seconds: float) -> Reading:
         """The installation at ``local``, after ``seconds`` since the previous step."""
         pv, panels, strings, cs, _clipped = units_now(local, self.lat, self.lon)
-        load = load_now(local)
+        ev = ev_now(local)
+        hp = heat_pump_now(local)
+        # The main meter's consumption: the EV charger is on a meter of its own.
+        load = load_now(local) + hp
         h = local.hour + local.minute / 60
         power = dict.fromkeys(self.soc, 0.0)
         caps = {key: cap for key, _n, _p, cap in BATTERIES}
@@ -398,7 +429,7 @@ class DemoPlant:
         return Reading(
             t=local.timestamp(),
             pv_kw=round(pv, 3),
-            load_kw=round(load, 3),
+            load_kw=round(load + ev, 3),
             grid_kw=None if meter_out else round(load + batt - pv, 3),
             stale=[METER] if meter_out else [],
             expected_kw=round(cs * min(weather(local.date()) + 0.04, 1.0), 3),
@@ -406,6 +437,10 @@ class DemoPlant:
             units={k: round(v, 4) for k, v in panels.items()},
             strings={k: round(v, 4) for k, v in strings.items()},
             batteries=batteries,
+            consumers={
+                "wallbox": ConsumerReading(round(ev, 3), EV_PRICE, separate_meter=True),
+                "heat_pump": ConsumerReading(round(hp, 3)),
+            },
             import_price=tempo_price(local),
             day_color=tempo_color(local.date()) if local.hour >= 6 else None,
             reference="forecast",

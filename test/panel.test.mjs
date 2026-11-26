@@ -199,3 +199,28 @@ test('offer comparator, contract and production reference', () => {
   assert.match(unknown, /more than 7 months old/);
   assert.match(unknown, /scaled to a year/);
 });
+
+test('large consumers: nodes under the home, stacked in the curves, their tariffs', () => {
+  const p = panel('en');
+  const flow = p._flow();
+  assert.match(flow, /viewBox="0 0 680 296"/);
+  assert.match(flow, /class="node cnode" title="EV charger"/);
+  assert.match(flow, /class="node cnode" title="Heat pump"/);
+  p._period = 'today';
+  const today = p._curve();
+  assert.match(today, /<path d="M[^"]+Z" fill="#D4537E" fill-opacity="\.45"\/>/, 'the EV charger is stacked in the day');
+  assert.match(today, /<span class="chip"><span style="width:12px;height:10px;border-radius:2px;background:#D4537E;opacity:\.7"><\/span>EV charger<\/span>/);
+  p._period = '7d';
+  assert.match(p._curve(), /fill="#D4537E" fill-opacity="\.75"/);
+  p._sub = 'tariffs';
+  const tariffs = p._settingsTab();
+  assert.match(tariffs, /Large consumers/);
+  assert.match(tariffs, /EV charger<\/td><td>€0\.1848 \/kWh<\/td><td>own meter/);
+  assert.match(tariffs, /Heat pump<\/td><td>contract price<\/td><td>main meter/);
+  // Without consumers: the flow keeps its height, no node, no box
+  const bare = panel('en', { ...snapshot, consumers: [] });
+  assert.match(bare._flow(), /viewBox="0 0 680 228"/);
+  assert.doesNotMatch(bare._flow(), /cnode/);
+  bare._sub = 'tariffs';
+  assert.doesNotMatch(bare._settingsTab(), /Large consumers/);
+});

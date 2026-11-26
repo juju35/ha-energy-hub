@@ -423,5 +423,9 @@
   "entities_format": "Viac entít oddelených čiarkou. Solárny výkon sa sčítava, pri ostatných vyhráva prvá, ktorá odpovie – tak sa deklaruje alternatívny zdroj.",
   "entities_save": "Uložiť",
   "entities_saved": "Uložené",
-  "entities_failed": "Zlyhalo"
+  "entities_failed": "Zlyhalo",
+  "consumers_box": "Veľkí spotrebitelia",
+  "contract_price": "zmluvná cena",
+  "own_meter": "vlastný elektromer",
+  "main_meter": "hlavný elektromer"
 }

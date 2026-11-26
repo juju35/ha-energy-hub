@@ -423,5 +423,9 @@
   "entities_format": "Wiele encji oddzielonych przecinkami. Moc fotowoltaiczna jest sumowana; w pozostałych wygrywa pierwsza, która odpowie – tak deklaruje się źródło alternatywne.",
   "entities_save": "Zapisz",
   "entities_saved": "Zapisano",
-  "entities_failed": "Błąd"
+  "entities_failed": "Błąd",
+  "consumers_box": "Duzi odbiorcy",
+  "contract_price": "cena z umowy",
+  "own_meter": "osobny licznik",
+  "main_meter": "licznik główny"
 }

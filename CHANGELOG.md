@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.8.0 - 2026-11-26
+
+### Features
+- Large consumers (EV charger, heat pump, air conditioning, water heater…): detected from the Energy dashboard's individual devices, or declared under `consumers:` in YAML (a power or an energy entity, a kind, a name). Overview: each one is a node under the home in the energy flow, and a slice stacked under the consumption curve of the day, or a stacked bar in the 7-day, 30-day and 12-month charts; the tooltips list them. (#24)
+- A second tariff per consumer: `import_price` prices the kWh it draws from the grid, and `separate_meter: true` puts it on its own meter (heat pump and EV tariffs): no solar reaches it, its energy is bought apart and added to the home's consumption, the bill and the savings use its price, and the offer comparator keeps to the main meter. Settings → Tariffs lists each consumer with its price and its meter. (#24)
+- The snapshot carries the consumers (`consumers`: power now, energy, solar share and cost of the day), the curve and the period rows their powers and energies (`c`); the equivalent YAML of the Settings tab includes them.
+- Demo: an EV charger on its own meter and price, and a heat pump (heating in winter, hot water every early afternoon).
+- Translations: the new panel keys in the 21 other languages.
+
 ## 1.7.0 - 2026-11-25
 
 ### Features

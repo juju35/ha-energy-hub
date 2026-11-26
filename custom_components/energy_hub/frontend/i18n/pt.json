@@ -423,5 +423,9 @@
   "entities_format": "Várias entidades separadas por vírgulas. A potência solar soma-se; nas outras ganha a primeira que responde, é assim que se declara uma fonte alternativa.",
   "entities_save": "Guardar",
   "entities_saved": "Guardado",
-  "entities_failed": "Falhou"
+  "entities_failed": "Falhou",
+  "consumers_box": "Grandes consumidores",
+  "contract_price": "preço do contrato",
+  "own_meter": "contador próprio",
+  "main_meter": "contador principal"
 }

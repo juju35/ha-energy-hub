@@ -41,6 +41,15 @@ class BatteryReading:
 
 
 @dataclass(slots=True)
+class ConsumerReading:
+    """A large consumer now: its power, the price of the kWh it draws (None: the contract's), its own meter."""
+
+    kw: float | None
+    price: float | None = None
+    separate_meter: bool = False
+
+
+@dataclass(slots=True)
 class Reading:
     """One look at the installation: powers in kW (grid positive = import, battery positive = charging)."""
 
@@ -53,6 +62,8 @@ class Reading:
     units: dict[str, float] = field(default_factory=dict)
     strings: dict[str, float] = field(default_factory=dict)
     batteries: list[BatteryReading] = field(default_factory=list)
+    # Large consumers by key. Those on a separate meter are counted in load_kw, not in grid_kw (the main meter).
+    consumers: dict[str, ConsumerReading] = field(default_factory=dict)
     # Entities read without a usable value (unavailable, unknown, gone), and whether production or grid is off-line.
     stale: list[str] = field(default_factory=list)
     offline: bool = False
@@ -181,6 +192,7 @@ class History:
                 if pv is not None:
                     self_kw = max(pv - max(-(grid or 0.0), 0.0), 0.0)
                     record["self_eur"] = record.get("self_eur", 0.0) + self_kw * h * price
+            self._consumers(record, last, reading, h, load, grid, price)
             for name, kw in reading.units.items():
                 record["units"][name] = record["units"].get(name, 0.0) + kw * h
             for name, kw in reading.strings.items():
@@ -210,6 +222,57 @@ class History:
                 record.setdefault("cells_v", {})[b.key] = [round(v, 4) for v in b.cells]
         return self._bucket(reading)
 
+    @staticmethod
+    def _consumers(
+        record: dict[str, Any],
+        last: Reading,
+        reading: Reading,
+        h: float,
+        load: float | None,
+        grid: float | None,
+        price: float | None,
+    ) -> None:
+        """Each consumer's energy, its solar part and its cost: [kWh, solar kWh, EUR] per day.
+
+        On the main meter a consumer gets the solar share of the home at that moment (what the grid did not
+        supply); on a separate meter it gets none, and its energy is bought apart: added to the day's import.
+        A consumer's own price replaces the contract's for the kWh it draws, in the bill and the savings.
+        """
+        if not reading.consumers:
+            return
+        powers = {}
+        for key, c in reading.consumers.items():
+            prev = last.consumers.get(key)
+            if (kw := _avg(prev.kw if prev else None, c.kw)) is not None:
+                powers[key] = max(kw, 0.0)
+        separate = sum(kw for key, kw in powers.items() if reading.consumers[key].separate_meter)
+        main_load = (load or 0.0) - separate
+        share = min(max((main_load - max(grid or 0.0, 0.0)) / main_load, 0.0), 1.0) if main_load > 0.01 else 0.0
+        days = record.setdefault("consumers", {})
+        for key, kw in powers.items():
+            c = reading.consumers[key]
+            solar = 0.0 if c.separate_meter else kw * share
+            drawn = (kw - solar) * h
+            own = c.price if c.price is not None else price
+            row = days.setdefault(key, [0.0, 0.0, 0.0])
+            row[0] += kw * h
+            row[1] += solar * h
+            if own is not None:
+                row[2] += drawn * own
+            if c.separate_meter:
+                record["import"] += drawn
+            if own is None:
+                continue
+            base = price if price is not None else own
+            if c.separate_meter:
+                record["import_eur"] = record.get("import_eur", 0.0) + drawn * own
+                record["load_eur"] = record.get("load_eur", 0.0) + kw * h * (own - base)
+            elif c.price is not None:
+                # Same meter, own price: its kWh from the grid, and those the sun spared it, at its price.
+                record["import_eur"] = record.get("import_eur", 0.0) + drawn * (own - base)
+                record["load_eur"] = record.get("load_eur", 0.0) + kw * h * (own - base)
+                record["self_eur"] = record.get("self_eur", 0.0) + solar * h * (own - base)
+
     def _bucket(self, reading: Reading) -> bool:
         start = reading.t // BUCKET_SECONDS * BUCKET_SECONDS
         closed = False
@@ -237,6 +300,8 @@ class History:
         for b in reading.batteries:
             if b.soc is not None:
                 values[f"soc:{b.key}"] = b.soc
+        for key, c in reading.consumers.items():
+            values[f"c:{key}"] = c.kw
         # Entities without a fresh value during the bucket, for the data quality of the last 24 hours.
         if reading.stale:
             acc.setdefault("stale", set()).update(reading.stale)

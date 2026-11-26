@@ -423,5 +423,9 @@
   "entities_format": "Vairākas entītijas, atdalītas ar komatu. Saules jauda summējas, pārējās uzvar pirmā, kas atbild – tā norāda alternatīvu avotu.",
   "entities_save": "Saglabāt",
   "entities_saved": "Saglabāts",
-  "entities_failed": "Neizdevās"
+  "entities_failed": "Neizdevās",
+  "consumers_box": "Lielie patērētāji",
+  "contract_price": "līguma cena",
+  "own_meter": "atsevišķs skaitītājs",
+  "main_meter": "galvenais skaitītājs"
 }

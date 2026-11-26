@@ -423,5 +423,9 @@
   "entities_format": "Mehrere Entitäten, durch Kommas getrennt. Die Solarleistung wird addiert; bei den anderen zählt die erste, die antwortet – so wird eine alternative Quelle angegeben.",
   "entities_save": "Speichern",
   "entities_saved": "Gespeichert",
-  "entities_failed": "Fehlgeschlagen"
+  "entities_failed": "Fehlgeschlagen",
+  "consumers_box": "Großverbraucher",
+  "contract_price": "Vertragspreis",
+  "own_meter": "eigener Zähler",
+  "main_meter": "Hauptzähler"
 }

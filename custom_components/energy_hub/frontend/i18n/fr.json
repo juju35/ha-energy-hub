@@ -423,5 +423,9 @@
   "entities_format": "Plusieurs entités : séparées par des virgules. La puissance solaire les additionne ; pour les autres rôles la première qui répond gagne, c'est ainsi qu'on déclare une source alternative.",
   "entities_save": "Enregistrer",
   "entities_saved": "Enregistré",
-  "entities_failed": "Échec"
+  "entities_failed": "Échec",
+  "consumers_box": "Gros consommateurs",
+  "contract_price": "prix du contrat",
+  "own_meter": "compteur dédié",
+  "main_meter": "compteur principal"
 }

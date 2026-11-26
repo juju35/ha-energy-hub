@@ -423,5 +423,9 @@
   "entities_format": "Više entiteta odvojenih zapetom. Solarna snaga se sabira, kod ostalih pobeđuje prvi koji odgovori — tako se zadaje alternativni izvor.",
   "entities_save": "Sačuvaj",
   "entities_saved": "Sačuvano",
-  "entities_failed": "Greška"
+  "entities_failed": "Greška",
+  "consumers_box": "Veliki potrošači",
+  "contract_price": "cena po ugovoru",
+  "own_meter": "zasebno brojilo",
+  "main_meter": "glavno brojilo"
 }

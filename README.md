@@ -22,7 +22,7 @@ Home Assistant integration and sidebar panel for **solar installations**: produc
 ## Features
 
 - **Energy Hub sidebar panel** (no dashboard to build): an illustrated banner that follows the sun, the battery level and the alerts, folding into a compact bar on scroll, and six tabs
-  - **Overview**: live energy flow between solar, home, batteries and grid; self-consumption, self-sufficiency, savings and losses of the day with their trend; the production chart over today, 7 days, 30 days or 12 months (forecast, consumption, battery %, inverter maximum, clipping hatched); the current alerts
+  - **Overview**: live energy flow between solar, home, batteries and grid, with the large consumers under the home; self-consumption, self-sufficiency, savings and losses of the day with their trend; the production chart over today, 7 days, 30 days or 12 months (forecast, consumption with the large consumers stacked under it, battery %, inverter maximum, clipping hatched); the current alerts
   - **Production**: specific yield, performance index, peak, month total; **per-panel yield on a roof drawing** (micro-inverters, optimizers) and per-string comparison; 30-day performance index with rainy days; 12 months against expected
   - **Batteries**: any number of batteries of any brand as one fleet (charge, net power, autonomy, battery-to-battery exchange), each battery drawn with its level, its health over 3 years and charge of the day with their projections, its modules, and the **cells** as a modules × cells heat map (deviation, voltage, temperature, balancing), each cell's 30-day drift and the spread projected to the threshold
   - **Losses**: from potential to produced (cascade), clipping heat map over 30 days, causes of the month, events with their status (recurring, to watch, resolved)
@@ -30,6 +30,7 @@ Home Assistant integration and sidebar panel for **solar installations**: produc
   - **Settings**: sources with what each provides or what the hub estimates, attachment suggestions, data quality of the last 24 hours; a clickable DC/AC layout and the configuration checks with their actions; tariffs; alert rules; the equivalent YAML to copy
 - **Loss detection based on the PV monitoring literature** (see [How it works](#how-it-works)): clipping, recurring shading per panel, soiling, string mismatch, degradation, export limitation, unavailability
 - **Automatic detection** of the installation from the Energy dashboard settings and from 27 integration profiles; YAML to override anything
+- **Large consumers** (EV charger, heat pump, air conditioning, water heater…) from the Energy dashboard's individual devices or `consumers:` in YAML: each one drawn in the flow and stacked in the charts, with its energy, solar share and cost of the day, and **its own tariff** — a price per kWh, and a separate meter (heat pump or EV tariffs) whose energy is bought apart from the main contract
 - **Expected production from what Home Assistant already knows**: a measured irradiance sensor, the solar forecast, or a weather entity's cloud cover, with no network call of its own
 - 12 **sensors** (self-consumption, self-sufficiency, solar energy today, specific yield, performance index, losses, clipping, fleet charge and power, autonomy, savings, alerts) for your own dashboards and automations
 - `energy_hub_alert` **event** and **notifications** in Home Assistant's language (once a day per alert): through [Notify Hub](https://github.com/juju35/ha-notify-hub) when it is installed, or to the notify action or entity of your choice
@@ -166,6 +167,16 @@ energy_hub:
       cells: sensor.jk_bms_cell_voltage_*   # glob of the cell voltage sensors
       cell_temperatures: sensor.jk_bms_cell_temperature_*
       cells_per_module: 16        # draws the cells as modules × cells
+  consumers:                      # large consumers, drawn apart (the Energy dashboard's devices are detected)
+    wallbox:
+      name: EV charger
+      power: sensor.wallbox_power           # or energy: sensor.wallbox_energy (power derived from it)
+      kind: ev_charger            # ev_charger, heat_pump, climate, water_heater, other: icon and colour
+    heat_pump:
+      name: Heat pump
+      energy: sensor.heat_pump_energy
+      import_price: 0.24          # its own price per kWh drawn from the grid (default: the contract's)
+      separate_meter: true        # on its own meter: no solar, outside the main contract, still in the home's use
   ignore:                         # entities never read (a double count, for example)
     - sensor.zendure_ac_input
   tariff:
@@ -244,6 +255,7 @@ Every 30 seconds the integration reads the detected entities (powers converted t
 - **Mismatch**: a string or panel whose relative yield stays under 90 % of the leave-one-out median of its peers for 3 days (after Guerriero et al.).
 - **Batteries**: fleet charge weighted by capacity, autonomy above the reserves at the current load, state of health from charges covering at least 40 points of charge, equivalent cycles, round-trip efficiency over 30 days, cell spread and its Theil–Sen projection to the threshold (50 mV).
 - **Offer comparator**: the grid draw is kept per half hour for a year; each offer prices every half hour (off-peak ranges, week-ends and French public holidays, the Tempo colour or Zen Flex day recorded that day, or the season's expected mix when it was not), adds its subscription and is ranked. The regulated prices change on 1 February and 1 August and the Zen offers at most twice a year: the grid is EDF's published one, embedded with its date, flagged after 7 months, updated by release, and the market offers are shown as references to check against your contract.
+- **Large consumers**: on the main meter a consumer gets the home's solar share at each moment (the part the grid did not supply) and its grid part is priced at its own price when it has one; on a separate meter it gets no solar, its energy is added to the home's consumption and to the energy bought, priced at its own price, and left out of the offer comparator (which replays the main meter). A consumer known by its energy only gets the slope between two changes of that energy as its power.
 - **Payback**: gains are the self-consumed energy at the price of its half hour (the price entity, else the contract's grid, else the flat import price) plus the exported energy at the export price; the projection adds the yearly gain with the chosen price rise, 0.5 %/year of degradation and one inverter replacement.
 
 ## Development

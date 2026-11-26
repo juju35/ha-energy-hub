@@ -423,5 +423,9 @@
   "entities_format": "Flera entiteter åtskilda av kommatecken. Soleffekten summeras; för de övriga vinner den första som svarar – så anger du en alternativ källa.",
   "entities_save": "Spara",
   "entities_saved": "Sparat",
-  "entities_failed": "Misslyckades"
+  "entities_failed": "Misslyckades",
+  "consumers_box": "Storförbrukare",
+  "contract_price": "avtalspris",
+  "own_meter": "egen mätare",
+  "main_meter": "huvudmätare"
 }

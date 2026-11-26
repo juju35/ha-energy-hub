@@ -423,5 +423,9 @@
   "entities_format": "Několik entit oddělených čárkou. Solární výkon se sčítá, u ostatních vyhrává první, která odpoví – tak se deklaruje alternativní zdroj.",
   "entities_save": "Uložit",
   "entities_saved": "Uloženo",
-  "entities_failed": "Selhalo"
+  "entities_failed": "Selhalo",
+  "consumers_box": "Velcí spotřebitelé",
+  "contract_price": "smluvní cena",
+  "own_meter": "vlastní elektroměr",
+  "main_meter": "hlavní elektroměr"
 }

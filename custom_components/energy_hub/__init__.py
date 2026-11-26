@@ -278,6 +278,19 @@ def settings_yaml(cfg, inst) -> str:
                 lines.append(f"      cell_temperatures: {b.cell_temperatures[0].rstrip('0123456789')}*")
             if b.cells_per_module:
                 lines.append(f"      cells_per_module: {b.cells_per_module}")
+    if inst.consumers:
+        lines.append("  consumers:")
+        for c in inst.consumers:
+            name = c.name.replace("\\", "\\\\").replace('"', '\\"')
+            lines += [f"    {c.key}:", f'      name: "{name}"']
+            for attr in ("power", "energy"):
+                if getattr(c, attr):
+                    lines.append(f"      {attr}: {getattr(c, attr)}")
+            lines.append(f"      kind: {c.kind}")
+            if c.import_price is not None:
+                lines.append(f"      import_price: {c.import_price:g}")
+            if c.separate_meter:
+                lines.append("      separate_meter: true")
     if inst.excluded:
         lines.append("  ignore:")
         lines += [f"    - {e}" for e in sorted(inst.excluded)]

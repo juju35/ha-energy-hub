@@ -423,5 +423,9 @@
   "entities_format": "Több entitás vesszővel elválasztva. A napelemes teljesítmény összeadódik, a többinél az első válaszoló nyer – így ad meg alternatív forrást.",
   "entities_save": "Mentés",
   "entities_saved": "Mentve",
-  "entities_failed": "Sikertelen"
+  "entities_failed": "Sikertelen",
+  "consumers_box": "Nagyfogyasztók",
+  "contract_price": "szerződéses ár",
+  "own_meter": "saját mérő",
+  "main_meter": "fő mérő"
 }
