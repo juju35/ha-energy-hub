@@ -44,7 +44,7 @@ type EnergyHubConfigEntry = ConfigEntry[EnergyHubCoordinator]
 POWER_FACTORS = {"W": 0.001, "kW": 1.0, "MW": 1000.0, "mW": 1e-6}
 ENERGY_FACTORS = {"Wh": 0.001, "kWh": 1.0, "MWh": 1000.0}
 # A consumer known by its energy only: its power is the slope between two changes of the energy, and 0 once the
-# energy has not moved for this long.
+# energy has not moved for this long, or for twice its last interval when its counter steps more slowly.
 ENERGY_IDLE_SECONDS = 900
 SAVE_DELAY = 300
 # Installation re-detected this often (a new integration, a renamed entity).
@@ -71,12 +71,20 @@ def power_kw(state: State | None) -> float | None:
     return value / 1000 if abs(value) > 100 else value
 
 
+_NO_UNIT_WARNED: set[str] = set()
+
+
 def energy_kwh(state: State | None) -> float | None:
-    """An energy state in kWh, whatever its unit."""
+    """An energy state in kWh, whatever its unit. Without a unit it is taken as kWh, with a warning once: unlike a
+    power, an energy's magnitude does not tell Wh from kWh."""
     value = _number(state)
     if value is None:
         return None
-    return value * ENERGY_FACTORS.get(state.attributes.get("unit_of_measurement"), 1.0)
+    unit = state.attributes.get("unit_of_measurement")
+    if unit not in ENERGY_FACTORS and state.entity_id not in _NO_UNIT_WARNED:
+        _NO_UNIT_WARNED.add(state.entity_id)
+        _LOGGER.warning("%s has no energy unit (Wh, kWh, MWh): its value is read as kWh", state.entity_id)
+    return value * ENERGY_FACTORS.get(unit, 1.0)
 
 
 class EnergyHubCoordinator(DataUpdateCoordinator[dict[str, Any]]):
@@ -95,8 +103,8 @@ class EnergyHubCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._plant: demo.DemoPlant | None = None
         self._last_t: float | None = None
         self._notified: dict[str, str] = {}
-        # Last energy seen per consumer known by its energy only: {key: (timestamp, kWh, kW)}.
-        self._energy_seen: dict[str, tuple[float, float, float | None]] = {}
+        # Last change of energy per consumer known by its energy only: {key: (changed at, kWh, kW, interval s)}.
+        self._energy_seen: dict[str, tuple[float, float, float | None, float | None]] = {}
         self.reading: Reading | None = None
 
     @property
@@ -288,22 +296,31 @@ class EnergyHubCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         )
 
     def _consumers(self, t: float) -> dict[str, ConsumerReading]:
-        """Each large consumer's power now: its power entity, else the slope of its energy entity."""
+        """Each large consumer's power now: its power entity, else the slope of its energy entity between two of its
+        changes (timed by the state's own ``last_changed``, not by when it was read)."""
         get = self.hass.states.get
         out: dict[str, ConsumerReading] = {}
         for c in self.installation.consumers:
             kw = power_kw(get(c.power)) if c.power else None
-            if kw is None and c.energy and (kwh := energy_kwh(get(c.energy))) is not None:
-                seen = self._energy_seen.get(c.key)
-                if seen is None or kwh < seen[1]:
-                    self._energy_seen[c.key] = (t, kwh, None)
-                elif kwh > seen[1]:
-                    kw = (kwh - seen[1]) * 3600 / max(t - seen[0], 1.0)
-                    self._energy_seen[c.key] = (t, kwh, kw)
-                else:
-                    kw = 0.0 if t - seen[0] > ENERGY_IDLE_SECONDS else seen[2]
+            if kw is None and c.energy and (state := get(c.energy)) and (kwh := energy_kwh(state)) is not None:
+                kw = self._energy_slope(c.key, kwh, state.last_changed.timestamp(), t)
             out[c.key] = ConsumerReading(kw, c.import_price, c.separate_meter)
         return out
+
+    def _energy_slope(self, key: str, kwh: float, changed: float, now: float) -> float | None:
+        seen = self._energy_seen.get(key)
+        if seen is None or kwh < seen[1]:
+            # First look, or a counter reset: no slope yet.
+            self._energy_seen[key] = (changed, kwh, None, None)
+            return None
+        at, last_kwh, last_kw, interval = seen
+        if kwh > last_kwh:
+            gap = max(changed - at, 1.0)
+            kw = (kwh - last_kwh) * 3600 / gap
+            self._energy_seen[key] = (changed, kwh, kw, gap)
+            return kw
+        idle = max(ENERGY_IDLE_SECONDS, 2 * interval) if interval else ENERGY_IDLE_SECONDS
+        return 0.0 if now - at > idle else last_kw
 
     def _expected(self, now, clear: float | None, forecast: float | None) -> tuple[float | None, str]:
         """Expected production now and its reference, best first: a measured irradiance (the clear sky scaled by

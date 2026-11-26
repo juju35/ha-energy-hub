@@ -126,23 +126,37 @@ class ConsumerSource:
     separate_meter: bool = False
 
 
-# A consumer's kind guessed from its entity id, for its icon and colour (YAML ``kind:`` wins).
+# A consumer's kind guessed from its entity id, for its icon and colour (YAML ``kind:`` wins). Words are matched
+# between underscores: ``_`` is a word character for ``\b``, so ``(?:^|_)`` and ``(?:_|$)`` mark their edges.
+_W0, _W1 = r"(?:^|_)", r"(?:_|$)"
 CONSUMER_KIND_PATTERNS = (
     (
         "ev_charger",
         re.compile(
-            r"wallbox|charger|charging|chargepoint|easee|zappi|evse|\bev_|_ev_|borne|wallbe|tesla_wall|ohme|pod_point"
+            rf"wallbox|ev_?charger|car_?charger|charge_?point|easee|zappi|evse|ohme|pod_point|wallbe|tesla_wall"
+            rf"|{_W0}(?:ev|borne|irve){_W1}"
         ),
     ),
     (
         "heat_pump",
         re.compile(
-            r"heat_?pump|heatpump|pac_|_pac\b|waermepumpe|warmepumpe|wp_|daikin|altherma|aquarea|ecodan|nibe|vaillant|viessmann|stiebel"
+            rf"heat_?pump|w(?:ae|a)rmepumpe|daikin|altherma|aquarea|ecodan|nibe|vaillant|viessmann|stiebel"
+            rf"|{_W0}(?:pac|wp){_W1}"
         ),
     ),
-    ("water_heater", re.compile(r"water_heater|boiler|cumulus|chauffe_eau|ballon|dhw")),
-    ("climate", re.compile(r"climate|aircon|air_con|\bac_|clim|hvac")),
+    ("water_heater", re.compile(rf"water_heater|boiler|cumulus|chauffe_eau|{_W0}(?:ballon|dhw){_W1}")),
+    ("climate", re.compile(rf"climate|aircon|air_?con|hvac|{_W0}(?:ac|clim|climatisation){_W1}")),
 )
+
+
+def consumer_key(entity_id: str, taken: set[str]) -> str:
+    """A key that stays with its entity: the entity's object id, made unique."""
+    base = re.sub(r"[^a-z0-9_]+", "_", entity_id.partition(".")[2].lower()).strip("_") or "consumer"
+    key, n = base, 2
+    while key in taken:
+        key, n = f"{base}_{n}", n + 1
+    taken.add(key)
+    return key
 
 
 def consumer_kind(entity_id: str | None) -> str:
@@ -370,8 +384,10 @@ def _from_energy_prefs(prefs: dict[str, Any] | None, inst: Installation, hass: H
 
 def _consumers_from_prefs(prefs: dict[str, Any] | None, inst: Installation, hass: HomeAssistant) -> None:
     """The Energy dashboard's individual devices, as large consumers. A device counted inside another one
-    (``included_in_stat``) is left out: its energy is already in its parent's."""
-    for i, device in enumerate((prefs or {}).get("device_consumption") or []):
+    (``included_in_stat``) is left out: its energy is already in its parent's. The key comes from the entity, not
+    from the position in the list, so that reordering the devices keeps each one's history and colour."""
+    taken = {c.key for c in inst.consumers}
+    for device in (prefs or {}).get("device_consumption") or []:
         energy = device.get("stat_consumption")
         if not energy or device.get("included_in_stat"):
             continue
@@ -379,7 +395,7 @@ def _consumers_from_prefs(prefs: dict[str, Any] | None, inst: Installation, hass
         name = device.get("name") or (state.attributes.get("friendly_name") if state else None) or energy
         inst.consumers.append(
             ConsumerSource(
-                key=f"device_{i}",
+                key=consumer_key(energy, taken),
                 name=str(name),
                 platform="energy",
                 power=device.get("stat_rate"),
@@ -436,7 +452,7 @@ def _apply_yaml(cfg: HubConfig, inst: Installation, all_entity_ids: list[str]) -
     inst.strings = [u for u in inst.strings if (u.power or u.voltage) not in inst.excluded]
     inst.units = [u for u in inst.units if u.power not in inst.excluded]
     inst.batteries = [b for b in inst.batteries if b.soc not in inst.excluded]
-    inst.consumers = [c for c in inst.consumers if (c.power or c.energy) not in inst.excluded]
+    inst.consumers = [c for c in inst.consumers if not {c.power, c.energy} & set(inst.excluded)]
 
 
 def _merge_battery(cfg: BatteryConfig, inst: Installation, all_entity_ids: list[str]) -> None:
