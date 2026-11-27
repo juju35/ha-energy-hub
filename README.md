@@ -177,6 +177,16 @@ energy_hub:
       energy: sensor.heat_pump_energy
       import_price: 0.24          # its own price per kWh drawn from the grid (default: the contract's)
       separate_meter: true        # on its own meter: no solar, outside the main contract, still in the home's use
+  panels:                         # panels / micro-inverter inputs no profile finds (template sensors…)
+    - name: TM 1
+      power: sensor.solar_tm_l2000m_pv1_power
+    - name: TM 2
+      voltage: sensor.tm_pv2_voltage        # or voltage × current
+      current: sensor.tm_pv2_current
+      kwp: 0.5                    # optional
+  strings:                        # string / MPPT inputs, same keys as panels
+    - name: MPPT 1
+      power: sensor.inverter_pv1_power
   ignore:                         # entities never read (a double count, for example)
     - sensor.zendure_ac_input
   tariff:
@@ -207,6 +217,21 @@ energy_hub:
 ```
 
 The **Settings** tab shows the YAML equivalent to what is detected, ready to copy.
+
+A panel or a string of `panels:` / `strings:` reading the same entity as a detected one renames it; the others are added to the detected ones.
+
+### Your own profiles
+
+A setup no profile covers (template sensors, a home-made integration…) can get its own detection profile, in the format of `custom_components/energy_hub/profiles/*.yaml`, in **`/config/energy_hub/profiles/`**: those files survive the updates of the integration, are read at startup, and one named like a built-in profile replaces it. For example `/config/energy_hub/profiles/tm_l2000m.yaml`:
+
+```yaml
+name: TM-L2000M
+platform: template
+units:
+  power: ['^solar_tm_l2000m_(pv\d)_power$']   # regexes on the object id; the first group names the panel
+```
+
+A file that cannot be read is skipped, with a warning in **Settings → System → Logs**. A profile that works for an integration is welcome as a pull request.
 
 ### Sensors
 

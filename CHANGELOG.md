@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.9.0 - 2026-11-27
+
+### Features
+- Panels and strings declared in YAML (`panels:` / `strings:`, a power entity or a voltage and a current, an optional kWp): for template sensors or any setup no profile finds; one reading the same entity as a detected panel renames it (#28).
+- Your own detection profiles in `/config/energy_hub/profiles/*.yaml`, kept across updates; one named like a built-in profile replaces it, an unreadable one is skipped with a warning (#28).
+
 ## 1.8.1 - 2026-11-27
 
 ### Fixes

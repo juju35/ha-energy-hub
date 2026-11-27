@@ -21,6 +21,9 @@ energy_hub:
       cells: sensor.jk_bms_cell_*
   ignore:
     - sensor.zendure_ac_input
+  panels:                       # panels no profile finds (template sensors…); strings: works the same
+    - name: TM 1
+      power: sensor.solar_tm_l2000m_pv1_power
   consumers:                    # large consumers drawn apart in the curve and the flow
     wallbox:
       name: EV charger
@@ -74,8 +77,10 @@ from .const import (
     CONF_INVERTER_MAX_KW,
     CONF_KWP,
     CONF_NOTIFY,
+    CONF_PANELS,
     CONF_PLANES,
     CONF_SHOW_PANEL,
+    CONF_STRINGS,
     CONF_TARIFF,
     CONF_TILT,
     CONF_WEATHER,
@@ -171,6 +176,27 @@ CONSUMER_SCHEMA = vol.All(
     _power_or_energy,
 )
 
+
+def _power_or_voltage_current(value: dict[str, Any]) -> dict[str, Any]:
+    if not value.get("power") and not (value.get("voltage") and value.get("current")):
+        raise vol.Invalid("a panel or string needs a power entity, or a voltage and a current entity")
+    return value
+
+
+# A panel (micro-inverter input) or a string / MPPT input declared by hand: power, or voltage × current.
+UNIT_SCHEMA = vol.All(
+    vol.Schema(
+        {
+            vol.Required("name"): cv.string,
+            vol.Optional("power"): cv.entity_id,
+            vol.Optional("voltage"): cv.entity_id,
+            vol.Optional("current"): cv.entity_id,
+            vol.Optional(CONF_KWP): vol.All(vol.Coerce(float), vol.Range(min=0.01, max=1000)),
+        }
+    ),
+    _power_or_voltage_current,
+)
+
 YAML_SCHEMA = vol.Schema(
     {
         vol.Optional(CONF_DEMO): cv.boolean,
@@ -183,6 +209,8 @@ YAML_SCHEMA = vol.Schema(
         vol.Optional(CONF_IGNORE, default=[]): [cv.entity_id],
         vol.Optional(CONF_CONSUMERS, default={}): {cv.slug: CONSUMER_SCHEMA},
         vol.Optional(CONF_FORECAST, default=[]): [cv.entity_id],
+        vol.Optional(CONF_PANELS, default=[]): [UNIT_SCHEMA],
+        vol.Optional(CONF_STRINGS, default=[]): [UNIT_SCHEMA],
         vol.Optional(CONF_TARIFF, default={}): vol.Schema(
             {
                 vol.Optional("import", default=0.2016): vol.Coerce(float),
@@ -241,6 +269,15 @@ class ConsumerConfig:
 
 
 @dataclass(slots=True)
+class UnitConfig:
+    name: str
+    power: str | None = None
+    voltage: str | None = None
+    current: str | None = None
+    kwp: float | None = None
+
+
+@dataclass(slots=True)
 class HubConfig:
     demo: bool = False
     show_panel: bool = True
@@ -253,6 +290,9 @@ class HubConfig:
     ignore: set[str] = field(default_factory=set)
     consumers: list[ConsumerConfig] = field(default_factory=list)
     forecast: list[str] = field(default_factory=list)
+    # Panels and strings declared by hand (template sensors no profile finds): added, or renaming a detected one.
+    panels: list[UnitConfig] = field(default_factory=list)
+    strings: list[UnitConfig] = field(default_factory=list)
     import_price: float = 0.2016
     export_price: float = 0.04
     currency: str = "EUR"
@@ -340,6 +380,8 @@ def parse(raw: dict[str, Any] | None, options: dict[str, Any] | None = None) -> 
             for key, c in data[CONF_CONSUMERS].items()
         ],
         forecast=list(data[CONF_FORECAST]),
+        panels=[UnitConfig(**u) for u in data[CONF_PANELS]],
+        strings=[UnitConfig(**u) for u in data[CONF_STRINGS]],
         import_price=tariff["import"],
         export_price=tariff["export"],
         currency=tariff["currency"],

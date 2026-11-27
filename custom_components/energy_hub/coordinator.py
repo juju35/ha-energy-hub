@@ -29,10 +29,11 @@ from .const import (
     STORAGE_KEY,
     STORAGE_VERSION,
     UPDATE_SECONDS,
+    USER_PROFILES_DIR,
 )
 from .engine import build_snapshot, estimate_kwp
 from .history import BatteryReading, ConsumerReading, History, Reading
-from .sources import Installation, discover, load_profiles, role_entities
+from .sources import PROFILES_DIR, Installation, discover, load_profiles, role_entities
 from .views import contract_offer
 
 _LOGGER = logging.getLogger(__name__)
@@ -113,7 +114,9 @@ class EnergyHubCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     async def async_setup(self) -> None:
         """Load the profiles and the stored history (or build the demo's)."""
-        self.profiles = await self.hass.async_add_executor_job(load_profiles)
+        self.profiles = await self.hass.async_add_executor_job(
+            load_profiles, PROFILES_DIR, Path(self.hass.config.path(USER_PROFILES_DIR))
+        )
         if self.demo:
             now = dt_util.now()
             self.cfg.planes = self.cfg.planes or list(demo.PLANES)

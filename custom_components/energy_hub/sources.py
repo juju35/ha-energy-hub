@@ -24,7 +24,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 
-from .config import BatteryConfig, ConsumerConfig, HubConfig
+from .config import BatteryConfig, ConsumerConfig, HubConfig, UnitConfig
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -52,28 +52,47 @@ def _patterns(section: dict[str, list[str]] | None) -> dict[str, list[re.Pattern
     return {k: [re.compile(p) for p in v] for k, v in (section or {}).items()}
 
 
-def load_profiles(directory: Path = PROFILES_DIR) -> list[Profile]:
-    """Every profile of the integration (blocking: run in the executor)."""
+def load_profiles(directory: Path = PROFILES_DIR, user_directory: Path | None = None) -> list[Profile]:
+    """Every profile of the integration, then the user's (blocking: run in the executor).
+
+    The user's profiles (``/config/energy_hub/profiles/*.yaml``) survive the updates of the integration; one
+    named like a built-in profile replaces it. A user profile that cannot be read is skipped with a warning.
+    """
+    profiles = {p.key: p for p in _read_profiles(directory, strict=True)}
+    if user_directory is not None and user_directory.is_dir():
+        for profile in _read_profiles(user_directory, strict=False):
+            profiles[profile.key] = profile
+    return list(profiles.values())
+
+
+def _read_profiles(directory: Path, strict: bool) -> list[Profile]:
     profiles = []
     for path in sorted(directory.glob("*.yaml")):
-        raw = yaml.safe_load(path.read_text(encoding="utf-8"))
-        profiles.append(
-            Profile(
-                key=path.stem,
-                name=raw["name"],
-                platform=raw["platform"],
-                status=raw.get("status", "beta"),
-                url=raw.get("url", ""),
-                roles=_patterns(raw.get("roles")),
-                strings=_patterns(raw.get("strings")),
-                units=_patterns(raw.get("units")),
-                battery=_patterns(raw.get("battery")),
-                signs=dict(raw.get("signs") or {}),
-                capabilities=dict(raw.get("capabilities") or {}),
-                match_device=[re.compile(p, re.IGNORECASE) for p in raw.get("match_device", [])],
-            )
-        )
+        try:
+            profiles.append(_profile(path))
+        except (OSError, yaml.YAMLError, KeyError, TypeError, AttributeError, re.error) as err:
+            if strict:
+                raise
+            _LOGGER.warning("Energy Hub: user profile %s skipped: %s", path, err)
     return profiles
+
+
+def _profile(path: Path) -> Profile:
+    raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+    return Profile(
+        key=path.stem,
+        name=raw["name"],
+        platform=raw["platform"],
+        status=raw.get("status", "beta"),
+        url=raw.get("url", ""),
+        roles=_patterns(raw.get("roles")),
+        strings=_patterns(raw.get("strings")),
+        units=_patterns(raw.get("units")),
+        battery=_patterns(raw.get("battery")),
+        signs=dict(raw.get("signs") or {}),
+        capabilities=dict(raw.get("capabilities") or {}),
+        match_device=[re.compile(p, re.IGNORECASE) for p in raw.get("match_device", [])],
+    )
 
 
 @dataclass(slots=True)
@@ -444,6 +463,10 @@ def _apply_yaml(cfg: HubConfig, inst: Installation, all_entity_ids: list[str]) -
         _merge_battery(battery_cfg, inst, all_entity_ids)
     for consumer_cfg in cfg.consumers:
         _merge_consumer(consumer_cfg, inst)
+    for unit_cfg in cfg.strings:
+        _merge_unit(unit_cfg, inst.strings)
+    for unit_cfg in cfg.panels:
+        _merge_unit(unit_cfg, inst.units)
     for entity_id in cfg.ignore:
         inst.excluded[entity_id] = "ignore"
     inst.roles = {r: e for r, e in inst.roles.items() if e not in inst.excluded}
@@ -453,6 +476,23 @@ def _apply_yaml(cfg: HubConfig, inst: Installation, all_entity_ids: list[str]) -
     inst.units = [u for u in inst.units if u.power not in inst.excluded]
     inst.batteries = [b for b in inst.batteries if b.soc not in inst.excluded]
     inst.consumers = [c for c in inst.consumers if not {c.power, c.energy} & set(inst.excluded)]
+
+
+def _merge_unit(cfg: UnitConfig, units: list[UnitSource]) -> None:
+    """A panel / string of the YAML: renames the detected one reading the same entity, or is added."""
+    same = next(
+        (u for u in units if (cfg.power and u.power == cfg.power) or (cfg.voltage and u.voltage == cfg.voltage)),
+        None,
+    )
+    unit = UnitSource(cfg.name, cfg.power, cfg.voltage, cfg.current, cfg.kwp)
+    if same is None:
+        units.append(unit)
+        return
+    same.name = cfg.name
+    same.power = cfg.power or same.power
+    same.voltage = cfg.voltage or same.voltage
+    same.current = cfg.current or same.current
+    same.kwp = cfg.kwp if cfg.kwp is not None else same.kwp
 
 
 def _merge_battery(cfg: BatteryConfig, inst: Installation, all_entity_ids: list[str]) -> None:

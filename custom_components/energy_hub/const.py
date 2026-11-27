@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Final
 
 DOMAIN: Final = "energy_hub"
-VERSION: Final = "1.8.1"
+VERSION: Final = "1.9.0"
 
 # Options of the entry (set in the UI or in YAML; YAML wins).
 CONF_DEMO: Final = "demo"
@@ -27,6 +27,11 @@ CONF_INSTALLATION: Final = "installation"
 CONF_NOTIFY: Final = "notify"
 CONF_FORECAST: Final = "forecast"
 CONF_WEATHER: Final = "weather"
+CONF_PANELS: Final = "panels"
+CONF_STRINGS: Final = "strings"
+
+# Profiles of the user, next to the configuration (kept across updates): /config/energy_hub/profiles/*.yaml
+USER_PROFILES_DIR: Final = "energy_hub/profiles"
 
 # Seconds between two readings of the source entities; samples are averaged into 5-minute buckets.
 UPDATE_SECONDS: Final = 30
