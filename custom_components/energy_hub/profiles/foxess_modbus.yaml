@@ -1,6 +1,6 @@
 name: FoxESS Modbus
 platform: foxess_modbus
-status: beta
+status: stable
 url: https://github.com/nathanmarlor/foxess_modbus
 # FoxESS H1, H3, KH, AC… inverters over Modbus (RS485 or LAN). Object ids carry the friendly-name prefix the user
 # chose (`foxessmodbus_pv1_power`) or none (`pv1_power`), so every pattern matches the end of the object id, after
