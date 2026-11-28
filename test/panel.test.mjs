@@ -295,6 +295,29 @@ test('a unit only detected by the profile is never written back as a declaration
   });
 });
 
+test('an unset count_in_total stays unset and is shown as the coordinator counts it', () => {
+  const p = panel('en');
+  const unset = { name: 'MPPT 1', power: 'sensor.mppt_1', count_in_total: null, _edited: true };
+  // Not written: the backend keeps the 1.9.0 behaviour (inside the meter, or in the units' sum without one).
+  assert.deepEqual(plain(p._instPayload({ strings: [unset] })), { strings: [{ name: 'MPPT 1', power: 'sensor.mppt_1' }] });
+  p._settings = { ...settings, pv_metered: true };
+  assert.equal(p._countsInTotal(unset), false, 'not added on top of a pv_power meter');
+  p._settings = { ...settings, pv_metered: false };
+  assert.equal(p._countsInTotal(unset), true, 'the units are the total without a meter');
+  assert.equal(p._countsInTotal({ count_in_total: false }), false);
+  p._settings = { ...settings, pv_metered: true };
+  assert.equal(p._countsInTotal({ count_in_total: true }), true);
+});
+
+test('the azimuth boxes take the 0-360° convention the backend validates', () => {
+  const p = panel('en');
+  p._sub = 'sources';
+  p._settings = { ...settings, planes: [{ kwp: 3, tilt: 30, azimuth: 180 }], strings: [{ name: 'Est', azimuth: 90 }] };
+  const html = p._settingsTab();
+  assert.doesNotMatch(html, /min="-180"/);
+  assert.ok(html.match(/min="0" max="360"/g).length >= 2);
+});
+
 test('saving "Panels & strings" sends energy_hub/set_installation', async () => {
   const p = panel('en');
   p._sub = 'sources';

@@ -1143,11 +1143,18 @@ export class EnergyHubPanel extends HTMLElement {
     return this._instDraft[kind];
   }
 
+  // Whether a unit counts in the PV total as the coordinator reads it: an explicit choice wins; unset, it counts
+  // only when there is no pv_power meter (the units are the total), it is not added on top of a meter.
+  _countsInTotal(u) {
+    if (typeof u.count_in_total === 'boolean') return u.count_in_total;
+    return !(this._settings || {}).pv_metered;
+  }
+
   _planeRow(p, i) {
     const v = (k) => (p[k] == null ? '' : p[k]);
     const input = (k, label, extra) =>
       `<input class="entin" type="number" step="${k === 'kwp' ? '0.01' : '1'}" ${extra} inputmode="decimal" data-pfield="${k}" data-pi="${i}" value="${ehEsc(v(k))}" aria-label="${ehEsc(label)}">`;
-    return `<div class="entrow pgrid"><label class="a1">${ehEsc(this._t('plane_n', { n: i + 1 }))}</label>${input('kwp', this._t('unit_capacity'), 'min="0" placeholder="3.0"')}${input('tilt', this._t('tilt'), 'min="0" max="90" placeholder="30"')}${input('azimuth', this._t('azimuth'), 'min="-180" max="180" placeholder="180"')}<button class="copy ghost" data-action="plane-del" data-pi="${i}" aria-label="${ehEsc(this._t('remove'))}" title="${ehEsc(this._t('remove'))}">${ehIcon('trash-can-outline', 14)}</button></div>`;
+    return `<div class="entrow pgrid"><label class="a1">${ehEsc(this._t('plane_n', { n: i + 1 }))}</label>${input('kwp', this._t('unit_capacity'), 'min="0" placeholder="3.0"')}${input('tilt', this._t('tilt'), 'min="0" max="90" placeholder="30"')}${input('azimuth', this._t('azimuth'), 'min="0" max="360" placeholder="180"')}<button class="copy ghost" data-action="plane-del" data-pi="${i}" aria-label="${ehEsc(this._t('remove'))}" title="${ehEsc(this._t('remove'))}">${ehIcon('trash-can-outline', 14)}</button></div>`;
   }
 
   _planesBox() {
@@ -1164,7 +1171,7 @@ export class EnergyHubPanel extends HTMLElement {
       `<label class="ufield"><span>${ehEsc(label)}</span><input class="entin" type="number" step="${k === 'kwp' ? '0.01' : '1'}" ${extra} inputmode="decimal" data-ufield="${k}" data-ukind="${kind}" data-ui="${i}" value="${ehEsc(v(k))}" aria-label="${ehEsc(label)}"></label>`;
     const txt = (k, label, unit) =>
       `<label class="ufield"><span>${ehEsc(label)}</span><input class="entin" type="text" spellcheck="false" autocomplete="off" data-ufield="${k}" data-ukind="${kind}" data-ui="${i}" value="${ehEsc(v(k))}" aria-label="${ehEsc(label)}"><i class="uhint">${ehEsc(this._t('uh', { u: unit }))}</i></label>`;
-    return `<div class="urow"><div class="urowhead"><input class="entin uname" type="text" spellcheck="false" autocomplete="off" data-ufield="name" data-ukind="${kind}" data-ui="${i}" value="${ehEsc(v('name'))}" placeholder="${ehEsc(this._t('unit_name'))}" aria-label="${ehEsc(this._t('unit_name'))}"><button class="copy ghost" data-action="unit-del" data-ukind="${kind}" data-ui="${i}" aria-label="${ehEsc(this._t('remove'))}" title="${ehEsc(this._t('remove'))}">${ehIcon('trash-can-outline', 14)}</button></div><div class="ugrid">${num('kwp', this._t('unit_capacity'), 'min="0" placeholder="3.0"')}${num('tilt', this._t('tilt'), 'min="0" max="90" placeholder="30"')}${num('azimuth', this._t('azimuth'), 'min="-180" max="180" placeholder="180"')}${txt('power', this._t('unit_power_entity'), 'W')}${txt('voltage', this._t('unit_voltage_entity'), 'V')}${txt('current', this._t('unit_current_entity'), 'A')}<label class="uchk"><input type="checkbox" data-ufield="count_in_total" data-ukind="${kind}" data-ui="${i}" ${u.count_in_total === false ? '' : 'checked'}> <span>${ehEsc(this._t('unit_count_total'))}</span></label></div></div>`;
+    return `<div class="urow"><div class="urowhead"><input class="entin uname" type="text" spellcheck="false" autocomplete="off" data-ufield="name" data-ukind="${kind}" data-ui="${i}" value="${ehEsc(v('name'))}" placeholder="${ehEsc(this._t('unit_name'))}" aria-label="${ehEsc(this._t('unit_name'))}"><button class="copy ghost" data-action="unit-del" data-ukind="${kind}" data-ui="${i}" aria-label="${ehEsc(this._t('remove'))}" title="${ehEsc(this._t('remove'))}">${ehIcon('trash-can-outline', 14)}</button></div><div class="ugrid">${num('kwp', this._t('unit_capacity'), 'min="0" placeholder="3.0"')}${num('tilt', this._t('tilt'), 'min="0" max="90" placeholder="30"')}${num('azimuth', this._t('azimuth'), 'min="0" max="360" placeholder="180"')}${txt('power', this._t('unit_power_entity'), 'W')}${txt('voltage', this._t('unit_voltage_entity'), 'V')}${txt('current', this._t('unit_current_entity'), 'A')}<label class="uchk"><input type="checkbox" data-ufield="count_in_total" data-ukind="${kind}" data-ui="${i}" ${this._countsInTotal(u) ? 'checked' : ''}> <span>${ehEsc(this._t('unit_count_total'))}</span></label></div></div>`;
   }
 
   _unitsBox() {
@@ -1213,7 +1220,8 @@ export class EnergyHubPanel extends HTMLElement {
             const s = txt(u[k]);
             if (s) o[k] = s;
           }
-          o.count_in_total = u.count_in_total !== false;
+          // Unset stays unset (counted the 1.9.0 way); only a choice of the user is written.
+          if (typeof u.count_in_total === 'boolean') o.count_in_total = u.count_in_total;
           return o;
         });
     }
@@ -1544,7 +1552,7 @@ export class EnergyHubPanel extends HTMLElement {
       this._render();
     });
     onAction('unit-add', (btn) => {
-      this._instRows(btn.dataset.ukind).push({ name: '', kwp: null, tilt: null, azimuth: null, power: '', voltage: '', current: '', count_in_total: true, _edited: true });
+      this._instRows(btn.dataset.ukind).push({ name: '', kwp: null, tilt: null, azimuth: null, power: '', voltage: '', current: '', count_in_total: null, _edited: true });
       this._render();
     });
     onAction('unit-del', (btn) => {
