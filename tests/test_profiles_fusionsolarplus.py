@@ -85,7 +85,7 @@ async def test_fusionsolarplus_plant_total_drives_pv_power(hass: HomeAssistant) 
     (source,) = [s for s in inst.sources if s.platform == PLATFORM]
     assert source.role == "pv"
     assert inst.roles["pv_power"] == f"sensor.fsp_{PLANT_ID}_flow_solar_power"
-    assert inst.roles["pv_energy"] == f"sensor.fsp_{PLANT_ID}_today_energy"
+    assert inst.roles["pv_energy"] == f"sensor.fsp_{PLANT_ID}_total_energy"
     assert inst.roles["inverter_max_power"] == f"sensor.fsp_{INVERTERS[0][0]}_rated_power"
     assert [s.power for s in inst.strings] == [
         f"sensor.fsp_{INVERTERS[0][0]}_current_active_power",

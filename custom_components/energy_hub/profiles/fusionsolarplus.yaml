@@ -9,7 +9,7 @@ url: https://github.com/JortvanSchijndel/FusionSolarPlus
 # The plant carries the installation total; each inverter only carries its own share.
 roles:
   pv_power: ['_flow_solar_power$']
-  pv_energy: ['_today_energy$', '_total_energy$']
+  pv_energy: ['_total_energy$', '_today_energy$']
   inverter_max_power: ['_rated_power$']
 # One string per inverter: FusionSolarPlus exposes no per-MPPT power, so the inverter is the finest unit.
 # These strings are a fallback for installations where the plant flow sensor does not exist (the
