@@ -102,6 +102,9 @@ async def test_yaml_battery_capacity_sensor(hass: HomeAssistant) -> None:
     assert battery.capacity_entity == "sensor.my_capacity"
     assert _read(hass, inst).batteries[0].capacity_kwh == 11.2
 
+    hass.states.async_set("sensor.my_capacity", "200", {"unit_of_measurement": "Ah"})
+    assert _read(hass, inst).batteries[0].capacity_kwh is None  # a charge, not an energy: not read as 200 kWh
+
     yaml["batteries"]["house"]["capacity_kwh"] = 10
     inst = discover(hass, parse(yaml, {}), None, load_profiles())
     assert _read(hass, inst).batteries[0].capacity_kwh == 10

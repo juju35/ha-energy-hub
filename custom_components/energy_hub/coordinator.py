@@ -77,11 +77,15 @@ _NO_UNIT_WARNED: set[str] = set()
 
 
 def capacity_kwh(state: State | None) -> float | None:
-    """A battery capacity in kWh: Wh and MWh converted, a value without a unit taken as kWh; nothing at zero."""
+    """A battery capacity in kWh: Wh and MWh converted, a value without a unit taken as kWh; nothing at zero, and
+    nothing in another unit (a BMS's Ah is a charge, not an energy: read as kWh it would be off by the voltage)."""
     value = _number(state)
     if not value or value < 0:
         return None
-    return value * ENERGY_FACTORS.get(state.attributes.get("unit_of_measurement"), 1.0)
+    unit = state.attributes.get("unit_of_measurement")
+    if unit and unit not in ENERGY_FACTORS:
+        return None
+    return value * ENERGY_FACTORS.get(unit, 1.0)
 
 
 def energy_kwh(state: State | None) -> float | None:
