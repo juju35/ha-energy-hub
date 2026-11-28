@@ -427,5 +427,22 @@
   "consumers_box": "Großverbraucher",
   "contract_price": "Vertragspreis",
   "own_meter": "eigener Zähler",
-  "main_meter": "Hauptzähler"
+  "main_meter": "Hauptzähler",
+  "strings_box": "Module & Strings",
+  "strings_hint": "Eine Zeile pro physischer Einheit: Leistung und Ausrichtung bestimmen Verluste, spezifischen Ertrag und Summen.",
+  "orientation_hint": "kWp, Neigung und Azimut jeder Ebene: sie bestimmen das Klarhimmel-Modell, die Verluste und den spezifischen Ertrag.",
+  "unit_kind": "Typ",
+  "unit_name": "Name",
+  "unit_capacity": "kWp",
+  "unit_power_entity": "Leistungs-Entität",
+  "unit_voltage_entity": "Spannungs-Entität",
+  "unit_current_entity": "Strom-Entität",
+  "unit_count_total": "In die PV-Gesamtleistung einrechnen",
+  "unit_add": "Zeile hinzufügen",
+  "plane_add": "Ebene hinzufügen",
+  "remove": "Entfernen",
+  "no_strings": "Kein String deklariert: in Einstellungen → Quellen hinzufügen.",
+  "string_lagging": "{n} T hinter den anderen",
+  "uh": "Werte angegeben in {u}",
+  "uh_color": "Name der Tagesfarbe (tempo: blau, weiß, rot)"
 }

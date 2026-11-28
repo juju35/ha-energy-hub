@@ -41,7 +41,19 @@
           "tariff_price": "Prix de l'énergie",
           "tariff_color": "Couleur du tarif"
         }
+      },
+      "installation": {
+        "title": "Installation déclarée",
+        "description": "Plans, chaînes et panneaux sous forme de listes YAML. Ce qui est écrit ici l'emporte sur le bloc `energy_hub:` de configuration.yaml ; laissez un champ vide pour garder le bloc YAML ou la détection.",
+        "data": {
+          "planes": "Plans (kWc, inclinaison, azimut)",
+          "strings": "Chaînes (nom, puissance, ou tension et courant, kWc)",
+          "panels": "Panneaux (nom, puissance, ou tension et courant, kWc)"
+        }
       }
+    },
+    "error": {
+      "invalid_installation": "Ce champ attend une liste YAML d'entrées."
     }
   },
   "entity": {

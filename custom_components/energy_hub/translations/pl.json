@@ -41,7 +41,19 @@
           "tariff_price": "Cena energii",
           "tariff_color": "Kolor taryfy"
         }
+      },
+      "installation": {
+        "title": "Zadeklarowana instalacja",
+        "description": "Płaszczyzny, stringi i panele jako listy YAML. To, co tu wpisano, ma pierwszeństwo przed blokiem `energy_hub:` w configuration.yaml; puste pole oznacza użycie bloku YAML lub autowykrywania.",
+        "data": {
+          "planes": "Płaszczyzny (kWp, nachylenie, azymut)",
+          "strings": "Stringi (nazwa, moc lub napięcie i prąd, kWp)",
+          "panels": "Panele (nazwa, moc lub napięcie i prąd, kWp)"
+        }
       }
+    },
+    "error": {
+      "invalid_installation": "To pole oczekuje listy YAML z wpisami."
     }
   },
   "entity": {

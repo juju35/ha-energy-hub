@@ -41,7 +41,19 @@
           "tariff_price": "Cena energije",
           "tariff_color": "Boja tarife"
         }
+      },
+      "installation": {
+        "title": "Deklarisana instalacija",
+        "description": "Ravni, stringovi i paneli kao YAML liste. Ono što je ovde napisano ima prednost nad blokom `energy_hub:` u configuration.yaml; prazno polje zadržava YAML blok ili prepoznavanje.",
+        "data": {
+          "planes": "Ravni (kWp, nagib, azimut)",
+          "strings": "Stringovi (naziv, snaga ili napon i struja, kWp)",
+          "panels": "Paneli (naziv, snaga ili napon i struja, kWp)"
+        }
       }
+    },
+    "error": {
+      "invalid_installation": "Ovo polje očekuje YAML listu sa stavkama."
     }
   },
   "entity": {

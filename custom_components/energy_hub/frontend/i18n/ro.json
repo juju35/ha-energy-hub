@@ -427,5 +427,22 @@
   "consumers_box": "Consumatori mari",
   "contract_price": "prețul contractului",
   "own_meter": "contor propriu",
-  "main_meter": "contor principal"
+  "main_meter": "contor principal",
+  "strings_box": "Panouri și stringuri",
+  "strings_hint": "O linie per unitate fizică: puterea și orientarea alimentează pierderile, randamentul specific și totalurile.",
+  "orientation_hint": "kWp, înclinarea și azimutul fiecărui plan: guvernează modelul de cer senin, pierderile și randamentul specific.",
+  "unit_kind": "Tip",
+  "unit_name": "Nume",
+  "unit_capacity": "kWp",
+  "unit_power_entity": "Entitate putere",
+  "unit_voltage_entity": "Entitate tensiune",
+  "unit_current_entity": "Entitate curent",
+  "unit_count_total": "Contează în puterea totală",
+  "unit_add": "Adaugă o linie",
+  "plane_add": "Adaugă un plan",
+  "remove": "Elimină",
+  "no_strings": "Niciun string declarat: adaugă-le în Setări → Surse.",
+  "string_lagging": "{n} z în urmă",
+  "uh": "valori exprimate în {u}",
+  "uh_color": "numele culorii zilei (tempo: albastru, alb, roșu)"
 }

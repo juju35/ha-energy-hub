@@ -68,6 +68,7 @@ from .const import (
     CONF_AZIMUTH,
     CONF_BATTERIES,
     CONF_CONSUMERS,
+    CONF_COUNT_IN_TOTAL,
     CONF_DEMO,
     CONF_ENTITIES,
     CONF_EXPORT_LIMIT_KW,
@@ -184,18 +185,32 @@ def _power_or_voltage_current(value: dict[str, Any]) -> dict[str, Any]:
 
 
 # A panel (micro-inverter input) or a string / MPPT input declared by hand: power, or voltage × current.
-UNIT_SCHEMA = vol.All(
-    vol.Schema(
-        {
-            vol.Required("name"): cv.string,
-            vol.Optional("power"): cv.entity_id,
-            vol.Optional("voltage"): cv.entity_id,
-            vol.Optional("current"): cv.entity_id,
-            vol.Optional(CONF_KWP): vol.All(vol.Coerce(float), vol.Range(min=0.01, max=1000)),
-        }
-    ),
-    _power_or_voltage_current,
-)
+UNIT_FIELDS: dict[Any, Any] = {
+    vol.Required("name"): cv.string,
+    vol.Optional("power"): cv.entity_id,
+    vol.Optional("voltage"): cv.entity_id,
+    vol.Optional("current"): cv.entity_id,
+    vol.Optional(CONF_KWP): vol.All(vol.Coerce(float), vol.Range(min=0.01, max=1000)),
+    # Orientation of the plane behind the unit, and whether its production counts in the PV total.
+    vol.Optional(CONF_TILT): vol.All(vol.Coerce(float), vol.Range(min=0, max=90)),
+    vol.Optional(CONF_AZIMUTH): vol.All(vol.Coerce(float), vol.Range(min=0, max=360)),
+    # Absent: counted the 1.9.0 way (inside a pv_power meter, or in the units' sum without one). True: added on
+    # top of a pv_power meter that does not read it. False: left out of the total.
+    vol.Optional(CONF_COUNT_IN_TOTAL): cv.boolean,
+}
+UNIT_SCHEMA = vol.All(vol.Schema(UNIT_FIELDS), _power_or_voltage_current)
+# Declared from the panel's Settings tab or the options flow: the entity list is validated elsewhere, so a unit
+# may stay a name only (a plane the user wants to see listed before wiring its sensor).
+DECLARED_UNIT_SCHEMA = vol.Schema(UNIT_FIELDS)
+
+# The installation the user declares (admin websocket command energy_hub/set_installation, options flow):
+# planes, strings and panels, each a list of the schemas above.
+INSTALLATION_ITEMS: dict[str, Any] = {
+    CONF_PLANES: PLANE_SCHEMA,
+    CONF_STRINGS: DECLARED_UNIT_SCHEMA,
+    CONF_PANELS: DECLARED_UNIT_SCHEMA,
+}
+INSTALLATION_SCHEMA: dict[Any, Any] = {vol.Optional(key): [schema] for key, schema in INSTALLATION_ITEMS.items()}
 
 YAML_SCHEMA = vol.Schema(
     {
@@ -275,6 +290,11 @@ class UnitConfig:
     voltage: str | None = None
     current: str | None = None
     kwp: float | None = None
+    # Orientation of the plane behind the unit (None: the plane's, or unknown), and how its production counts in
+    # the PV total: None as in 1.9.0 (already inside a pv_power meter), True added on top of one, False left out.
+    tilt: float | None = None
+    azimuth: float | None = None
+    count_in_total: bool | None = None
 
 
 @dataclass(slots=True)
@@ -310,14 +330,37 @@ class HubConfig:
 
     @property
     def kwp(self) -> float:
-        return sum(p.kwp for p in self.planes)
+        """Capacity of the installation: the planes when there are any, else the declared strings and panels.
+
+        A declared string or panel sits on a plane: adding both would count the same modules twice. Without a plane,
+        the units carry the capacity — strings first (a panel is a module of a string), each once.
+        """
+        if self.planes:
+            return sum(p.kwp for p in self.planes)
+        units = self.strings or self.panels
+        return sum(u.kwp or 0.0 for u in units if u.count_in_total is not False)
+
+
+def _declared(options: dict[str, Any], key: str, fallback: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """The list declared in the options when the key is there (an explicit choice), else the YAML's."""
+    values = options.get(key)
+    return fallback if values is None else list(values)
+
+
+def _planes(values: list[dict[str, Any]]) -> list[Plane]:
+    return [Plane(p[CONF_KWP], p[CONF_TILT], p[CONF_AZIMUTH]) for p in map(PLANE_SCHEMA, values)]
+
+
+def _units(values: list[dict[str, Any]]) -> list[UnitConfig]:
+    return [UnitConfig(**u) for u in map(DECLARED_UNIT_SCHEMA, values)]
 
 
 def parse(raw: dict[str, Any] | None, options: dict[str, Any] | None = None) -> HubConfig:
     """HubConfig from the YAML block (validated here) and the entry's options.
 
-    YAML wins where both say something, except the entities: those chosen in the options (the panel's
-    Settings tab or the options flow) are an explicit substitution and win over the YAML and the detection.
+    YAML wins where both say something, except what the user declares in the options (the panel's Settings tab
+    or the options flow): the entities substituted by role, and the planes, strings and panels — a list present
+    in the options replaces the YAML's for that key (an empty list is not stored: the key is removed).
     """
     options = options or {}
     data = YAML_SCHEMA(dict(raw or {}))
@@ -334,7 +377,7 @@ def parse(raw: dict[str, Any] | None, options: dict[str, Any] | None = None) -> 
         show_panel=bool(
             data[CONF_SHOW_PANEL] if raw and CONF_SHOW_PANEL in raw else options.get(CONF_SHOW_PANEL, True)
         ),
-        planes=[Plane(p[CONF_KWP], p[CONF_TILT], p[CONF_AZIMUTH]) for p in data[CONF_PLANES]],
+        planes=_planes(_declared(options, CONF_PLANES, data[CONF_PLANES])),
         inverter_max_kw=data.get(CONF_INVERTER_MAX_KW),
         export_limit_kw=data.get(CONF_EXPORT_LIMIT_KW),
         entities=_roles(
@@ -380,8 +423,8 @@ def parse(raw: dict[str, Any] | None, options: dict[str, Any] | None = None) -> 
             for key, c in data[CONF_CONSUMERS].items()
         ],
         forecast=list(data[CONF_FORECAST]),
-        panels=[UnitConfig(**u) for u in data[CONF_PANELS]],
-        strings=[UnitConfig(**u) for u in data[CONF_STRINGS]],
+        panels=_units(_declared(options, CONF_PANELS, data[CONF_PANELS])),
+        strings=_units(_declared(options, CONF_STRINGS, data[CONF_STRINGS])),
         import_price=tariff["import"],
         export_price=tariff["export"],
         currency=tariff["currency"],

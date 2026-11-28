@@ -41,7 +41,19 @@
           "tariff_price": "Energiepreis",
           "tariff_color": "Tariffarbe"
         }
+      },
+      "installation": {
+        "title": "Deklarierte Anlage",
+        "description": "Ebenen, Strings und Module als YAML-Listen. Was hier steht, hat Vorrang vor dem Block `energy_hub:` in configuration.yaml; ein leeres Feld lässt den YAML-Block oder die Erkennung gelten.",
+        "data": {
+          "planes": "Ebenen (kWp, Neigung, Azimut)",
+          "strings": "Strings (Name, Leistung oder Spannung und Strom, kWp)",
+          "panels": "Module (Name, Leistung oder Spannung und Strom, kWp)"
+        }
       }
+    },
+    "error": {
+      "invalid_installation": "Dieses Feld erwartet eine YAML-Liste von Einträgen."
     }
   },
   "entity": {

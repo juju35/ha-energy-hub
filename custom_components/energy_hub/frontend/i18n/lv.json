@@ -427,5 +427,22 @@
   "consumers_box": "Lielie patērētāji",
   "contract_price": "līguma cena",
   "own_meter": "atsevišķs skaitītājs",
-  "main_meter": "galvenais skaitītājs"
+  "main_meter": "galvenais skaitītājs",
+  "strings_box": "Paneļi un stringi",
+  "strings_hint": "Viena rinda uz fizisku vienību: jauda un orientācija baro zudumus, īpatnējo iznākumu un kopsummas.",
+  "orientation_hint": "kWp, slīpums un azimuts katrai plaknei: tie vada skaidras debess modeli, zudumus un īpatnējo iznākumu.",
+  "unit_kind": "Tips",
+  "unit_name": "Nosaukums",
+  "unit_capacity": "kWp",
+  "unit_power_entity": "Jaudas entītija",
+  "unit_voltage_entity": "Sprieguma entītija",
+  "unit_current_entity": "Strāvas entītija",
+  "unit_count_total": "Ieskaitīt PV kopējā jaudā",
+  "unit_add": "Pievienot rindu",
+  "plane_add": "Pievienot plakni",
+  "remove": "Noņemt",
+  "no_strings": "Nav deklarēts neviens strings: pievienojiet tos sadaļā Iestatījumi → Avoti.",
+  "string_lagging": "{n} d aiz muguras",
+  "uh": "vērtības izteiktas {u}",
+  "uh_color": "dienas krāsas nosaukums (tempo: zila, balta, sarkana)"
 }

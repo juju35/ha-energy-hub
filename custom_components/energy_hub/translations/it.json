@@ -41,7 +41,19 @@
           "tariff_price": "Prezzo dell'energia",
           "tariff_color": "Colore della tariffa"
         }
+      },
+      "installation": {
+        "title": "Impianto dichiarato",
+        "description": "Piani, stringhe e pannelli come liste YAML. Quanto scritto qui prevale sul blocco `energy_hub:` di configuration.yaml; lascia un campo vuoto per usare il blocco YAML o il rilevamento.",
+        "data": {
+          "planes": "Piani (kWp, inclinazione, azimut)",
+          "strings": "Stringhe (nome, potenza, o tensione e corrente, kWp)",
+          "panels": "Pannelli (nome, potenza, o tensione e corrente, kWp)"
+        }
       }
+    },
+    "error": {
+      "invalid_installation": "Questo campo richiede un elenco YAML di voci."
     }
   },
   "entity": {

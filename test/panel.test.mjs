@@ -224,3 +224,184 @@ test('large consumers: nodes under the home, stacked in the curves, their tariff
   bare._sub = 'tariffs';
   assert.doesNotMatch(bare._settingsTab(), /Large consumers/);
 });
+
+test('the production tab lists every declared string, with its friendly name', () => {
+  const names = ['Toit sud', 'Toit nord', 'Garage', 'Balcon', 'Pergola', 'Abri bois'];
+  const data = structuredClone(snapshot);
+  data.production.strings = names.map((name, i) => ({
+    name,
+    kw: 2.5 - i * 0.2,
+    kwh: 12 - i,
+    relative: i === 0 ? 1.19 : 0.9,
+    lagging_days: i === 1 ? 6 : 0,
+    kwp: 3.2,
+    tilt: 30,
+    azimuth: 180,
+    count_in_total: true,
+  }));
+  const html = panel('en', data)._production();
+  for (const name of names) assert.match(html, new RegExp(`<b>${name}</b>`), `${name} is shown`);
+  assert.equal(html.match(/class="barrow srow"/g).length, names.length, 'no cap on the number of strings');
+  assert.match(html, /3\.20 kWp/);
+  assert.match(html, /30° \/ 180°/);
+  assert.match(html, /6 d behind its peers/);
+  // An engine that does not send kwp/tilt/azimuth yet still renders, with no meta line
+  data.production.strings = [{ name: 'String 1', kw: 1.2, kwh: 3.4 }];
+  const legacy = panel('en', data)._production();
+  assert.match(legacy, /<b>String 1<\/b>/);
+  assert.equal(legacy.match(/<b>String 1<\/b>.*?<\/div>/)[0].includes('kWp'), false);
+});
+
+test('without declared strings the box keeps a clean empty state', () => {
+  const data = structuredClone(snapshot);
+  data.production.strings = [];
+  const html = panel('en', data)._production();
+  assert.match(html, /No string declared/);
+  assert.doesNotMatch(html, /class="barrow srow"/);
+});
+
+// Objects built inside the panel come from the vm realm: compare plain JSON copies.
+const plain = (v) => JSON.parse(JSON.stringify(v));
+
+
+test('the install payload: numbers, optional fields, nameless rows dropped', () => {
+  const p = panel('en');
+  const payload = p._instPayload({
+    planes: [{ kwp: '3.2', tilt: '', azimuth: '180' }, { kwp: '', tilt: null, azimuth: '' }],
+    strings: [
+      { name: ' Toit sud ', kwp: '3.2', tilt: '30', azimuth: '180', power: 'sensor.toit_sud', voltage: '', current: '', count_in_total: true },
+      { name: '', kwp: '1' },
+      { name: 'Garage', kwp: '', voltage: 'sensor.g_v', current: 'sensor.g_i', count_in_total: false },
+    ],
+  });
+  assert.deepEqual(plain(payload), {
+    planes: [{ kwp: 3.2, azimuth: 180 }],
+    strings: [
+      { name: 'Toit sud', kwp: 3.2, tilt: 30, azimuth: 180, power: 'sensor.toit_sud', count_in_total: true },
+      { name: 'Garage', voltage: 'sensor.g_v', current: 'sensor.g_i', count_in_total: false },
+    ],
+  });
+  // An empty list is sent so the backend can remove the key; absent groups are omitted.
+  assert.deepEqual(plain(p._instPayload({ strings: [] })), { strings: [] });
+});
+
+test('a unit only detected by the profile is never written back as a declaration', () => {
+  const p = panel('en');
+  const detected = { name: 'Inverter 1', power: 'sensor.fsp_sn_current_active_power', count_in_total: true, declared: false };
+  assert.deepEqual(plain(p._instPayload({ strings: [detected] })), { strings: [] });
+  detected._edited = true;
+  assert.deepEqual(plain(p._instPayload({ strings: [detected] })), {
+    strings: [{ name: 'Inverter 1', power: 'sensor.fsp_sn_current_active_power', count_in_total: true }],
+  });
+});
+
+test('an unset count_in_total stays unset and is shown as the coordinator counts it', () => {
+  const p = panel('en');
+  const unset = { name: 'MPPT 1', power: 'sensor.mppt_1', count_in_total: null, _edited: true };
+  // Not written: the backend keeps the 1.9.0 behaviour (inside the meter, or in the units' sum without one).
+  assert.deepEqual(plain(p._instPayload({ strings: [unset] })), { strings: [{ name: 'MPPT 1', power: 'sensor.mppt_1' }] });
+  p._settings = { ...settings, pv_metered: true };
+  assert.equal(p._countsInTotal(unset), false, 'not added on top of a pv_power meter');
+  p._settings = { ...settings, pv_metered: false };
+  assert.equal(p._countsInTotal(unset), true, 'the units are the total without a meter');
+  assert.equal(p._countsInTotal({ count_in_total: false }), false);
+  p._settings = { ...settings, pv_metered: true };
+  assert.equal(p._countsInTotal({ count_in_total: true }), true);
+});
+
+test('the azimuth boxes take the 0-360° convention the backend validates', () => {
+  const p = panel('en');
+  p._sub = 'sources';
+  p._settings = { ...settings, planes: [{ kwp: 3, tilt: 30, azimuth: 180 }], strings: [{ name: 'Est', azimuth: 90 }] };
+  const html = p._settingsTab();
+  assert.doesNotMatch(html, /min="-180"/);
+  assert.ok(html.match(/min="0" max="360"/g).length >= 2);
+});
+
+test('saving "Panels & strings" sends energy_hub/set_installation', async () => {
+  const p = panel('en');
+  p._sub = 'sources';
+  p._settingsTab();
+  p._instRows('strings').length = 0; // the demo settings carry detected rows: start from a clean draft
+  p._instRows('strings').push({ name: 'Toit sud', kwp: '3.2', tilt: '30', azimuth: '180', power: 'sensor.toit_sud', voltage: '', current: '', count_in_total: true });
+  p._instRows('strings').push({ name: '  ', kwp: '9' });
+  const calls = [];
+  p._hass.callWS = async (msg) => {
+    calls.push(msg);
+  };
+  p._resubscribe = async () => {};
+  p._render = () => {};
+  const btn = {
+    disabled: false,
+    textContent: '',
+    title: '',
+    addEventListener: (_type, fn) => {
+      btn.fire = fn;
+    },
+  };
+  p.shadowRoot = {
+    activeElement: null,
+    querySelector: () => null,
+    querySelectorAll: (sel) => (sel === '[data-action="save-installation"]' ? [btn] : []),
+  };
+  p._bind();
+  btn.fire({ currentTarget: btn });
+  await new Promise((r) => setTimeout(r, 10));
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].type, 'energy_hub/set_installation');
+  assert.deepEqual(plain(calls[0].strings), [{ name: 'Toit sud', kwp: 3.2, tilt: 30, azimuth: 180, power: 'sensor.toit_sud', count_in_total: true }]);
+  assert.deepEqual(plain(calls[0].panels), []);
+  assert.equal(calls[0].planes, undefined, 'the strings box does not resend the planes');
+});
+
+test('the settings hold editable orientation and panels/strings boxes', () => {
+  const p = panel('en');
+  p._sub = 'sources';
+  p._settings = { ...settings, planes: [{ kwp: 3.2, tilt: 30, azimuth: 180 }], strings: [{ name: 'Toit sud', kwp: 3.2 }] };
+  const html = p._settingsTab();
+  assert.match(html, /data-action="save-planes"/);
+  assert.match(html, /data-action="plane-add"/);
+  assert.match(html, /data-action="save-installation"/);
+  assert.match(html, /data-action="unit-add"/);
+  assert.match(html, /data-pfield="kwp"[^>]*value="3.2"/);
+  assert.match(html, /data-ufield="name"[^>]*value="Toit sud"/);
+  assert.match(html, /data-ufield="count_in_total"/);
+  assert.doesNotMatch(html, /energy_hub:\n/, 'the read-only YAML snippet is gone');
+});
+
+test('typed rows survive a re-render, a fresh settings payload replaces the draft', () => {
+  const p = panel('en');
+  p._sub = 'sources';
+  p._settingsTab();
+  p._instRows('strings').push({ name: 'Toit sud', kwp: '3.2', tilt: '30', azimuth: '180', power: 'sensor.x', voltage: '', current: '', count_in_total: false });
+  for (let i = 0; i < 3; i += 1) {
+    const html = p._settingsTab();
+    assert.match(html, /data-ufield="name"[^>]*value="Toit sud"/);
+    assert.match(html, /data-ufield="count_in_total"[^>]*data-ui="\d+"(?![^>]*checked)/);
+  }
+  // A brand new settings payload (after a reload) is the source of truth again
+  p._settings = { ...settings, strings: [{ name: 'Neuf', kwp: 1 }] };
+  const fresh = p._settingsTab();
+  assert.match(fresh, /value="Neuf"/);
+  assert.doesNotMatch(fresh, /value="Toit sud"/);
+});
+
+test('every entity input of the settings says its unit', () => {
+  const p = panel('en');
+  assert.equal(p._unitHint('grid_power'), 'values expressed in W');
+  assert.equal(p._unitHint('pv_energy'), 'values expressed in kWh');
+  assert.equal(p._unitHint('forecast_energy_today'), 'values expressed in kWh');
+  assert.equal(p._unitHint('battery_home.soc'), 'values expressed in %');
+  assert.equal(p._unitHint('tariff_price'), `values expressed in ${p._data.currency}/kWh`);
+  assert.equal(p._unitHint('irradiance'), 'values expressed in W/m²');
+  assert.equal(p._unitHint('weather'), '');
+  assert.match(p._unitHint('tariff_color'), /colou?r/i);
+  p._sub = 'sources';
+  const html = p._settingsTab();
+  const inputs = html.match(/<input[^>]*data-erole=/g) || [];
+  const hints = html.match(/<i class="uhint">/g) || [];
+  assert.ok(inputs.length > 8, `the demo form has ${inputs.length} entity inputs`);
+  assert.ok(hints.length >= inputs.length - 1, `${hints.length} hints for ${inputs.length} inputs (the weather entity has no unit)`);
+  const fr = panel('fr');
+  assert.equal(fr._unitHint('grid_power'), 'valeurs exprimées en W');
+});

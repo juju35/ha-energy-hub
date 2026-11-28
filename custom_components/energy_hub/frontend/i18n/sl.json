@@ -427,5 +427,22 @@
   "consumers_box": "Veliki porabniki",
   "contract_price": "pogodbena cena",
   "own_meter": "lastni števec",
-  "main_meter": "glavni števec"
+  "main_meter": "glavni števec",
+  "strings_box": "Paneli in stringi",
+  "strings_hint": "Ena vrstica na fizično enoto: moč in usmeritev napajata izgube, specifični donos in vsote.",
+  "orientation_hint": "kWp, naklon in azimut vsake ravnine: vodijo model jasnega neba, izgube in specifični donos.",
+  "unit_kind": "Vrsta",
+  "unit_name": "Ime",
+  "unit_capacity": "kWp",
+  "unit_power_entity": "Entiteta moči",
+  "unit_voltage_entity": "Entiteta napetosti",
+  "unit_current_entity": "Entiteta toka",
+  "unit_count_total": "Štej v skupno moč PV",
+  "unit_add": "Dodaj vrstico",
+  "plane_add": "Dodaj ravnino",
+  "remove": "Odstrani",
+  "no_strings": "Noben string ni deklariran: dodajte jih v Nastavitve → Viri.",
+  "string_lagging": "{n} d zaostanka",
+  "uh": "vrednosti izražene v {u}",
+  "uh_color": "ime barve dneva (tempo: modra, bela, rdeča)"
 }

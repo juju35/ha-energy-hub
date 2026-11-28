@@ -1,0 +1,23 @@
+name: FusionSolarPlus
+platform: fusionsolarplus
+status: beta
+url: https://github.com/JortvanSchijndel/FusionSolarPlus
+# Huawei FusionSolar (cloud portal) through the FusionSolarPlus custom integration.
+# Entity ids are built by the integration as `sensor.fsp_<device serial>_<signal name>`, so every pattern
+# is anchored on the signal suffix: a device name or serial never breaks detection.
+# Values stay in kW exactly as the integration publishes them - the coordinator converts, no maths here.
+# The plant carries the installation total; each inverter only carries its own share.
+roles:
+  pv_power: ['_flow_solar_power$']
+  pv_energy: ['_total_energy$', '_today_energy$']
+  inverter_max_power: ['_rated_power$']
+# One string per inverter: FusionSolarPlus exposes no per-MPPT power, so the inverter is the finest unit.
+# These strings are a fallback for installations where the plant flow sensor does not exist (the
+# integration skips a flow sensor whose value is None): the coordinator only falls back to the strings
+# when no pv_power sensor is found, so plant total and inverters never add up twice.
+strings:
+  power: ['fsp_(.+)_current_active_power$']
+capabilities:
+  strings: provided
+  pmax: provided
+  soc: absent

@@ -427,5 +427,22 @@
   "consumers_box": "Storförbrukare",
   "contract_price": "avtalspris",
   "own_meter": "egen mätare",
-  "main_meter": "huvudmätare"
+  "main_meter": "huvudmätare",
+  "strings_box": "Paneler och strängar",
+  "strings_hint": "En rad per fysisk enhet: effekt och orientering styr förluster, specifik avkastning och totaler.",
+  "orientation_hint": "kWp, lutning och azimut för varje plan: de styr klarvädermodellen, förlusterna och den specifika avkastningen.",
+  "unit_kind": "Typ",
+  "unit_name": "Namn",
+  "unit_capacity": "kWp",
+  "unit_power_entity": "Effektentitet",
+  "unit_voltage_entity": "Spänningsentitet",
+  "unit_current_entity": "Strömentitet",
+  "unit_count_total": "Räkna med i PV-totalen",
+  "unit_add": "Lägg till en rad",
+  "plane_add": "Lägg till ett plan",
+  "remove": "Ta bort",
+  "no_strings": "Ingen sträng deklarerad: lägg till dem i Inställningar → Källor.",
+  "string_lagging": "{n} d efter de andra",
+  "uh": "värden uttryckta i {u}",
+  "uh_color": "namnet på dagens färg (tempo: blå, vit, röd)"
 }

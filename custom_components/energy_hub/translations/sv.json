@@ -41,7 +41,19 @@
           "tariff_price": "Energipris",
           "tariff_color": "Tariffärg"
         }
+      },
+      "installation": {
+        "title": "Deklarerad anläggning",
+        "description": "Plan, strängar och paneler som YAML-listor. Det som står här går före blocket `energy_hub:` i configuration.yaml; lämna ett fält tomt för att behålla YAML-blocket eller identifieringen.",
+        "data": {
+          "planes": "Plan (kWp, lutning, azimut)",
+          "strings": "Strängar (namn, effekt, eller spänning och ström, kWp)",
+          "panels": "Paneler (namn, effekt, eller spänning och ström, kWp)"
+        }
       }
+    },
+    "error": {
+      "invalid_installation": "Det här fältet förväntar sig en YAML-lista med poster."
     }
   },
   "entity": {

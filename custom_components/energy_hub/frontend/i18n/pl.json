@@ -427,5 +427,22 @@
   "consumers_box": "Duzi odbiorcy",
   "contract_price": "cena z umowy",
   "own_meter": "osobny licznik",
-  "main_meter": "licznik główny"
+  "main_meter": "licznik główny",
+  "strings_box": "Panele i stringi",
+  "strings_hint": "Jeden wiersz na jednostkę fizyczną: moc i orientacja zasilają straty, uzysk jednostkowy i sumy.",
+  "orientation_hint": "kWp, nachylenie i azymut każdej płaszczyzny: sterują modelem czystego nieba, stratami i uzyskiem jednostkowym.",
+  "unit_kind": "Typ",
+  "unit_name": "Nazwa",
+  "unit_capacity": "kWp",
+  "unit_power_entity": "Encja mocy",
+  "unit_voltage_entity": "Encja napięcia",
+  "unit_current_entity": "Encja prądu",
+  "unit_count_total": "Licz w łącznej mocy PV",
+  "unit_add": "Dodaj wiersz",
+  "plane_add": "Dodaj płaszczyznę",
+  "remove": "Usuń",
+  "no_strings": "Nie zadeklarowano stringów: dodaj je w Ustawienia → Źródła.",
+  "string_lagging": "{n} d za pozostałymi",
+  "uh": "wartości wyrażone w {u}",
+  "uh_color": "nazwa koloru dnia (tempo: niebieski, biały, czerwony)"
 }

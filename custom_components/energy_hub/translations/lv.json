@@ -41,7 +41,19 @@
           "tariff_price": "Enerģijas cena",
           "tariff_color": "Tarifa krāsa"
         }
+      },
+      "installation": {
+        "title": "Deklarētā iekārta",
+        "description": "Plaknes, virknes un paneļi kā YAML saraksti. Šeit rakstītais ir svarīgāks par bloku `energy_hub:` failā configuration.yaml; tukšs lauks saglabā YAML bloku vai noteikšanu.",
+        "data": {
+          "planes": "Plaknes (kWp, slīpums, azimuts)",
+          "strings": "Virknes (nosaukums, jauda vai spriegums un strāva, kWp)",
+          "panels": "Paneļi (nosaukums, jauda vai spriegums un strāva, kWp)"
+        }
       }
+    },
+    "error": {
+      "invalid_installation": "Šis lauks gaida YAML sarakstu ar ierakstiem."
     }
   },
   "entity": {

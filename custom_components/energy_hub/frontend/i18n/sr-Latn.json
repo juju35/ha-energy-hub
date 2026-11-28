@@ -427,5 +427,22 @@
   "consumers_box": "Veliki potrošači",
   "contract_price": "cena po ugovoru",
   "own_meter": "zasebno brojilo",
-  "main_meter": "glavno brojilo"
+  "main_meter": "glavno brojilo",
+  "strings_box": "Paneli i stringovi",
+  "strings_hint": "Jedan red po fizičkoj jedinici: snaga i orijentacija hrane gubitke, specifični prinos i ukupne vrednosti.",
+  "orientation_hint": "kWp, nagib i azimut svake ravni: upravljaju modelom vedra neba, gubicima i specifičnim prinosom.",
+  "unit_kind": "Tip",
+  "unit_name": "Naziv",
+  "unit_capacity": "kWp",
+  "unit_power_entity": "Entitet snage",
+  "unit_voltage_entity": "Entitet napona",
+  "unit_current_entity": "Entitet struje",
+  "unit_count_total": "Uračunaj u ukupnu snagu PV",
+  "unit_add": "Dodaj red",
+  "plane_add": "Dodaj ravan",
+  "remove": "Ukloni",
+  "no_strings": "Nijedan string nije deklarisan: dodajte ih u Podešavanja → Izvori.",
+  "string_lagging": "{n} d u zaostatku",
+  "uh": "vrednosti izražene u {u}",
+  "uh_color": "naziv boje dana (tempo: plava, bela, crvena)"
 }

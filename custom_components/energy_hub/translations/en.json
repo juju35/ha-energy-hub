@@ -41,7 +41,19 @@
           "tariff_price": "Energy price",
           "tariff_color": "Tariff colour"
         }
+      },
+      "installation": {
+        "title": "Declared installation",
+        "description": "Planes, strings and panels as YAML lists. What is written here wins over the `energy_hub:` block of configuration.yaml; leave a box empty to keep the YAML block or the detection.",
+        "data": {
+          "planes": "Planes (kWp, tilt, azimuth)",
+          "strings": "Strings (name, power, or voltage and current, kWp)",
+          "panels": "Panels (name, power, or voltage and current, kWp)"
+        }
       }
+    },
+    "error": {
+      "invalid_installation": "This box expects a YAML list of entries."
     }
   },
   "entity": {

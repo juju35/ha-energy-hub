@@ -427,5 +427,22 @@
   "consumers_box": "Storforbrugere",
   "contract_price": "aftalepris",
   "own_meter": "egen måler",
-  "main_meter": "hovedmåler"
+  "main_meter": "hovedmåler",
+  "strings_box": "Paneler og strings",
+  "strings_hint": "Én linje pr. fysisk enhed: effekt og orientering driver tab, specifikt udbytte og totaler.",
+  "orientation_hint": "kWp, hældning og azimut for hvert plan: de styrer klarsky-modellen, tabene og det specifikke udbytte.",
+  "unit_kind": "Type",
+  "unit_name": "Navn",
+  "unit_capacity": "kWp",
+  "unit_power_entity": "Effekt-entitet",
+  "unit_voltage_entity": "Spændings-entitet",
+  "unit_current_entity": "Strøm-entitet",
+  "unit_count_total": "Tæl med i PV-totalen",
+  "unit_add": "Tilføj en linje",
+  "plane_add": "Tilføj et plan",
+  "remove": "Fjern",
+  "no_strings": "Ingen string erklæret: tilføj dem i Indstillinger → Kilder.",
+  "string_lagging": "{n} d bag de andre",
+  "uh": "værdier angivet i {u}",
+  "uh_color": "navnet på dagens farve (tempo: blå, hvid, rød)"
 }

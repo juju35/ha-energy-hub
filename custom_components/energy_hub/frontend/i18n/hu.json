@@ -427,5 +427,22 @@
   "consumers_box": "Nagyfogyasztók",
   "contract_price": "szerződéses ár",
   "own_meter": "saját mérő",
-  "main_meter": "fő mérő"
+  "main_meter": "fő mérő",
+  "strings_box": "Panelek és stringek",
+  "strings_hint": "Egy sor fizikai egységenként: a teljesítmény és a tájolás táplálja a veszteségeket, a fajlagos hozamot és az összegeket.",
+  "orientation_hint": "kWp, dőlésszög és azimut síkonként: ezek vezérlik a derült ég modelljét, a veszteségeket és a fajlagos hozamot.",
+  "unit_kind": "Típus",
+  "unit_name": "Név",
+  "unit_capacity": "kWp",
+  "unit_power_entity": "Teljesítmény entitás",
+  "unit_voltage_entity": "Feszültség entitás",
+  "unit_current_entity": "Áram entitás",
+  "unit_count_total": "Beszámít a PV összteljesítménybe",
+  "unit_add": "Sor hozzáadása",
+  "plane_add": "Sík hozzáadása",
+  "remove": "Eltávolítás",
+  "no_strings": "Nincs deklarált string: add hozzá a Beállítások → Források alatt.",
+  "string_lagging": "{n} nap lemaradás",
+  "uh": "értékek {u}-ban kifejezve",
+  "uh_color": "a nap színének neve (tempo: kék, fehér, piros)"
 }

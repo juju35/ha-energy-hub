@@ -41,7 +41,19 @@
           "tariff_price": "Cena energie",
           "tariff_color": "Farba tarify"
         }
+      },
+      "installation": {
+        "title": "Deklarovaná inštalácia",
+        "description": "Roviny, stringy a panely ako zoznamy YAML. Čo je tu uvedené, má prednosť pred blokom `energy_hub:` v configuration.yaml; prázdne pole ponechá blok YAML alebo detekciu.",
+        "data": {
+          "planes": "Roviny (kWp, sklon, azimut)",
+          "strings": "Stringy (názov, výkon, alebo napätie a prúd, kWp)",
+          "panels": "Panely (názov, výkon, alebo napätie a prúd, kWp)"
+        }
       }
+    },
+    "error": {
+      "invalid_installation": "Toto pole očakáva zoznam YAML s položkami."
     }
   },
   "entity": {

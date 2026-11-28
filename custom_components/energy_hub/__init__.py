@@ -19,11 +19,14 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.typing import ConfigType
 
-from .config import ROLES, YAML_SCHEMA, entity_ids, parse
+from .config import INSTALLATION_SCHEMA, ROLES, YAML_SCHEMA, entity_ids, parse
 from .const import (
     BADGE_FILENAME,
     CONF_ENTITIES,
+    CONF_PANELS,
+    CONF_PLANES,
     CONF_SHOW_PANEL,
+    CONF_STRINGS,
     DOMAIN,
     FRONTEND_URL,
     PANEL_FILENAME,
@@ -54,6 +57,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     websocket_api.async_register_command(hass, ws_subscribe)
     websocket_api.async_register_command(hass, ws_settings)
     websocket_api.async_register_command(hass, ws_set_entities)
+    websocket_api.async_register_command(hass, ws_set_installation)
     if DOMAIN in config:
         # Kept unvalidated: config.parse validates it again with the entry's options.
         hass.data[DATA_YAML] = dict(config[DOMAIN])
@@ -210,6 +214,54 @@ async def ws_set_entities(hass: HomeAssistant, connection: websocket_api.ActiveC
     connection.send_result(msg["id"], {"roles": chosen})
 
 
+@websocket_api.require_admin
+@websocket_api.websocket_command({vol.Required("type"): "energy_hub/set_installation", **INSTALLATION_SCHEMA})
+@websocket_api.async_response
+async def ws_set_installation(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """Save the planes, strings and panels declared from the Settings tab; the integration reloads.
+
+    A list in the message replaces the YAML's for that key; an empty list removes the key, so the YAML (or the
+    detection) speaks again. The update listener reloads the entry: the sensors follow the new declaration.
+    """
+    entries = _loaded_entries(hass)
+    if not entries:
+        connection.send_error(msg["id"], "not_loaded", "Energy Hub is not loaded")
+        return
+    entry = entries[0]
+    options = dict(entry.options)
+    for key in (CONF_PLANES, CONF_STRINGS, CONF_PANELS):
+        if key not in msg:
+            continue
+        values = msg[key] or []
+        if values:
+            options[key] = values
+        else:
+            options.pop(key, None)
+    hass.config_entries.async_update_entry(entry, options=options)
+    connection.send_result(
+        msg["id"], {key: list(entry.options.get(key) or []) for key in (CONF_PLANES, CONF_STRINGS, CONF_PANELS)}
+    )
+
+
+def _unit_payload(unit) -> dict[str, Any]:
+    """A declared string or panel, as the Settings tab edits it."""
+    return {
+        "name": unit.name,
+        # Detected by the profile but not declared by the user: the panel must not write it back
+        # as a declaration (that would make it count on top of the pv_power role and double count).
+        "declared": bool(getattr(unit, "declared", False)),
+        "kwp": unit.kwp,
+        "tilt": unit.tilt,
+        "azimuth": unit.azimuth,
+        "power": unit.power,
+        "voltage": unit.voltage,
+        "current": unit.current,
+        "count_in_total": unit.count_in_total,
+    }
+
+
 def settings_payload(
     cfg, inst, *, yaml_configured: bool, show_panel: bool, notify: str | None = None
 ) -> dict[str, Any]:
@@ -220,6 +272,11 @@ def settings_payload(
         "show_panel": show_panel,
         "yaml": settings_yaml(cfg, inst),
         "planes": [{"kwp": p.kwp, "tilt": p.tilt, "azimuth": p.azimuth} for p in cfg.planes],
+        # Whether a pv_power meter is there: without one the units are the total, so an unset count_in_total counts.
+        "pv_metered": bool(role_entities(inst, "pv_power")),
+        "kwp": cfg.kwp,
+        "strings": [_unit_payload(u) for u in inst.strings],
+        "panels": [_unit_payload(u) for u in inst.units],
         "batteries": [
             {
                 "key": b.key,
@@ -260,6 +317,20 @@ def settings_yaml(cfg, inst) -> str:
         for role, ids in sorted(roles.items()):
             value = ids[0] if len(ids) == 1 else "[" + ", ".join(ids) + "]"
             lines.append(f"    {role}: {value}")
+    for key, units in (("strings", cfg.strings), ("panels", cfg.panels)):
+        if not units:
+            continue
+        lines.append(f"  {key}:")
+        for u in units:
+            lines.append(f"    - name: {u.name}")
+            for attr in ("power", "voltage", "current"):
+                if getattr(u, attr):
+                    lines.append(f"      {attr}: {getattr(u, attr)}")
+            for attr in ("kwp", "tilt", "azimuth"):
+                if getattr(u, attr) is not None:
+                    lines.append(f"      {attr}: {getattr(u, attr):g}")
+            if u.count_in_total is not None:
+                lines.append(f"      count_in_total: {str(u.count_in_total).lower()}")
     if inst.batteries:
         lines.append("  batteries:")
         for b in inst.batteries:

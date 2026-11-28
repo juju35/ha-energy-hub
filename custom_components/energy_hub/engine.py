@@ -37,6 +37,12 @@ from .analytics.mismatch import score_units
 from .analytics.shading import MIN_CLEAR_DAYS, recurring_shading
 from .analytics.soiling import MIN_DAYS as SOILING_DAYS
 from .analytics.soiling import soiling_srr
+from .analytics.strings import (
+    UnitLoss,
+    capacity_shares,
+    declared_units,
+    unit_losses,
+)
 from .config import MULTI_ROLES, ROLES, HubConfig
 from .history import History, Reading
 from .sources import DEFAULT_CAPACITY_KWH, Installation, role_entities
@@ -64,9 +70,9 @@ def _r(value: float | None, digits: int = 2) -> float | None:
 
 
 def estimate_kwp(cfg: HubConfig, history: History) -> tuple[float, bool]:
-    """Installed kWp: from the planes in YAML, else 1.15 × the highest daily peak seen (estimated)."""
+    """Installed kWp: the planes (else the declared strings / panels), else 1.15 × the highest daily peak seen."""
     if cfg.kwp:
-        return cfg.kwp, False
+        return round(cfg.kwp, 3), False
     peaks = [d["peak"] for d in history.days.values() if d.get("peak")]
     return (round(max(peaks) * 1.15, 2), True) if peaks else (0.0, True)
 
@@ -130,6 +136,39 @@ def _unit_shading(history: History) -> list[tuple[str | None, Any]] | None:
     return found if enough else None
 
 
+def _unit_loss_fields(loss: UnitLoss | None, unit: Any = None) -> dict[str, Any]:
+    """The per-unit fields added to a strings[]/units[] record: declaration first, then the unit's own losses."""
+    if loss is None:
+        return {
+            "kwp": _r(getattr(unit, "kwp", None), 2),
+            "tilt": _r(getattr(unit, "tilt", None), 1),
+            "azimuth": _r(getattr(unit, "azimuth", None), 1),
+            "count_in_total": getattr(unit, "count_in_total", None) is not False,
+            "expected_kwh": None,
+            "yield": None,
+            "performance": None,
+            "soiling": None,
+            "shading_kwh": None,
+            "mismatch": None,
+            "clipping_kwh": None,
+            "degradation_pct": None,
+        }
+    return {
+        "kwp": _r(loss.kwp, 2),
+        "tilt": _r(loss.tilt, 1),
+        "azimuth": _r(loss.azimuth, 1),
+        "count_in_total": loss.count_in_total is not False,
+        "expected_kwh": _r(loss.expected_kwh, 2),
+        "yield": _r(loss.yield_kwh_per_kwp, 2),
+        "performance": _r(loss.performance, 3),
+        "soiling": _r(loss.soiling, 4),
+        "shading_kwh": _r(loss.shading_kwh, 2),
+        "mismatch": _r(loss.mismatch, 3),
+        "clipping_kwh": _r(loss.clipping_kwh, 2),
+        "degradation_pct": _r(loss.degradation_pct, 2),
+    }
+
+
 def build_snapshot(
     history: History,
     inst: Installation,
@@ -138,12 +177,18 @@ def build_snapshot(
     now: datetime,
     ages: dict[str, float] | None = None,
     demo: bool = False,
+    latitude: float | None = None,
+    longitude: float | None = None,
 ) -> dict[str, Any]:
     today = now.date()
     day_start = now.replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
     rec = history.day(today)
     yrec = history.days.get((today - timedelta(days=1)).isoformat())
+    # The day's ``pv`` already holds every unit counted in the total: the coordinator adds the declared ones the
+    # pv_power role misses before the history integrates it, so nothing is added here a second time.
+    declared = declared_units(cfg, inst)
     kwp, kwp_estimated = estimate_kwp(cfg, history)
+    shares = capacity_shares(declared, kwp)
     bal = _balance(rec)
     ybal = _balance(yrec)
 
@@ -193,6 +238,21 @@ def build_snapshot(
         shading = [(None, w) for w in shading] if shading is not None else None
     shading_today = sum(w.kwh_per_day for _u, w in shading or []) if bal.pv else 0.0
     soiling_today = bal.pv * (1 / soiling.ratio - 1) if soiling and soiling.ratio > 0 else 0.0
+    # Every declared string and panel, weighed on its own orientation: soiling, shading, mismatch, clipping and
+    # degradation of each line, next to the installation-wide figures that stay unchanged.
+    unit_loss = unit_losses(
+        history.days,
+        clear,
+        declared,
+        kwp,
+        today=today,
+        shares=shares,
+        latitude=latitude,
+        longitude=longitude,
+        tz=now.tzinfo,
+        shading=shading,
+        today_clipping=rec.get("clipped", 0.0),
+    )
 
     # ---- strings, panels
     def unit_days(kind: str, count: int) -> list[dict[str, tuple[float, float]]]:
@@ -200,8 +260,9 @@ def build_snapshot(
         for key in sorted(history.days)[-8:]:
             values = history.days[key][kind]
             if values:
-                share = kwp / max(len(values), 1) if kwp else 1.0
-                days.append({n: (e, share) for n, e in values.items()})
+                days.append(
+                    {n: (e, shares.get(n) or kwp / max(len(values), 1) if kwp else 1.0) for n, e in values.items()}
+                )
         return days[-count:]
 
     string_scores = {s.name: s for s in score_units(unit_days("strings", 7))}
@@ -213,6 +274,7 @@ def build_snapshot(
             "kwh": _r(rec["strings"].get(u.name), 2),
             "relative": _r(string_scores[u.name].relative, 3) if u.name in string_scores else None,
             "lagging_days": string_scores[u.name].lagging_days if u.name in string_scores else 0,
+            **_unit_loss_fields(unit_loss.get(u.name), u),
         }
         for u in inst.strings
     ]
@@ -224,6 +286,7 @@ def build_snapshot(
             "kwh": _r(rec["units"].get(u.name), 3),
             "pct": round(rec["units"].get(u.name, 0) / best_unit * 100) if best_unit else None,
             "lagging_days": unit_scores[u.name].lagging_days if u.name in unit_scores else 0,
+            **_unit_loss_fields(unit_loss.get(u.name), u),
         }
         for u in inst.units
     ]
@@ -502,6 +565,16 @@ def build_snapshot(
                 "produced": _r(bal.pv),
             },
             "month": {k: _r(v) for k, v in month_causes.items()},
+            # Each declared string and panel on its own orientation: the same fields as its strings[]/units[] record.
+            "strings": [
+                {
+                    "name": loss.name,
+                    "kind": loss.kind,
+                    "kwh": _r(loss.production_kwh, 2),
+                    **_unit_loss_fields(loss),
+                }
+                for loss in unit_loss.values()
+            ],
             "month_eur": _r(sum(month_causes.values()) * cfg.import_price),
             "availability": _r(availability, 4),
             "heatmap": heatmap,

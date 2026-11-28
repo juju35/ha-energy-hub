@@ -427,5 +427,22 @@
   "consumers_box": "Grootverbruikers",
   "contract_price": "contractprijs",
   "own_meter": "eigen meter",
-  "main_meter": "hoofdmeter"
+  "main_meter": "hoofdmeter",
+  "strings_box": "Panelen & strings",
+  "strings_hint": "Eén regel per fysieke eenheid: vermogen en oriëntatie bepalen de verliezen, de specifieke opbrengst en de totalen.",
+  "orientation_hint": "kWp, helling en azimut van elk vlak: ze sturen het heldere-hemelmodel, de verliezen en de specifieke opbrengst.",
+  "unit_kind": "Type",
+  "unit_name": "Naam",
+  "unit_capacity": "kWp",
+  "unit_power_entity": "Vermogensentiteit",
+  "unit_voltage_entity": "Spanningsentiteit",
+  "unit_current_entity": "Stroomentiteit",
+  "unit_count_total": "Meetellen in het PV-totaal",
+  "unit_add": "Regel toevoegen",
+  "plane_add": "Vlak toevoegen",
+  "remove": "Verwijderen",
+  "no_strings": "Geen string gedeclareerd: voeg ze toe in Instellingen → Bronnen.",
+  "string_lagging": "{n} d achter op de rest",
+  "uh": "waarden uitgedrukt in {u}",
+  "uh_color": "naam van de dagkleur (tempo: blauw, wit, rood)"
 }

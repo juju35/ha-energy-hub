@@ -41,7 +41,19 @@
           "tariff_price": "Cena energije",
           "tariff_color": "Barva tarife"
         }
+      },
+      "installation": {
+        "title": "Deklarirana napeljava",
+        "description": "Ravnine, nizi in paneli kot seznami YAML. Kar je zapisano tukaj, prevlada nad blokom `energy_hub:` v configuration.yaml; prazen okvir pusti blok YAML ali zaznavanje.",
+        "data": {
+          "planes": "Ravnine (kWp, naklon, azimut)",
+          "strings": "Nizi (ime, moč ali napetost in tok, kWp)",
+          "panels": "Paneli (ime, moč ali napetost in tok, kWp)"
+        }
       }
+    },
+    "error": {
+      "invalid_installation": "To polje pričakuje seznam YAML z vnosi."
     }
   },
   "entity": {

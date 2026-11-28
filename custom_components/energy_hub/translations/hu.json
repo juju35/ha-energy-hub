@@ -41,7 +41,19 @@
           "tariff_price": "Energiaár",
           "tariff_color": "Tarifa színe"
         }
+      },
+      "installation": {
+        "title": "Megadott rendszer",
+        "description": "Síkok, stringek és panelek YAML-listaként. Az itt megadottak elsőbbséget élveznek a configuration.yaml `energy_hub:` blokkjával szemben; egy üres mező megtartja a YAML-blokkot vagy a felismerést.",
+        "data": {
+          "planes": "Síkok (kWp, dőlésszög, azimut)",
+          "strings": "Stringek (név, teljesítmény, vagy feszültség és áram, kWp)",
+          "panels": "Panelek (név, teljesítmény, vagy feszültség és áram, kWp)"
+        }
       }
+    },
+    "error": {
+      "invalid_installation": "Ez a mező YAML-bejegyzések listáját várja."
     }
   },
   "entity": {

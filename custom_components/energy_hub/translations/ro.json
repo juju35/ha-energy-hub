@@ -41,7 +41,19 @@
           "tariff_price": "Prețul energiei",
           "tariff_color": "Culoarea tarifului"
         }
+      },
+      "installation": {
+        "title": "Instalație declarată",
+        "description": "Planuri, stringuri și panouri ca liste YAML. Ce este scris aici are prioritate față de blocul `energy_hub:` din configuration.yaml; lasă un câmp gol pentru a păstra blocul YAML sau detectarea.",
+        "data": {
+          "planes": "Planuri (kWp, înclinare, azimut)",
+          "strings": "Stringuri (nume, putere, sau tensiune și curent, kWp)",
+          "panels": "Panouri (nume, putere, sau tensiune și curent, kWp)"
+        }
       }
+    },
+    "error": {
+      "invalid_installation": "Acest câmp așteaptă o listă YAML de intrări."
     }
   },
   "entity": {

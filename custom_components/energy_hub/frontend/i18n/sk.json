@@ -427,5 +427,22 @@
   "consumers_box": "Veľkí spotrebitelia",
   "contract_price": "zmluvná cena",
   "own_meter": "vlastný elektromer",
-  "main_meter": "hlavný elektromer"
+  "main_meter": "hlavný elektromer",
+  "strings_box": "Panely a stringy",
+  "strings_hint": "Jeden riadok na fyzickú jednotku: výkon a orientácia napájajú straty, merný výnos a súčty.",
+  "orientation_hint": "kWp, sklon a azimut každej roviny: riadia model jasnej oblohy, straty a merný výnos.",
+  "unit_kind": "Typ",
+  "unit_name": "Názov",
+  "unit_capacity": "kWp",
+  "unit_power_entity": "Entita výkonu",
+  "unit_voltage_entity": "Entita napätia",
+  "unit_current_entity": "Entita prúdu",
+  "unit_count_total": "Počítať do celkového výkonu PV",
+  "unit_add": "Pridať riadok",
+  "plane_add": "Pridať rovinu",
+  "remove": "Odstrániť",
+  "no_strings": "Žiadny string nie je deklarovaný: pridajte ich v Nastavenia → Zdroje.",
+  "string_lagging": "{n} d pozadu",
+  "uh": "hodnoty vyjadrené v {u}",
+  "uh_color": "názov farby dňa (tempo: modrá, biela, červená)"
 }

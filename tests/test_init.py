@@ -2,15 +2,27 @@
 
 from __future__ import annotations
 
+import pytest
 from homeassistant.components import frontend
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.setup import async_setup_component
+from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.energy_hub.const import CONF_ENTITIES, DOMAIN, PANEL_URL_PATH
+from custom_components.energy_hub.config import parse
+from custom_components.energy_hub.const import (
+    CONF_ENTITIES,
+    CONF_PANELS,
+    CONF_PLANES,
+    CONF_STRINGS,
+    DOMAIN,
+    PANEL_URL_PATH,
+)
+from custom_components.energy_hub.coordinator import EnergyHubCoordinator
 from custom_components.energy_hub.diagnostics import async_get_config_entry_diagnostics
+from custom_components.energy_hub.sources import Installation, _apply_yaml
 
 DEMO_YAML = {
     "demo": True,
@@ -75,11 +87,106 @@ async def test_entities_can_be_chosen_in_the_options(hass: HomeAssistant) -> Non
         result["flow_id"],
         {"grid_power": ["sensor.solaire_zigbee_power"], "pv_power": ["sensor.pv_a", "sensor.pv_b"]},
     )
+    assert result["step_id"] == "installation"
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {})
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["data"][CONF_ENTITIES] == {
         "grid_power": ["sensor.solaire_zigbee_power"],
         "pv_power": ["sensor.pv_a", "sensor.pv_b"],
     }
+
+
+async def test_the_installation_can_be_declared_in_the_options(hass: HomeAssistant) -> None:
+    entry = await _setup_demo(hass)
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {"demo": True, "show_panel": True})
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {})
+    assert result["step_id"] == "installation"
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {
+            "strings": "- name: Toit sud\n  power: sensor.pv_sud\n  kwp: 1.5\n  tilt: 30\n  azimuth: 200\n",
+            "panels": "- name: Garage\n  power: sensor.pv_garage\n  kwp: 0.4\n  count_in_total: false\n",
+        },
+    )
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert CONF_PLANES not in result["data"]  # an empty box keeps the YAML block
+    strings = result["data"][CONF_STRINGS]
+    assert (strings[0]["name"], strings[0]["kwp"], strings[0]["tilt"], strings[0]["azimuth"]) == (
+        "Toit sud",
+        1.5,
+        30.0,
+        200.0,
+    )
+    panels = result["data"][CONF_PANELS]
+    assert (panels[0]["name"], panels[0]["count_in_total"]) == ("Garage", False)
+
+
+async def test_an_invalid_installation_box_is_shown_again(hass: HomeAssistant) -> None:
+    entry = await _setup_demo(hass)
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {"demo": True, "show_panel": True})
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {})
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {"strings": "name: pas une liste"})
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "installation"
+    assert result["errors"] == {"strings": "invalid_installation"}
+
+
+async def test_websocket_set_installation_saves_the_declaration(hass: HomeAssistant, hass_ws_client) -> None:
+    entry = await _setup_demo(hass)
+    client = await hass_ws_client(hass)
+    await client.send_json_auto_id(
+        {
+            "type": "energy_hub/set_installation",
+            "planes": [{"kwp": 3.28, "tilt": 30, "azimuth": 190}],
+            "strings": [{"name": "Toit sud", "power": "sensor.pv_sud", "kwp": 1.5, "tilt": 30, "azimuth": 200}],
+            "panels": [{"name": "Garage", "power": "sensor.pv_garage", "kwp": 0.4, "count_in_total": False}],
+        }
+    )
+    reply = await client.receive_json()
+    assert reply["success"] is True
+    await hass.async_block_till_done()
+    options = hass.config_entries.async_get_entry(entry.entry_id).options
+    assert [p["kwp"] for p in options[CONF_PLANES]] == [3.28]
+    assert options[CONF_STRINGS][0]["name"] == "Toit sud"
+    assert options[CONF_STRINGS][0]["tilt"] == 30
+    assert options[CONF_PANELS][0]["count_in_total"] is False
+    assert reply["result"][CONF_PANELS][0]["name"] == "Garage"
+
+    # An empty list removes the declaration: the YAML block (or the detection) applies again.
+    await client.send_json_auto_id({"type": "energy_hub/set_installation", "planes": [], "strings": []})
+    assert (await client.receive_json())["success"] is True
+    await hass.async_block_till_done()
+    options = hass.config_entries.async_get_entry(entry.entry_id).options
+    assert CONF_PLANES not in options
+    assert CONF_STRINGS not in options
+    assert options[CONF_PANELS][0]["name"] == "Garage"
+
+
+async def test_websocket_set_installation_rejects_an_invalid_entity(hass: HomeAssistant, hass_ws_client) -> None:
+    await _setup_demo(hass)
+    client = await hass_ws_client(hass)
+    await client.send_json_auto_id(
+        {"type": "energy_hub/set_installation", "strings": [{"name": "Toit", "power": "pas_une_entite"}]}
+    )
+    reply = await client.receive_json()
+    assert reply["success"] is False
+    assert reply["error"]["code"] == "invalid_format"
+
+
+async def test_websocket_set_installation_needs_an_admin(hass: HomeAssistant, hass_ws_client) -> None:
+    from homeassistant.auth.const import GROUP_ID_USER
+
+    entry = await _setup_demo(hass)
+    user = await hass.auth.async_create_user("limited", group_ids=[GROUP_ID_USER])
+    token = hass.auth.async_create_access_token(await hass.auth.async_create_refresh_token(user, "test"))
+    client = await hass_ws_client(hass, token)
+    await client.send_json_auto_id({"type": "energy_hub/set_installation", "planes": [{"kwp": 1.0}]})
+    reply = await client.receive_json()
+    assert reply["success"] is False
+    assert reply["error"]["code"] == "unauthorized"
+    assert CONF_PLANES not in hass.config_entries.async_get_entry(entry.entry_id).options
 
 
 async def test_websocket_set_entities_saves_the_substitution(hass: HomeAssistant, hass_ws_client) -> None:
@@ -129,6 +236,8 @@ async def test_options_hide_the_panel(hass: HomeAssistant) -> None:
     assert result["type"] is FlowResultType.FORM
     result = await hass.config_entries.options.async_configure(result["flow_id"], {"demo": True, "show_panel": False})
     assert result["step_id"] == "entities"
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {})
+    assert result["step_id"] == "installation"
     result = await hass.config_entries.options.async_configure(result["flow_id"], {})
     assert result["type"] is FlowResultType.CREATE_ENTRY
     await hass.async_block_till_done()
@@ -372,3 +481,117 @@ async def test_denky_d4_off_peak_meter_uses_the_energy_total(hass: HomeAssistant
     inst = (await _setup_real(hass)).runtime_data.installation
     assert inst.roles["grid_power"] == "sensor.teleinfo_garage_tic_papp"
     assert inst.roles["grid_import_energy"] == "sensor.teleinfo_garage_energy_total"
+
+
+async def test_the_settings_payload_lists_the_declared_units(hass: HomeAssistant, hass_ws_client) -> None:
+    await _setup_real(hass)
+    client = await hass_ws_client(hass)
+    await client.send_json_auto_id(
+        {
+            "type": "energy_hub/set_installation",
+            "planes": [{"kwp": 3.28}],
+            "strings": [{"name": "Toit sud", "power": "sensor.pv_sud", "kwp": 1.5, "tilt": 30, "azimuth": 200}],
+            "panels": [
+                {
+                    "name": "Garage",
+                    "voltage": "sensor.u_garage",
+                    "current": "sensor.i_garage",
+                    "kwp": 0.4,
+                    "count_in_total": False,
+                }
+            ],
+        }
+    )
+    assert (await client.receive_json())["success"] is True
+    await hass.async_block_till_done()
+    await client.send_json_auto_id({"type": "energy_hub/settings"})
+    settings = (await client.receive_json())["result"]
+    # The strings and panels sit on the declared plane: the capacity is the plane's, not counted twice.
+    assert settings["kwp"] == pytest.approx(3.28)
+    assert settings["strings"][0] == {
+        "name": "Toit sud",
+        "declared": True,
+        "kwp": 1.5,
+        "tilt": 30.0,
+        "azimuth": 200.0,
+        "power": "sensor.pv_sud",
+        "voltage": None,
+        "current": None,
+        "count_in_total": None,
+    }
+    panel = settings["panels"][0]
+    assert (panel["name"], panel["voltage"], panel["current"], panel["kwp"]) == (
+        "Garage",
+        "sensor.u_garage",
+        "sensor.i_garage",
+        0.4,
+    )
+    assert (panel["tilt"], panel["azimuth"], panel["count_in_total"]) == (None, None, False)
+
+
+def _pv_coordinator(hass: HomeAssistant, yaml: dict):
+    entry = MockConfigEntry(domain=DOMAIN, options={})
+    entry.add_to_hass(hass)
+    cfg = parse(yaml, {})
+    coordinator = EnergyHubCoordinator(hass, entry, cfg)
+    coordinator.installation = Installation()
+    _apply_yaml(cfg, coordinator.installation, ["sensor.plant_power", "sensor.string_power", "sensor.other_power"])
+    return coordinator
+
+
+async def test_the_pv_total_adds_a_declared_string_the_role_does_not_read(hass: HomeAssistant) -> None:
+    """The plant meter already counts a string wired behind it: only the units outside the role are added."""
+    coordinator = _pv_coordinator(
+        hass,
+        {
+            "entities": {"pv_power": "sensor.plant_power"},
+            "strings": [
+                {"name": "Toit sud", "power": "sensor.string_power", "count_in_total": True},
+                {"name": "Toit nord", "power": "sensor.plant_power", "count_in_total": True},
+                {"name": "Hors total", "power": "sensor.other_power", "count_in_total": False},
+            ],
+        },
+    )
+    hass.states.async_set("sensor.plant_power", "2000", {"unit_of_measurement": "W"})
+    hass.states.async_set("sensor.string_power", "500", {"unit_of_measurement": "W"})
+    hass.states.async_set("sensor.other_power", "700", {"unit_of_measurement": "W"})
+    reading, _ages = coordinator._read(dt_util.now())
+    assert reading.pv_kw == 2.5
+
+
+async def test_a_string_declared_the_1_9_way_is_not_added_on_top_of_the_meter(hass: HomeAssistant) -> None:
+    """A 1.9.0 YAML names the MPPT strings behind the inverter's meter: no count_in_total, no double count."""
+    coordinator = _pv_coordinator(
+        hass,
+        {
+            "entities": {"pv_power": "sensor.plant_power"},
+            "strings": [{"name": "MPPT 1", "power": "sensor.string_power"}],
+        },
+    )
+    hass.states.async_set("sensor.plant_power", "2000", {"unit_of_measurement": "W"})
+    hass.states.async_set("sensor.string_power", "500", {"unit_of_measurement": "W"})
+    reading, _ages = coordinator._read(dt_util.now())
+    assert reading.pv_kw == 2.0
+
+
+async def test_the_units_sum_leaves_out_a_string_kept_out_of_the_total(hass: HomeAssistant) -> None:
+    coordinator = _pv_coordinator(
+        hass,
+        {
+            "strings": [
+                {"name": "Toit", "power": "sensor.string_power"},
+                {"name": "Abri", "power": "sensor.other_power", "count_in_total": False},
+            ]
+        },
+    )
+    hass.states.async_set("sensor.string_power", "500", {"unit_of_measurement": "W"})
+    hass.states.async_set("sensor.other_power", "700", {"unit_of_measurement": "W"})
+    reading, _ages = coordinator._read(dt_util.now())
+    assert reading.pv_kw == 0.5
+
+
+async def test_the_pv_total_falls_back_to_the_units_without_a_role(hass: HomeAssistant) -> None:
+    coordinator = _pv_coordinator(hass, {"strings": [{"name": "Toit", "power": "sensor.string_power", "kwp": 1.5}]})
+    hass.states.async_set("sensor.string_power", "500", {"unit_of_measurement": "W"})
+    reading, _ages = coordinator._read(dt_util.now())
+    assert reading.pv_kw == 0.5

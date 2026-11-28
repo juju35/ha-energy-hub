@@ -427,5 +427,22 @@
   "consumers_box": "Grandes consumidores",
   "contract_price": "precio del contrato",
   "own_meter": "contador propio",
-  "main_meter": "contador principal"
+  "main_meter": "contador principal",
+  "strings_box": "Paneles y strings",
+  "strings_hint": "Una línea por unidad física: su potencia y orientación alimentan las pérdidas, el rendimiento específico y los totales.",
+  "orientation_hint": "kWp, inclinación y azimut de cada plano: determinan el modelo de cielo claro, las pérdidas y el rendimiento específico.",
+  "unit_kind": "Tipo",
+  "unit_name": "Nombre",
+  "unit_capacity": "kWp",
+  "unit_power_entity": "Entidad de potencia",
+  "unit_voltage_entity": "Entidad de tensión",
+  "unit_current_entity": "Entidad de corriente",
+  "unit_count_total": "Contar en la potencia total",
+  "unit_add": "Añadir una línea",
+  "plane_add": "Añadir un plano",
+  "remove": "Quitar",
+  "no_strings": "Ningún string declarado: añádelos en Ajustes → Fuentes.",
+  "string_lagging": "{n} d por detrás",
+  "uh": "valores expresados en {u}",
+  "uh_color": "nombre del color del día (tempo: azul, blanco, rojo)"
 }

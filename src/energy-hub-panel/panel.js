@@ -563,15 +563,23 @@ export class EnergyHubPanel extends HTMLElement {
       const legend = `<span class="chip"><span class="sw" style="background:${EH_AMBER}"></span>≥ 92 %</span><span class="chip"><span class="sw" style="background:#EF9F27"></span>70 – 92 %</span><span class="chip"><span class="sw" style="background:${EH_RED}"></span>&lt; 70 %</span>`;
       o += this._box(this._t('roof'), this._t('roof_hint'), `${svg}<div class="legend">${legend}</div>`);
     }
-    if (P.strings.length) {
-      const best = Math.max(...P.strings.map((s) => s.kwh || 0), 0.001);
-      const rows = P.strings
+    const STR = d.strings || P.strings || [];
+    if (STR.length) {
+      const best = Math.max(...STR.map((s) => s.kwh || 0), 0.001);
+      const rows = STR
         .map((s) => {
-          const lag = s.lagging_days >= 3;
-          return `<div class="barrow"><span>${ehEsc(s.name)}</span><div class="meter"><div style="width:${((s.kwh || 0) / best) * 100}%;background:${lag ? '#EF9F27' : EH_AMBER}"></div></div><span style="color:${lag ? EH_AMBER : 'var(--secondary-text-color)'}">${this._kwh(s.kwh)}${s.relative != null ? ` · ${s.relative >= 1 ? '+' : '−'}${this._num(Math.abs(s.relative - 1) * 100, 0)} %` : ''}</span></div>`;
+          const lag = (s.lagging_days || 0) >= 3;
+          const rel = s.relative != null ? `${s.relative >= 1 ? '+' : '−'}${this._num(Math.abs(s.relative - 1) * 100, 0)} %` : '';
+          const orient = s.tilt != null && s.azimuth != null ? `${this._num(s.tilt, 0)}° / ${this._num(s.azimuth, 0)}°` : s.tilt != null ? `${this._num(s.tilt, 0)}°` : s.azimuth != null ? `${this._num(s.azimuth, 0)}°` : '';
+          const meta = [s.kwp != null ? `${this._num(s.kwp, 2)} kWp` : '', orient, rel, lag ? this._t('string_lagging', { n: this._num(s.lagging_days, 0) }) : '']
+            .filter(Boolean)
+            .join(' · ');
+          return `<div class="barrow srow"><span class="bname"><b>${ehEsc(s.name)}</b>${meta ? `<i class="t3">${ehEsc(meta)}</i>` : ''}</span><div class="meter"><div style="width:${((s.kwh || 0) / best) * 100}%;background:${lag ? '#EF9F27' : EH_AMBER}"></div></div><span class="sval" style="color:${lag ? EH_AMBER : 'var(--secondary-text-color)'}"><b>${this._kwh(s.kwh)}</b><i class="t3">${s.kw != null ? this._kw(s.kw) : ''}</i></span></div>`;
         })
         .join('');
-      o += this._box(this._t('strings'), '', rows);
+      o += this._box(this._t('strings'), this._kwh(STR.reduce((a, s) => a + (s.kwh || 0), 0)), rows);
+    } else {
+      o += this._box(this._t('strings'), '', `<div class="hint">${ehEsc(this._t('no_strings'))}</div>`);
     }
     const epi = P.epi_30d;
     let prSvg = '<svg class="mini" viewBox="0 0 300 120" role="img" aria-label="PR">';
@@ -1060,6 +1068,8 @@ export class EnergyHubPanel extends HTMLElement {
   _setSources() {
     const d = this._data;
     let o = this._entitiesBox();
+    o += this._planesBox();
+    o += this._unitsBox();
     const sugg = d.suggestions || [];
     if (sugg.length) {
       o += this._box(this._t('suggestions'), `${sugg.length}`, sugg.map((s) => `<div class="sugg"><span class="pa sm" style="background:#EEEDFE;color:#3C3489">${ehIcon('lightbulb-on-outline', 14)}</span><div class="tt"><div class="a1">${ehEsc(this._t(`suggest.${s.kind}`, { bms: s.bms || '', battery: s.battery || '' }))}</div><div class="t3">${s.correlation != null ? ehEsc(this._t('correlation', { v: this._num(s.correlation, 2) })) : ''}</div></div>${this._snip(s.yaml)}</div>`).join(''));
@@ -1094,11 +1104,128 @@ export class EnergyHubPanel extends HTMLElement {
         const cur = this._entDraft?.[role] ?? (chosen[role] || []).join(', ');
         const auto = detected[role] || [];
         const many = (e.multi || []).includes(role);
-        return `<div class="entrow"><label class="a1">${ehEsc(this._roleLabel(role))}</label><input class="entin" data-erole="${ehEsc(role)}" aria-label="${ehEsc(this._roleLabel(role))}" value="${ehEsc(cur)}" placeholder="${ehEsc(auto.join(', '))}" spellcheck="false" autocomplete="off"><span class="t3">${ehEsc(this._t(many ? 'entities_multi' : 'entities_one'))}</span></div>`;
+        const hint = this._unitHint(role);
+        return `<div class="entrow"><label class="a1">${ehEsc(this._roleLabel(role))}</label><div class="ein"><input class="entin" data-erole="${ehEsc(role)}" aria-label="${ehEsc(this._roleLabel(role))}" value="${ehEsc(cur)}" placeholder="${ehEsc(auto.join(', '))}" spellcheck="false" autocomplete="off">${hint ? `<i class="uhint">${ehEsc(hint)}</i>` : ''}</div><span class="t3">${ehEsc(this._t(many ? 'entities_multi' : 'entities_one'))}</span></div>`;
       })
       .join('');
     const bar = `<div class="entbar"><button class="copy" data-action="save-entities">${ehIcon('check', 14)} ${ehEsc(this._t('entities_save'))}</button><span class="hint">${ehEsc(this._t('entities_format'))}</span></div>`;
     return this._box(this._t('entities'), this._t('entities_hint'), rows + bar);
+  }
+
+  _unitHint(role) {
+    const r = String(role);
+    if (r.includes('.')) return r.endsWith('.soc') ? this._t('uh', { u: '%' }) : this._t('uh', { u: 'W' });
+    if (r === 'tariff_color') return this._t('uh_color');
+    if (r === 'weather') return '';
+    if (r === 'irradiance') return this._t('uh', { u: 'W/m²' });
+    if (r.includes('energy')) return this._t('uh', { u: 'kWh' });
+    if (r.includes('price') || r.includes('tariff')) return this._t('uh', { u: `${this._data?.currency || '€'}/kWh` });
+    if (r.includes('temp')) return this._t('uh', { u: '°C' });
+    if (r.includes('soc') || r.includes('ratio') || r.includes('humidity')) return this._t('uh', { u: '%' });
+    if (r.includes('power')) return this._t('uh', { u: 'W' });
+    return '';
+  }
+
+  // Installation rows (planes, strings, panels) are edited in a draft so a 30 s
+  // push never wipes what the user is typing: the draft survives _render() and is
+  // dropped only once the user saves or a fresh settings payload arrives.
+  _instRows(kind) {
+    const base = this._settings || {};
+    if (this._instBase !== base) {
+      this._instBase = base;
+      this._instDraft = null;
+    }
+    this._instDraft ||= {};
+    if (!Array.isArray(this._instDraft[kind])) {
+      const from = base[kind];
+      this._instDraft[kind] = Array.isArray(from) ? from.map((u) => ({ ...u })) : [];
+    }
+    return this._instDraft[kind];
+  }
+
+  // Whether a unit counts in the PV total as the coordinator reads it: an explicit choice wins; unset, it counts
+  // only when there is no pv_power meter (the units are the total), it is not added on top of a meter.
+  _countsInTotal(u) {
+    if (typeof u.count_in_total === 'boolean') return u.count_in_total;
+    return !(this._settings || {}).pv_metered;
+  }
+
+  _planeRow(p, i) {
+    const v = (k) => (p[k] == null ? '' : p[k]);
+    const input = (k, label, extra) =>
+      `<input class="entin" type="number" step="${k === 'kwp' ? '0.01' : '1'}" ${extra} inputmode="decimal" data-pfield="${k}" data-pi="${i}" value="${ehEsc(v(k))}" aria-label="${ehEsc(label)}">`;
+    return `<div class="entrow pgrid"><label class="a1">${ehEsc(this._t('plane_n', { n: i + 1 }))}</label>${input('kwp', this._t('unit_capacity'), 'min="0" placeholder="3.0"')}${input('tilt', this._t('tilt'), 'min="0" max="90" placeholder="30"')}${input('azimuth', this._t('azimuth'), 'min="0" max="360" placeholder="180"')}<button class="copy ghost" data-action="plane-del" data-pi="${i}" aria-label="${ehEsc(this._t('remove'))}" title="${ehEsc(this._t('remove'))}">${ehIcon('trash-can-outline', 14)}</button></div>`;
+  }
+
+  _planesBox() {
+    const rows = this._instRows('planes');
+    const head = `<div class="entrow pgrid ehead"><span></span><span class="t3">${ehEsc(this._t('unit_capacity'))}</span><span class="t3">${ehEsc(this._t('tilt'))}</span><span class="t3">${ehEsc(this._t('azimuth'))}</span><span></span></div>`;
+    const body = rows.map((p, i) => this._planeRow(p, i)).join('');
+    const bar = `<div class="entbar"><button class="copy" data-action="save-planes">${ehIcon('check', 14)} ${ehEsc(this._t('entities_save'))}</button><button class="copy ghost" data-action="plane-add">${ehIcon('plus', 14)} ${ehEsc(this._t('plane_add'))}</button>${rows.length ? '' : `<span class="hint">${ehEsc(this._t('kwp_estimated'))}</span>`}</div>`;
+    return this._box(this._t('planes'), this._t('orientation_hint'), (body ? head + body : '') + bar);
+  }
+
+  _unitRow(kind, u, i) {
+    const v = (k) => (u[k] == null ? '' : u[k]);
+    const num = (k, label, extra) =>
+      `<label class="ufield"><span>${ehEsc(label)}</span><input class="entin" type="number" step="${k === 'kwp' ? '0.01' : '1'}" ${extra} inputmode="decimal" data-ufield="${k}" data-ukind="${kind}" data-ui="${i}" value="${ehEsc(v(k))}" aria-label="${ehEsc(label)}"></label>`;
+    const txt = (k, label, unit) =>
+      `<label class="ufield"><span>${ehEsc(label)}</span><input class="entin" type="text" spellcheck="false" autocomplete="off" data-ufield="${k}" data-ukind="${kind}" data-ui="${i}" value="${ehEsc(v(k))}" aria-label="${ehEsc(label)}"><i class="uhint">${ehEsc(this._t('uh', { u: unit }))}</i></label>`;
+    return `<div class="urow"><div class="urowhead"><input class="entin uname" type="text" spellcheck="false" autocomplete="off" data-ufield="name" data-ukind="${kind}" data-ui="${i}" value="${ehEsc(v('name'))}" placeholder="${ehEsc(this._t('unit_name'))}" aria-label="${ehEsc(this._t('unit_name'))}"><button class="copy ghost" data-action="unit-del" data-ukind="${kind}" data-ui="${i}" aria-label="${ehEsc(this._t('remove'))}" title="${ehEsc(this._t('remove'))}">${ehIcon('trash-can-outline', 14)}</button></div><div class="ugrid">${num('kwp', this._t('unit_capacity'), 'min="0" placeholder="3.0"')}${num('tilt', this._t('tilt'), 'min="0" max="90" placeholder="30"')}${num('azimuth', this._t('azimuth'), 'min="0" max="360" placeholder="180"')}${txt('power', this._t('unit_power_entity'), 'W')}${txt('voltage', this._t('unit_voltage_entity'), 'V')}${txt('current', this._t('unit_current_entity'), 'A')}<label class="uchk"><input type="checkbox" data-ufield="count_in_total" data-ukind="${kind}" data-ui="${i}" ${this._countsInTotal(u) ? 'checked' : ''}> <span>${ehEsc(this._t('unit_count_total'))}</span></label></div></div>`;
+  }
+
+  _unitsBox() {
+    const part = (kind, title) => {
+      const rows = this._instRows(kind);
+      const body = rows.map((u, i) => this._unitRow(kind, u, i)).join('');
+      return `<div class="subhead">${ehEsc(this._t(title))} <span class="t3">${rows.length}</span></div>${body || `<div class="hint">${ehEsc(this._t('no_strings'))}</div>`}<div class="entbar"><button class="copy ghost" data-action="unit-add" data-ukind="${kind}">${ehIcon('plus', 14)} ${ehEsc(this._t('unit_add'))}</button></div>`;
+    };
+    const bar = `<div class="entbar"><button class="copy" data-action="save-installation">${ehIcon('check', 14)} ${ehEsc(this._t('entities_save'))}</button></div>`;
+    return this._box(this._t('strings_box'), this._t('strings_hint'), part('strings', 'strings') + part('panels', 'panels') + bar);
+  }
+
+  // Wire payload for energy_hub/set_installation: a missing array leaves that
+  // group untouched, an empty array removes it; numbers are sent as numbers,
+  // unit rows without a name are skipped (name is the only mandatory field).
+  _instPayload(groups = this._instDraft || {}) {
+    const num = (x) => (x === '' || x == null || Number.isNaN(Number(x)) ? null : Number(x));
+    const txt = (x) => (x == null ? '' : String(x).trim());
+    const payload = {};
+    if (Array.isArray(groups.planes)) {
+      payload.planes = groups.planes
+        .map((p) => {
+          const o = {};
+          for (const k of ['kwp', 'tilt', 'azimuth']) {
+            const n = num(p[k]);
+            if (n != null) o[k] = n;
+          }
+          return o;
+        })
+        .filter((p) => Object.keys(p).length > 0);
+    }
+    for (const kind of ['strings', 'panels']) {
+      if (!Array.isArray(groups[kind])) continue;
+      payload[kind] = groups[kind]
+        // Only what the user actually declared: a unit merely detected by the profile arrives with
+        // declared=false and is shown for information only, writing it back as a declaration would
+        // make it count twice in the PV total.
+        .filter((u) => txt(u.name) && (u._edited === true || u.declared !== false))
+        .map((u) => {
+          const o = { name: txt(u.name) };
+          for (const k of ['kwp', 'tilt', 'azimuth']) {
+            const n = num(u[k]);
+            if (n != null) o[k] = n;
+          }
+          for (const k of ['power', 'voltage', 'current']) {
+            const s = txt(u[k]);
+            if (s) o[k] = s;
+          }
+          // Unset stays unset (counted the 1.9.0 way); only a choice of the user is written.
+          if (typeof u.count_in_total === 'boolean') o.count_in_total = u.count_in_total;
+          return o;
+        });
+    }
+    return payload;
   }
 
   _quality() {
@@ -1133,17 +1260,21 @@ export class EnergyHubPanel extends HTMLElement {
       ['grid', !!(roles.grid_power || roles.grid_import_energy), roles.grid_power || roles.grid_import_energy, { link: '/config/energy' }],
       ['battery', d.batteries.items.length > 0, this._t('batteries_n', { n: d.batteries.items.length }), { yaml: 'energy_hub:\n  batteries:\n    house:\n      soc: sensor.battery_soc\n      power: sensor.battery_power\n      capacity_kwh: 10\n' }],
       ['forecast', !!roles.forecast_power, roles.forecast_power, { link: '/config/integrations/dashboard/add?domain=forecast_solar' }],
-      ['planes', !d.kwp_estimated, d.kwp_estimated ? this._t('kwp_estimated') : this._t('kwp', { v: this._num(d.kwp, 1) }), { yaml: 'energy_hub:\n  planes:\n    - kwp: 3.0\n      tilt: 30\n      azimuth: 180\n' }],
+      ['planes', !d.kwp_estimated, d.kwp_estimated ? this._t('kwp_estimated') : this._t('kwp', { v: this._num(d.kwp, 1) }), { sub: 'sources' }],
       ['tariff', !!d.finances.net_cost, d.finances.net_cost ? this._eur(d.finances.net_cost, 0) : this._t('no_cost'), { yaml: 'energy_hub:\n  tariff:\n    import: 0.2016\n    export: 0.04\n  installation:\n    cost: 9000\n    subsidy: 0\n    commissioned: 2024-01-01\n' }],
     ];
     const okCount = checks.filter((c) => c[1]).length;
-    const action = (a) => (a?.yaml ? this._snip(a.yaml) : a?.link ? `<a class="copy" href="${a.link}" target="_top">${ehIcon('chevron-right', 14)} ${ehEsc(this._t('open'))}</a>` : '');
+    const action = (a) => (a?.sub ? `<button class="copy ghost" data-sub="${a.sub}">${ehIcon('chevron-right', 14)} ${ehEsc(this._t('open'))}</button>` : a?.yaml ? this._snip(a.yaml) : a?.link ? `<a class="copy" href="${a.link}" target="_top">${ehIcon('chevron-right', 14)} ${ehEsc(this._t('open'))}</a>` : '');
     let o = `<div class="ringrow"><div class="tile col"><svg width="90" height="90" viewBox="0 0 90 90" role="img" aria-label="${okCount}/${checks.length}"><circle cx="45" cy="45" r="36" fill="none" stroke="var(--divider-color)" stroke-width="8"/><circle cx="45" cy="45" r="36" fill="none" stroke="#639922" stroke-width="8" stroke-linecap="round" transform="rotate(-90 45 45)" stroke-dasharray="${((226 * okCount) / checks.length).toFixed(0)} 227"/><text x="45" y="50" text-anchor="middle" class="svgth">${okCount}/${checks.length}</text></svg><div class="t1">${ehEsc(this._t('health_title'))}</div></div><section class="box">`;
     o += checks.map(([key, ok, detail, act]) => `<div class="check"><span class="pa sm" style="background:${ok ? '#EAF3DE' : '#FAEEDA'};color:${ok ? EH_GREEN : '#854F0B'}">${ehIcon(ok ? 'check' : 'alert-outline', 14)}</span><div class="tt"><div class="a1">${ehEsc(this._t(`checks.${key}`))}</div><div class="t3">${ehEsc(detail || this._t('check_missing'))}</div></div>${ok ? '' : action(act)}</div>`).join('');
     o += '</section></div>';
     o += this._box(this._t('schematic'), this._t('schematic_hint'), `${this._schematic()}${this._nodeDetail()}`);
-    const planes = (s.planes || []).map((p, i) => `<tr><td>${ehEsc(this._t('plane_n', { n: i + 1 }))}</td><td>${this._num(p.kwp, 2)} kWp</td><td>${this._num(p.tilt, 0)}°</td><td>${this._num(p.azimuth, 0)}°</td></tr>`).join('');
-    o += this._box(this._t('planes'), d.kwp_estimated ? this._t('estimated') : this._t('kwp', { v: this._num(d.kwp, 2) }), `${planes ? `<table class="roles"><tr><th></th><th>${ehEsc(this._t('power'))}</th><th>${ehEsc(this._t('tilt'))}</th><th>${ehEsc(this._t('azimuth'))}</th></tr>${planes}</table>` : `<div class="hint">${ehEsc(this._t('kwp_estimated'))}</div>`}<table class="roles"><tr><td>${ehEsc(this._t('inverter_max_short'))}</td><td>${this._kw(d.inverter_max_kw)}</td></tr><tr><td>${ehEsc(this._t('export_limit'))}</td><td>${d.export_limit_kw ? this._kw(d.export_limit_kw) : '–'}</td></tr></table>`);
+    const cap = (kind) => (Array.isArray(s[kind]) ? s[kind] : []).reduce((a, u) => a + (Number(u.kwp) || 0), 0);
+    const unitRow = (kind, label) => {
+      const n = (Array.isArray(s[kind]) ? s[kind] : []).length;
+      return `<tr><td>${ehEsc(label)}</td><td>${n}${cap(kind) ? ` · ${this._num(cap(kind), 2)} kWp` : ''}</td></tr>`;
+    };
+    o += this._box(this._t('panels'), d.kwp_estimated ? this._t('estimated') : this._t('kwp', { v: this._num(d.kwp, 2) }), `<table class="roles">${unitRow('planes', this._t('planes'))}${unitRow('strings', this._t('strings'))}${unitRow('panels', this._t('panels'))}<tr><td>${ehEsc(this._t('inverter_max_short'))}</td><td>${this._kw(d.inverter_max_kw)}</td></tr><tr><td>${ehEsc(this._t('export_limit'))}</td><td>${d.export_limit_kw ? this._kw(d.export_limit_kw) : '–'}</td></tr></table><div class="entbar"><button class="copy ghost" data-sub="sources">${ehIcon('chevron-right', 14)} ${ehEsc(this._t('open'))}</button></div>`);
     o += this._reference();
     return o;
   }
@@ -1382,18 +1513,9 @@ export class EnergyHubPanel extends HTMLElement {
         this._entDraft = { ...this._entDraft, [el.dataset.erole]: el.value };
         check();
       });
-      el.addEventListener('blur', () => {
-        // Moving to the next field keeps the focus inside the form: render only once it really leaves.
-        setTimeout(() => {
-          if (this._renderLater && !this.shadowRoot.activeElement?.classList?.contains('entin')) {
-            this._renderLater = false;
-            this._render();
-          }
-        }, 0);
-      });
+      el.addEventListener('blur', () => this._deferRender());
     }
     root.querySelector('[data-action="save-entities"]')?.addEventListener('click', async (ev) => {
-      const btn = ev.currentTarget;
       const roles = {};
       for (const el of root.querySelectorAll('[data-erole]')) {
         roles[el.dataset.erole] = el.value
@@ -1401,23 +1523,90 @@ export class EnergyHubPanel extends HTMLElement {
           .map((s) => s.trim())
           .filter(Boolean);
       }
-      btn.disabled = true;
-      try {
-        await this._hass.callWS({ type: 'energy_hub/set_entities', roles });
-        btn.textContent = this._t('entities_saved');
+      await this._saveSetting(ev.currentTarget, () => this._hass.callWS({ type: 'energy_hub/set_entities', roles }), () => {
         this._entDraft = null;
-        this._renderLater = false;
-      } catch (err) {
-        btn.textContent = this._t('entities_failed');
-        btn.title = err?.message || '';
-        btn.disabled = false;
-        return;
-      }
-      // Saving reloads the integration: the subscription belonged to the old coordinator, take a new one.
-      await this._resubscribe();
+      });
     });
+    const instInputs = [...root.querySelectorAll('[data-pfield]'), ...root.querySelectorAll('[data-ufield]')];
+    for (const el of instInputs) {
+      el.addEventListener('input', () => {
+        const kind = el.dataset.ukind || 'planes';
+        const idx = Number(el.dataset.ui ?? el.dataset.pi);
+        const row = this._instRows(kind)[idx];
+        if (!row) return;
+        row[el.dataset.ufield || el.dataset.pfield] = el.type === 'checkbox' ? el.checked : el.value;
+        // Editing a detected unit turns it into a declared one, so it has to be persisted.
+        if (kind !== 'planes') row._edited = true;
+      });
+      el.addEventListener('blur', () => this._deferRender());
+    }
+    const onAction = (name, fn) => {
+      for (const el of root.querySelectorAll(`[data-action="${name}"]`)) el.addEventListener('click', (ev) => fn(ev.currentTarget));
+    };
+    onAction('plane-add', () => {
+      this._instRows('planes').push({ kwp: null, tilt: null, azimuth: null });
+      this._render();
+    });
+    onAction('plane-del', (btn) => {
+      this._instRows('planes').splice(Number(btn.dataset.pi), 1);
+      this._render();
+    });
+    onAction('unit-add', (btn) => {
+      this._instRows(btn.dataset.ukind).push({ name: '', kwp: null, tilt: null, azimuth: null, power: '', voltage: '', current: '', count_in_total: null, _edited: true });
+      this._render();
+    });
+    onAction('unit-del', (btn) => {
+      this._instRows(btn.dataset.ukind).splice(Number(btn.dataset.ui), 1);
+      this._render();
+    });
+    const saveInstallation = (btn, groups) =>
+      this._saveSetting(
+        btn,
+        () => this._hass.callWS({ type: 'energy_hub/set_installation', ...this._instPayload(groups) }),
+        () => {
+          this._instDraft = null;
+          this._instBase = null;
+        },
+      );
+    onAction('save-planes', (btn) => saveInstallation(btn, { planes: this._instRows('planes') }));
+    onAction('save-installation', (btn) => saveInstallation(btn, { strings: this._instRows('strings'), panels: this._instRows('panels') }));
     root.querySelector('[data-action="menu"]')?.addEventListener('click', () => this.dispatchEvent(new Event('hass-toggle-menu', { bubbles: true, composed: true })));
     this._bindCurve();
+  }
+
+  /**
+   * Saves a setting over the websocket, then takes a new subscription: saving
+   * reloads the integration, so the old subscription belonged to a coordinator
+   * that no longer exists. The button carries the outcome and comes back when
+   * the call fails, and `clear` drops the draft the saved rows came from.
+   */
+  /**
+   * A render on blur swallows the click on the next field: defer it, and skip it
+   * when the focus only moved from one input to another of the same form.
+   */
+  _deferRender() {
+    setTimeout(() => {
+      if (this._renderLater && !this.shadowRoot.activeElement?.classList?.contains('entin')) {
+        this._renderLater = false;
+        this._render();
+      }
+    }, 0);
+  }
+
+  async _saveSetting(btn, call, clear) {
+    btn.disabled = true;
+    try {
+      await call();
+      btn.textContent = this._t('entities_saved');
+      clear();
+      this._renderLater = false;
+    } catch (err) {
+      btn.textContent = this._t('entities_failed');
+      btn.title = err?.message || '';
+      btn.disabled = false;
+      return;
+    }
+    await this._resubscribe();
   }
 
   _bindCurve() {

@@ -427,5 +427,22 @@
   "consumers_box": "Gros consommateurs",
   "contract_price": "prix du contrat",
   "own_meter": "compteur dédié",
-  "main_meter": "compteur principal"
+  "main_meter": "compteur principal",
+  "strings_box": "Panneaux & strings",
+  "strings_hint": "Une ligne par unité physique : sa puissance et son orientation alimentent les pertes, le rendement spécifique et les totaux.",
+  "orientation_hint": "kWc, inclinaison et azimut de chaque plan : ils pilotent le modèle ciel clair, les pertes et le rendement spécifique.",
+  "unit_kind": "Type",
+  "unit_name": "Nom",
+  "unit_capacity": "kWc",
+  "unit_power_entity": "Entité puissance",
+  "unit_voltage_entity": "Entité tension",
+  "unit_current_entity": "Entité courant",
+  "unit_count_total": "Compter dans la puissance totale",
+  "unit_add": "Ajouter une ligne",
+  "plane_add": "Ajouter un plan",
+  "remove": "Supprimer",
+  "no_strings": "Aucun string déclaré : ajoutez-les dans Réglages → Sources.",
+  "string_lagging": "{n} j en retrait",
+  "uh": "valeurs exprimées en {u}",
+  "uh_color": "le nom de la couleur du jour (tempo : bleu, blanc, rouge)"
 }

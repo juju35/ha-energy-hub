@@ -41,7 +41,19 @@
           "tariff_price": "Energieprijs",
           "tariff_color": "Tariefkleur"
         }
+      },
+      "installation": {
+        "title": "Gedeclareerde installatie",
+        "description": "Vlakken, strings en panelen als YAML-lijsten. Wat hier staat, gaat voor op het blok `energy_hub:` in configuration.yaml; laat een veld leeg om het YAML-blok of de detectie te gebruiken.",
+        "data": {
+          "planes": "Vlakken (kWp, helling, azimut)",
+          "strings": "Strings (naam, vermogen, of spanning en stroom, kWp)",
+          "panels": "Panelen (naam, vermogen, of spanning en stroom, kWp)"
+        }
       }
+    },
+    "error": {
+      "invalid_installation": "Dit veld verwacht een YAML-lijst met items."
     }
   },
   "entity": {

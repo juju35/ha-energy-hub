@@ -427,5 +427,22 @@
   "consumers_box": "Grandi utenze",
   "contract_price": "prezzo del contratto",
   "own_meter": "contatore dedicato",
-  "main_meter": "contatore principale"
+  "main_meter": "contatore principale",
+  "strings_box": "Pannelli e stringhe",
+  "strings_hint": "Una riga per unità fisica: potenza e orientamento alimentano le perdite, la resa specifica e i totali.",
+  "orientation_hint": "kWp, inclinazione e azimut di ogni piano: guidano il modello di cielo sereno, le perdite e la resa specifica.",
+  "unit_kind": "Tipo",
+  "unit_name": "Nome",
+  "unit_capacity": "kWp",
+  "unit_power_entity": "Entità potenza",
+  "unit_voltage_entity": "Entità tensione",
+  "unit_current_entity": "Entità corrente",
+  "unit_count_total": "Conta nella potenza totale",
+  "unit_add": "Aggiungi una riga",
+  "plane_add": "Aggiungi un piano",
+  "remove": "Rimuovi",
+  "no_strings": "Nessuna stringa dichiarata: aggiungile in Impostazioni → Sorgenti.",
+  "string_lagging": "{n} g in ritardo",
+  "uh": "valori espressi in {u}",
+  "uh_color": "nome del colore del giorno (tempo: blu, bianco, rosso)"
 }
