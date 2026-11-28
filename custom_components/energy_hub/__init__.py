@@ -272,6 +272,8 @@ def settings_payload(
         "show_panel": show_panel,
         "yaml": settings_yaml(cfg, inst),
         "planes": [{"kwp": p.kwp, "tilt": p.tilt, "azimuth": p.azimuth} for p in cfg.planes],
+        # Whether a pv_power meter is there: without one the units are the total, so an unset count_in_total counts.
+        "pv_metered": bool(role_entities(inst, "pv_power")),
         "kwp": cfg.kwp,
         "strings": [_unit_payload(u) for u in inst.strings],
         "panels": [_unit_payload(u) for u in inst.units],
@@ -327,8 +329,8 @@ def settings_yaml(cfg, inst) -> str:
             for attr in ("kwp", "tilt", "azimuth"):
                 if getattr(u, attr) is not None:
                     lines.append(f"      {attr}: {getattr(u, attr):g}")
-            if not u.count_in_total:
-                lines.append("      count_in_total: false")
+            if u.count_in_total is not None:
+                lines.append(f"      count_in_total: {str(u.count_in_total).lower()}")
     if inst.batteries:
         lines.append("  batteries:")
         for b in inst.batteries:

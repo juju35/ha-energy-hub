@@ -2,7 +2,8 @@
 
 The declarations come from YAML (``strings:`` / ``panels:``, each with its own kWp, tilt, azimuth and
 ``count_in_total``); the installation holds the units the readings actually carry. These tests build both by hand,
-then check what the snapshot makes of them.
+then check what the snapshot makes of them. The day's ``pv`` is what the coordinator integrated: it already holds
+the declared units added to a meter (or the units' sum without one), so the engine reads it as it is.
 """
 
 from __future__ import annotations
@@ -36,7 +37,7 @@ class DeclaredUnit(UnitConfig):
         kwp: float | None = None,
         tilt: float | None = None,
         azimuth: float | None = None,
-        count_in_total: bool = True,
+        count_in_total: bool | None = None,
     ) -> None:
         super().__init__(name=name, power=power, kwp=kwp)
         self.tilt = tilt
@@ -47,7 +48,7 @@ class DeclaredUnit(UnitConfig):
 def _hub(
     *, planes: list[float] | None = None, strings: list[DeclaredUnit] | None = None, cost: float | None = None
 ) -> Any:
-    """A HubConfig shaped by the contract: ``kwp`` sums the planes, the strings and the panels."""
+    """A HubConfig shaped like the real one: ``kwp`` is the planes', else the strings' counted in the total."""
     from custom_components.energy_hub.analytics.clearsky import Plane
 
     base = parse({})
@@ -56,8 +57,11 @@ def _hub(
     cfg.strings = list(strings or [])
     cfg.panels = []
     cfg.cost = cost
-    # One capacity per physical unit, whatever its count_in_total: the panels are on the roof either way.
-    cfg.kwp = sum(p.kwp for p in cfg.planes) + sum(u.kwp or 0.0 for u in [*cfg.strings, *cfg.panels])
+    cfg.kwp = (
+        sum(p.kwp for p in cfg.planes)
+        if cfg.planes
+        else sum(u.kwp or 0.0 for u in cfg.strings if u.count_in_total is not False)
+    )
     return cfg
 
 
@@ -71,11 +75,11 @@ def _history(days: dict[int, dict], *, strings: dict[str, float] | None = None) 
     return h
 
 
-def test_a_declared_string_raises_the_pv_total_without_a_pv_power_role() -> None:
-    """No ``pv_power`` role: the total falls back to the units, so the declared string is counted."""
+def test_a_declared_string_is_the_pv_total_without_a_pv_power_role() -> None:
+    """No ``pv_power`` role: the coordinator's total is the units' sum, and the string carries the capacity."""
     cfg = _hub(strings=[DeclaredUnit("South", power="sensor.south_power", kwp=3.0, tilt=30.0, azimuth=180.0)])
     inst = Installation(strings=[UnitSource("South", power="sensor.south_power", kwp=3.0)])
-    history = _history({0: {"pv": 0.0, "clearsky": 20.0, "expected": 18.0}}, strings={"South": 6.0})
+    history = _history({0: {"pv": 6.0, "clearsky": 20.0, "expected": 18.0}}, strings={"South": 6.0})
 
     snap = engine.build_snapshot(history, inst, cfg, Reading(t=NOW.timestamp()), NOW)
 
@@ -110,17 +114,17 @@ def test_a_pv_power_role_already_metering_the_string_is_not_counted_twice() -> N
     snap = engine.build_snapshot(history, inst, cfg, Reading(t=NOW.timestamp(), pv_kw=3.0), NOW)
 
     assert snap["today"]["pv_kwh"] == 6.0
-    # The declared kWp still counts in the installed capacity: 6 kWp of planes + 3 kWp of string.
-    assert snap["kwp"] == 9.0
+    # The string sits on the plane: the capacity is the plane's 6 kWp, not 6 + 3.
+    assert snap["kwp"] == 6.0
 
 
-def test_a_second_string_on_its_own_sensor_is_added_once() -> None:
-    """Mixed installation: the metered string is in the total, the unmetered one is added to it."""
+def test_a_string_added_to_the_meter_is_not_added_a_second_time() -> None:
+    """The coordinator already added the garage string to the meter: the engine must not add its kWh again."""
     cfg = _hub(
         planes=[6.0],
         strings=[
             DeclaredUnit("South", power="sensor.pv_total", kwp=3.0),
-            DeclaredUnit("Garage", power="sensor.garage_power", kwp=2.0),
+            DeclaredUnit("Garage", power="sensor.garage_power", kwp=2.0, count_in_total=True),
         ],
     )
     inst = Installation(
@@ -130,12 +134,14 @@ def test_a_second_string_on_its_own_sensor_is_added_once() -> None:
             UnitSource("Garage", power="sensor.garage_power", kwp=2.0),
         ],
     )
-    history = _history({0: {"pv": 10.0, "clearsky": 40.0, "expected": 36.0}}, strings={"South": 6.0, "Garage": 4.0})
+    # 10 kWh metered + 4 kWh from the garage string, as the coordinator integrated them.
+    history = _history({0: {"pv": 14.0, "clearsky": 40.0, "expected": 36.0}}, strings={"South": 6.0, "Garage": 4.0})
 
     snap = engine.build_snapshot(history, inst, cfg, Reading(t=NOW.timestamp()), NOW)
 
-    assert snap["today"]["pv_kwh"] == 14.0  # 10 kWh metered + 4 kWh from the garage string
-    assert snap["kwp"] == 11.0
+    assert snap["today"]["pv_kwh"] == 14.0
+    assert snap["losses"]["today"]["produced"] == 14.0
+    assert snap["kwp"] == 6.0
 
 
 def test_a_string_left_out_of_the_total_is_ignored_even_though_it_produces() -> None:
@@ -150,34 +156,35 @@ def test_a_string_left_out_of_the_total_is_ignored_even_though_it_produces() -> 
     snap = engine.build_snapshot(history, inst, cfg, Reading(t=NOW.timestamp()), NOW)
 
     assert snap["today"]["pv_kwh"] == 5.0
-    # The panel is still on the roof: the installed capacity counts it even though its energy does not.
-    assert snap["kwp"] == 8.0
-    assert snap["today"]["specific_yield"] == pytest.approx(5 / 8, abs=0.01)
+    assert snap["kwp"] == 6.0
+    assert snap["today"]["specific_yield"] == pytest.approx(5 / 6, abs=0.01)
     assert snap["production"]["strings"][0]["count_in_total"] is False
     assert snap["production"]["strings"][0]["kwh"] == 4.0
 
 
 def test_the_strings_kwp_lowers_the_specific_yield_and_shortens_the_payback() -> None:
     """Capacity and gains both follow the declarations: kWh/kWc drops, the installation is paid back sooner."""
-    counted = _hub(planes=[6.0], strings=[DeclaredUnit("South", power="sensor.south_power", kwp=3.0)], cost=6000.0)
-    bigger = _hub(planes=[6.0], strings=[DeclaredUnit("South", power="sensor.south_power", kwp=6.0)], cost=6000.0)
+    counted = _hub(strings=[DeclaredUnit("South", power="sensor.south_power", kwp=3.0)], cost=6000.0)
+    bigger = _hub(strings=[DeclaredUnit("South", power="sensor.south_power", kwp=6.0)], cost=6000.0)
     left_out = _hub(
-        planes=[6.0],
+        planes=[3.0],
         strings=[DeclaredUnit("South", power="sensor.south_power", kwp=3.0, count_in_total=False)],
         cost=6000.0,
     )
     inst = Installation(strings=[UnitSource("South", power="sensor.south_power", kwp=3.0)])
-    history = _history({0: {"pv": 0.0, "clearsky": 20.0, "expected": 18.0}}, strings={"South": 6.0})
+    history = _history({0: {"pv": 6.0, "clearsky": 20.0, "expected": 18.0}}, strings={"South": 6.0})
+    # Left out of the total, the string's energy never reached the coordinator's total.
+    nothing = _history({0: {"pv": 0.0, "clearsky": 20.0, "expected": 18.0}}, strings={"South": 6.0})
 
     on = engine.build_snapshot(history, inst, counted, Reading(t=NOW.timestamp()), NOW)
     wide = engine.build_snapshot(history, inst, bigger, Reading(t=NOW.timestamp()), NOW)
-    off = engine.build_snapshot(history, inst, left_out, Reading(t=NOW.timestamp()), NOW)
+    off = engine.build_snapshot(nothing, inst, left_out, Reading(t=NOW.timestamp()), NOW)
 
-    # The declared kWp is the denominator: the same 6 kWh gives 6/9 kWh/kWc with a 3 kWc string declared,
-    # 6/12 with a 6 kWc one.
-    assert on["kwp"] == 9.0 and wide["kwp"] == 12.0
-    assert on["today"]["specific_yield"] == pytest.approx(6 / 9, abs=0.01)
-    assert wide["today"]["specific_yield"] == pytest.approx(6 / 12, abs=0.01)
+    # Without a plane the declared kWp is the denominator: the same 6 kWh gives 6/3 kWh/kWc with a 3 kWc string
+    # declared, 6/6 with a 6 kWc one.
+    assert on["kwp"] == 3.0 and wide["kwp"] == 6.0
+    assert on["today"]["specific_yield"] == pytest.approx(6 / 3, abs=0.01)
+    assert wide["today"]["specific_yield"] == pytest.approx(6 / 6, abs=0.01)
     # Only the counted string earns its savings, so it alone reaches break-even and a positive ROI.
     assert on["finances"]["yearly"] > 0
     assert on["finances"]["years_to_break_even"] is not None

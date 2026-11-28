@@ -506,7 +506,8 @@ async def test_the_settings_payload_lists_the_declared_units(hass: HomeAssistant
     await hass.async_block_till_done()
     await client.send_json_auto_id({"type": "energy_hub/settings"})
     settings = (await client.receive_json())["result"]
-    assert settings["kwp"] == pytest.approx(3.28 + 1.5 + 0.4)
+    # The strings and panels sit on the declared plane: the capacity is the plane's, not counted twice.
+    assert settings["kwp"] == pytest.approx(3.28)
     assert settings["strings"][0] == {
         "name": "Toit sud",
         "declared": True,
@@ -516,7 +517,7 @@ async def test_the_settings_payload_lists_the_declared_units(hass: HomeAssistant
         "power": "sensor.pv_sud",
         "voltage": None,
         "current": None,
-        "count_in_total": True,
+        "count_in_total": None,
     }
     panel = settings["panels"][0]
     assert (panel["name"], panel["voltage"], panel["current"], panel["kwp"]) == (
@@ -545,8 +546,8 @@ async def test_the_pv_total_adds_a_declared_string_the_role_does_not_read(hass: 
         {
             "entities": {"pv_power": "sensor.plant_power"},
             "strings": [
-                {"name": "Toit sud", "power": "sensor.string_power"},
-                {"name": "Toit nord", "power": "sensor.plant_power"},
+                {"name": "Toit sud", "power": "sensor.string_power", "count_in_total": True},
+                {"name": "Toit nord", "power": "sensor.plant_power", "count_in_total": True},
                 {"name": "Hors total", "power": "sensor.other_power", "count_in_total": False},
             ],
         },
@@ -556,6 +557,37 @@ async def test_the_pv_total_adds_a_declared_string_the_role_does_not_read(hass: 
     hass.states.async_set("sensor.other_power", "700", {"unit_of_measurement": "W"})
     reading, _ages = coordinator._read(dt_util.now())
     assert reading.pv_kw == 2.5
+
+
+async def test_a_string_declared_the_1_9_way_is_not_added_on_top_of_the_meter(hass: HomeAssistant) -> None:
+    """A 1.9.0 YAML names the MPPT strings behind the inverter's meter: no count_in_total, no double count."""
+    coordinator = _pv_coordinator(
+        hass,
+        {
+            "entities": {"pv_power": "sensor.plant_power"},
+            "strings": [{"name": "MPPT 1", "power": "sensor.string_power"}],
+        },
+    )
+    hass.states.async_set("sensor.plant_power", "2000", {"unit_of_measurement": "W"})
+    hass.states.async_set("sensor.string_power", "500", {"unit_of_measurement": "W"})
+    reading, _ages = coordinator._read(dt_util.now())
+    assert reading.pv_kw == 2.0
+
+
+async def test_the_units_sum_leaves_out_a_string_kept_out_of_the_total(hass: HomeAssistant) -> None:
+    coordinator = _pv_coordinator(
+        hass,
+        {
+            "strings": [
+                {"name": "Toit", "power": "sensor.string_power"},
+                {"name": "Abri", "power": "sensor.other_power", "count_in_total": False},
+            ]
+        },
+    )
+    hass.states.async_set("sensor.string_power", "500", {"unit_of_measurement": "W"})
+    hass.states.async_set("sensor.other_power", "700", {"unit_of_measurement": "W"})
+    reading, _ages = coordinator._read(dt_util.now())
+    assert reading.pv_kw == 0.5
 
 
 async def test_the_pv_total_falls_back_to_the_units_without_a_role(hass: HomeAssistant) -> None:

@@ -4,7 +4,8 @@ A string (``strings:``) or a panel / MPPT input (``panels:``) declared in YAML m
 and its own azimuth. Such a unit is then weighed on its own: its expectation comes from the clear sky of *its*
 orientation, so a steep array that produces less in June is not flagged as a fault while a string under a chimney
 keeps its shading on its own line. The installation's figures keep counting every unit whose ``count_in_total`` is
-true, and a unit the ``pv_power`` role already meters is never added twice.
+true, and a unit the ``pv_power`` role already meters is never added twice — the coordinator adds it to the total
+before the history integrates it, so the history's ``pv`` is used as it is.
 
 Neither Home Assistant nor the engine: everything here works on the history records and on the configuration.
 """
@@ -44,11 +45,8 @@ class DeclaredUnit:
     kwp: float | None = None
     tilt: float | None = None
     azimuth: float | None = None
-    count_in_total: bool = True
-    power: str | None = None
-    # Declared in YAML (``strings:`` / ``panels:``) rather than only found by the profile's naming rules: only a
-    # declaration asks for the unit to be added to a metered PV total.
-    explicit: bool = False
+    # None: counted as in 1.9.0, True: added on top of a pv_power meter, False: left out of the total.
+    count_in_total: bool | None = None
 
     @property
     def orientation(self) -> tuple[float, float]:
@@ -77,7 +75,7 @@ class UnitLoss:
     kwp: float | None = None
     tilt: float | None = None
     azimuth: float | None = None
-    count_in_total: bool = True
+    count_in_total: bool | None = None
     production_kwh: float = 0.0
     expected_kwh: float | None = None
     performance: float | None = None
@@ -127,9 +125,7 @@ def declared_units(cfg: Any, inst: Any) -> list[DeclaredUnit]:
                     kwp=_num(_pick(cfg_unit, "kwp", getattr(source, "kwp", None))),
                     tilt=_num(_pick(cfg_unit, "tilt", getattr(source, "tilt", None))),
                     azimuth=_num(_pick(cfg_unit, "azimuth", getattr(source, "azimuth", None))),
-                    count_in_total=bool(_pick(cfg_unit, "count_in_total", getattr(source, "count_in_total", True))),
-                    power=getattr(source, "power", None),
-                    explicit=cfg_unit is not None,
+                    count_in_total=_pick(cfg_unit, "count_in_total", getattr(source, "count_in_total", None)),
                 )
             )
     return units
@@ -142,37 +138,6 @@ def capacity_shares(units: Iterable[DeclaredUnit], installed: float) -> dict[str
     unknown = [u for u in units if not u.kwp]
     share = max(installed - known, 0.0) / len(unknown) if unknown else 0.0
     return {u.name: (u.kwp or share) for u in units}
-
-
-def installed_kwp(cfg: Any, units: Iterable[DeclaredUnit]) -> float:
-    """Installed DC capacity (kWc): the planes plus every declared unit counted in the total.
-
-    The configuration's ``kwp`` already sums planes, strings and panels; until it does, it only knows the planes,
-    so what it misses is added once (never twice: a total already large enough is kept as it is).
-    """
-    units = list(units)
-    planes = sum(_num(getattr(p, "kwp", None)) or 0.0 for p in list(getattr(cfg, "planes", None) or []))
-    counted = sum(u.kwp or 0.0 for u in units if u.count_in_total and u.explicit)
-    configured = _num(getattr(cfg, "kwp", None)) or 0.0
-    base = max(configured, planes)
-    return base if base + 1e-6 >= planes + counted else base + counted
-
-
-def production_kwh(record: dict[str, Any], units: Iterable[DeclaredUnit], pv_entities: set[str] | None = None) -> float:
-    """PV total of one day (kWh): the metered total, plus the declared units the ``pv_power`` role misses.
-
-    Without a ``pv_power`` role the total falls back to the sum of the unit sensors, so a declared string raises
-    it; with one, a counted unit whose power entity the role already collects is not added a second time.
-    """
-    total = _num(record.get("pv")) or 0.0
-    counted = [u for u in units if u.count_in_total]
-    own = sum(_num(record.get(u.kind, {}).get(u.name)) or 0.0 for u in counted)
-    if not pv_entities:
-        return max(total, own)
-    extra = sum(
-        _num(record.get(u.kind, {}).get(u.name)) or 0.0 for u in counted if u.explicit and u.power not in pv_entities
-    )
-    return total + extra
 
 
 @lru_cache(maxsize=8192)

@@ -3,14 +3,16 @@
 ## 1.10.0 - 2026-11-28
 
 ### Features
-- Settings → Panels & strings: every panel and every string of the installation is declared by hand — a name, its kWp, its tilt and azimuth, a power entity or a voltage and a current, and whether it counts in the PV total. The list is editable from the panel and from the options flow (third step, `installation`), an empty list removes the declaration, and the units a profile detects are listed for reference so nothing is typed twice. The Production tab shows every string with its readable name instead of the first four.
-- The orientation of each plane (kWp, tilt, azimuth) drives the clear-sky model per string: losses, specific yield and finance are computed unit by unit instead of on the installation average, and the snapshot carries a `losses.strings[]` entry per unit.
+- Settings → Panels & strings: every panel and every string of the installation is declared by hand — a name, its kWp, its tilt and azimuth (0–360°), a power entity or a voltage and a current, and how it counts in the PV total (`count_in_total`: unset as before, `true` to add a string the `pv_power` meter does not read, `false` to leave it out). The list is editable from the panel and from the options flow (third step, `installation`), an empty list removes the declaration, and the units a profile detects are listed for reference so nothing is typed twice. The Production tab shows every string with its readable name instead of the first four.
+- The orientation of each string (kWp, tilt, azimuth) drives the clear-sky model per string, at the location of Home Assistant: losses and specific yield are computed unit by unit next to the installation-wide figures, and the snapshot carries a `losses.strings[]` entry per unit. The installed capacity stays the planes' (the strings' only when no plane is declared).
 - Units next to every value: each entity field of the Settings tab says which unit it expects (`uh`, `uh_color`), so a sensor is not mistaken for a percentage or a price.
 - FusionSolarPlus (Huawei FusionSolar cloud) detected as an added solar source: the plant flow sensor gives the installation total, each inverter its own power, and the inverters only serve as strings when the plant flow sensor is missing — plant and inverters never add up twice.
 - Translations: the new panel keys in the 21 other languages, the new options step in the 22 translation files.
 
 ### Fixes
 - A unit only detected by a profile was written back as a declared one and counted a second time on top of the `pv_power` role: the settings payload now marks each row with `declared`, and only the rows the user declared (or edited) are saved.
+- A string declared in YAML before 1.10.0 (to name an MPPT input behind the inverter's meter) is no longer added on top of `pv_power`: only `count_in_total: true` adds a unit to the meter, and the PV total is added up once, in the coordinator — the history and the snapshot no longer add the declared strings a second time.
+- The kWp of the declared strings and panels is no longer added to the planes': the capacity is not counted twice.
 
 ## 1.9.0 - 2026-11-27
 

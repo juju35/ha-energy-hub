@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import time
 from datetime import timedelta
+from functools import partial
 from pathlib import Path
 from typing import Any
 
@@ -171,7 +172,18 @@ class EnergyHubCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         if not self.demo:
             self.store.async_delay_save(self._data_to_save, SAVE_DELAY)
         snapshot = await self.hass.async_add_executor_job(
-            build_snapshot, self.history, self.installation, self.cfg, reading, now, ages, self.demo
+            partial(
+                build_snapshot,
+                self.history,
+                self.installation,
+                self.cfg,
+                reading,
+                now,
+                ages,
+                self.demo,
+                latitude=self.hass.config.latitude,
+                longitude=self.hass.config.longitude,
+            )
         )
         snapshot["entities"]["configured"] = self._configured_entities()
         await self._async_alerts(snapshot)
@@ -214,14 +226,17 @@ class EnergyHubCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         strings = self._units(inst.strings)
         pv = role_sum_kw("pv_power")
         if pv is None and (strings or units):
-            pv = sum((strings or units).values())
+            kept = inst.strings if strings else inst.units
+            values = strings or units
+            pv = sum(values[u.name] for u in kept if u.name in values and u.count_in_total is not False)
         elif pv is not None:
-            # A declared unit the pv_power role does not already read (an inverter's string sensor next to the
-            # plant's meter) adds to the total, unless the user keeps it out of it.
+            # A unit of its own the user asked to add (count_in_total: true) and the pv_power role does not read
+            # (an inverter's string next to the plant's meter) adds to the total. This is the only place it is
+            # added: the history integrates this total, the snapshot reads it as is.
             covered = set(role_entities(inst, "pv_power"))
             extra = 0.0
             for unit in (*inst.strings, *inst.units):
-                if not (unit.declared and unit.count_in_total) or unit.power in covered:
+                if not unit.standalone or unit.count_in_total is not True or unit.power in covered:
                     continue
                 kw = self._unit_kw(unit)
                 if kw is not None:

@@ -107,10 +107,12 @@ class UnitSource:
     # Orientation of the plane behind the unit when it differs from the plane's (None: the plane's).
     tilt: float | None = None
     azimuth: float | None = None
-    # Whether the unit's production counts in the PV total, and whether the user declared it (YAML or options):
-    # only a declared unit is added on top of the pv_power role, a detected one is already inside the plant's.
-    count_in_total: bool = True
+    # How the unit counts in the PV total (see UnitConfig.count_in_total), whether the user declared it (YAML or
+    # options), and whether it is a unit of its own rather than a detected one renamed: only such a unit, with
+    # count_in_total true, is added on top of the pv_power role — a detected one is already inside the meter's.
+    count_in_total: bool | None = None
     declared: bool = False
+    standalone: bool = False
 
 
 @dataclass(slots=True)
@@ -501,6 +503,7 @@ def _merge_unit(cfg: UnitConfig, units: list[UnitSource]) -> None:
         azimuth=cfg.azimuth,
         count_in_total=cfg.count_in_total,
         declared=True,
+        standalone=True,
     )
     if same is None:
         units.append(unit)

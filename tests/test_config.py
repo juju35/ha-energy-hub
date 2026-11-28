@@ -61,7 +61,7 @@ DECLARED_YAML = {
 
 def test_a_unit_configured_without_orientation_stays_valid() -> None:
     unit = UnitConfig("Toit", "sensor.pv_toit", None, None, 2.0)
-    assert (unit.tilt, unit.azimuth, unit.count_in_total) == (None, None, True)
+    assert (unit.tilt, unit.azimuth, unit.count_in_total) == (None, None, None)
 
 
 def test_yaml_installation_is_kept_without_options() -> None:
@@ -105,9 +105,25 @@ def test_options_orientation_reaches_the_units() -> None:
     assert (unit.tilt, unit.azimuth, unit.count_in_total) == (45, 200, False)
 
 
-def test_kwp_adds_planes_strings_and_panels() -> None:
+def test_kwp_is_the_planes_when_there_are_any() -> None:
+    """The declared string and panel sit on the plane: their kWp is not added to it a second time."""
     cfg = parse(DECLARED_YAML["energy_hub"], {})
-    assert cfg.kwp == 3.28 + 1.5 + 0.4
+    assert cfg.kwp == 3.28
+
+
+def test_kwp_falls_back_to_the_strings_without_a_plane() -> None:
+    cfg = parse(
+        {
+            "strings": [
+                {"name": "Est", "power": "sensor.pv_est", "kwp": 1.5},
+                {"name": "Ouest", "power": "sensor.pv_ouest", "kwp": 2.0},
+                {"name": "Abri", "power": "sensor.pv_abri", "kwp": 0.4, "count_in_total": False},
+            ],
+            "panels": [{"name": "Garage", "power": "sensor.pv_garage", "kwp": 0.4}],
+        },
+        {},
+    )
+    assert cfg.kwp == 3.5  # strings counted once, panels are modules of them, the left-out string stays out
 
 
 def test_kwp_ignores_a_unit_without_capacity() -> None:
@@ -129,6 +145,15 @@ def test_a_declared_unit_renames_the_detected_one() -> None:
     assert unit.declared is True
     assert unit.tilt == 45 and unit.azimuth == 90  # the detection's orientation is kept
     assert unit.kwp == 2.0
+    assert unit.standalone is False  # a renamed detected unit is already inside the meter's total
+
+
+def test_a_declared_unit_of_its_own_is_standalone() -> None:
+    cfg = parse({"strings": [{"name": "Garage", "power": "sensor.pv_garage"}]}, {})
+    inst = Installation()
+    inst.strings = [UnitSource("PV1", "sensor.inverter_string_1")]
+    _apply_yaml(cfg, inst, [])
+    assert [u.standalone for u in inst.strings] == [False, True]
 
 
 def test_a_declared_orientation_overrides_the_detected_one() -> None:

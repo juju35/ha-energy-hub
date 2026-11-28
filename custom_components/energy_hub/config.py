@@ -194,7 +194,9 @@ UNIT_FIELDS: dict[Any, Any] = {
     # Orientation of the plane behind the unit, and whether its production counts in the PV total.
     vol.Optional(CONF_TILT): vol.All(vol.Coerce(float), vol.Range(min=0, max=90)),
     vol.Optional(CONF_AZIMUTH): vol.All(vol.Coerce(float), vol.Range(min=0, max=360)),
-    vol.Optional(CONF_COUNT_IN_TOTAL, default=True): cv.boolean,
+    # Absent: counted the 1.9.0 way (inside a pv_power meter, or in the units' sum without one). True: added on
+    # top of a pv_power meter that does not read it. False: left out of the total.
+    vol.Optional(CONF_COUNT_IN_TOTAL): cv.boolean,
 }
 UNIT_SCHEMA = vol.All(vol.Schema(UNIT_FIELDS), _power_or_voltage_current)
 # Declared from the panel's Settings tab or the options flow: the entity list is validated elsewhere, so a unit
@@ -288,11 +290,11 @@ class UnitConfig:
     voltage: str | None = None
     current: str | None = None
     kwp: float | None = None
-    # Orientation of the plane behind the unit (None: the plane's, or unknown), and whether its production
-    # counts in the PV total (a string already read by a plant sensor must not be added twice).
+    # Orientation of the plane behind the unit (None: the plane's, or unknown), and how its production counts in
+    # the PV total: None as in 1.9.0 (already inside a pv_power meter), True added on top of one, False left out.
     tilt: float | None = None
     azimuth: float | None = None
-    count_in_total: bool = True
+    count_in_total: bool | None = None
 
 
 @dataclass(slots=True)
@@ -328,13 +330,15 @@ class HubConfig:
 
     @property
     def kwp(self) -> float:
-        """Capacity of the installation: the planes, plus the strings and panels declared by hand.
+        """Capacity of the installation: the planes when there are any, else the declared strings and panels.
 
-        A plane holds kWp and orientation; a declared string or panel is a unit of that plane (its own kWp when
-        the user knows it). Each declared unit is counted once, wherever it was declared.
+        A declared string or panel sits on a plane: adding both would count the same modules twice. Without a plane,
+        the units carry the capacity — strings first (a panel is a module of a string), each once.
         """
-        declared = (*self.strings, *self.panels)
-        return sum(p.kwp for p in self.planes) + sum(u.kwp or 0.0 for u in declared)
+        if self.planes:
+            return sum(p.kwp for p in self.planes)
+        units = self.strings or self.panels
+        return sum(u.kwp or 0.0 for u in units if u.count_in_total is not False)
 
 
 def _declared(options: dict[str, Any], key: str, fallback: list[dict[str, Any]]) -> list[dict[str, Any]]:
