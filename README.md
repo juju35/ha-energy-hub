@@ -66,6 +66,7 @@ Energy Hub works on top of the integrations below. Each one has a detection prof
 | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/sma.png" alt="" width="16"> [SMA Solar](https://www.home-assistant.io/integrations/sma) | ✓ | ✓ | ✓ | strings |
 | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/solax.png" alt="" width="16"> [Solax Modbus](https://github.com/wills106/homeassistant-solax-modbus) (SolaX, Growatt, Sofar, Solis, AlphaESS, Qcells…) | ✓ | ✓ | ✓ | strings, inverter maximum, state of health |
 | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/solarman.png" alt="" width="16"> [Solarman](https://github.com/davidrapan/ha-solarman) (Deye, Sunsynk, Sol-Ark…) | ✓ | ✓ | ✓ | strings, state of health, battery modules |
+| [FoxESS Modbus](https://github.com/nathanmarlor/foxess_modbus) (H1, H3, KH, AC…) | ✓ | ✓ | ✓ | strings, state of health, cycles |
 | [Victron GX](https://www.home-assistant.io/integrations/victron_gx) | ✓ | ✓ | ✓ | MPPT trackers, state of health |
 | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/tesla.png" alt="" width="16"> [Tesla Powerwall](https://www.home-assistant.io/integrations/powerwall) | ✓ | ✓ | ✓ | |
 | <img src="https://raw.githubusercontent.com/juju35/ha-energy-hub/main/images/hoymiles.png" alt="" width="16"> [Hoymiles S-Miles Home](https://github.com/Phil-0805/hoymiles-home-assistant) (HiBattery…) | ✓ | ✓ | ✓ | micro-inverters |
@@ -159,7 +160,8 @@ energy_hub:
       soc: sensor.battery_state_of_capacity
       power: sensor.battery_charge_discharge_power
       power_sign: charge_positive # or discharge_positive
-      capacity_kwh: 15
+      capacity_kwh: 15            # fixed capacity, or read from a sensor:
+      # capacity: sensor.battery_capacity   # kWh, Wh or MWh (capacity_kwh wins when both are set)
       reserve: 10                 # % kept, left out of the autonomy
       soh: sensor.battery_soh
       cycles: sensor.battery_cycles
@@ -187,6 +189,7 @@ energy_hub:
   strings:                        # string / MPPT inputs, same keys as panels
     - name: MPPT 1
       power: sensor.inverter_pv1_power
+      count_in_total: true        # add it to the PV total when the pv_power meter does not read it (false: leave out)
   ignore:                         # entities never read (a double count, for example)
     - sensor.zendure_ac_input
   tariff:

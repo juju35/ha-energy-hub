@@ -1,0 +1,37 @@
+name: FoxESS Modbus
+platform: foxess_modbus
+status: beta
+url: https://github.com/nathanmarlor/foxess_modbus
+# FoxESS H1, H3, KH, AC… inverters over Modbus (RS485 or LAN). Object ids carry the friendly-name prefix the user
+# chose (`foxessmodbus_pv1_power`) or none (`pv1_power`): every pattern is anchored at the end, after `_` or the start.
+roles:
+  pv_power: ['(^|_)pv_power_now$', '(^|_)pv_power$']
+  pv_energy: ['(^|_)solar_energy_total$', '(^|_)pv_energy_total$']
+  grid_power: ['(^|_)grid_ct$']
+  grid_import_energy: ['(^|_)grid_consumption_energy_total$']
+  grid_export_energy: ['(^|_)feed_in_energy_total$']
+  load_power: ['(^|_)load_power$']
+# PV1, PV2… MPPT inputs of the inverter.
+strings:
+  power: ['(?:^|_)pv(\d+)_power$']
+  voltage: ['(?:^|_)pv(\d+)_voltage$']
+  current: ['(?:^|_)pv(\d+)_current$']
+# The battery power comes as two positive sensors, charge and discharge.
+battery:
+  soc: ['(^|_)battery_soc$', '(^|_)bms_soc$']
+  charge_power: ['(^|_)battery_charge$']
+  discharge_power: ['(^|_)battery_discharge$']
+  soh: ['(^|_)battery_soh$', '(^|_)bms_soh$']
+  cycles: ['(^|_)bms_cycle_count$', '(^|_)battery_cycle_count$']
+  capacity: ['(^|_)bms_design_capacity$', '(^|_)bms_full_capacity$']
+  temperature: ['(^|_)battery_temp$', '(^|_)bms_temperature$']
+  charge_energy: ['(^|_)battery_charge_total$']
+  discharge_energy: ['(^|_)battery_discharge_total$']
+signs:
+  grid_power: export_positive
+capabilities:
+  strings: provided
+  soc: provided
+  soh: provided
+  cycles: provided
+  cells: absent

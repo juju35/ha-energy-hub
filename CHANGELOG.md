@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.11.0 - 2026-11-28
+
+### Features
+- FoxESS Modbus profile (beta, #32): PV total, PV1, PV2… strings, grid, home load, and the battery's state of charge, state of health, cycles, charge and discharge power, temperature and energies.
+- A battery's capacity can be read from a sensor (`capacity:` in YAML, kWh, Wh or MWh) instead of a fixed `capacity_kwh`; a capacity sensor found by a profile is converted from Wh too (#32).
+- The YAML export of the Settings tab writes the batteries' `capacity`, `soh`, `cycles` and `temperature` sensors.
+
+### Fixes
+- The Energy dashboard's battery is no longer added a second time when a profile already reads a battery on the same device (#32).
+
 ## 1.10.0 - 2026-11-28
 
 ### Features

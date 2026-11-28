@@ -341,6 +341,11 @@ def settings_yaml(cfg, inst) -> str:
                     lines.append(f"      {attr}: {getattr(b, attr)}")
             if b.capacity_kwh:
                 lines.append(f"      capacity_kwh: {b.capacity_kwh:g}")
+            elif b.capacity_entity:
+                lines.append(f"      capacity: {b.capacity_entity}")
+            for attr in ("soh", "cycles", "temperature"):
+                if getattr(b, attr):
+                    lines.append(f"      {attr}: {getattr(b, attr)}")
             lines.append(f"      reserve: {b.reserve:g}")
             if b.cells and not b.cells_attribute:
                 prefix = b.cells[0].rstrip("0123456789")

@@ -367,6 +367,11 @@ def _apply_profile(
     )
 
 
+def _device_of(ent_reg: er.EntityRegistry, entity_id: str | None) -> str | None:
+    entry = ent_reg.async_get(entity_id) if entity_id else None
+    return entry.device_id if entry else None
+
+
 def _from_energy_prefs(prefs: dict[str, Any] | None, inst: Installation, hass: HomeAssistant) -> None:
     """Roles from the Energy dashboard's preferences: the user already said which entity is what there."""
     if not prefs:
@@ -395,6 +400,10 @@ def _from_energy_prefs(prefs: dict[str, Any] | None, inst: Installation, hass: H
                     if (entry.device_class or entry.original_device_class) == "battery" and entry.domain == "sensor":
                         soc = entry.entity_id
                         break
+            # A battery a profile already found on the same device (its own SoC sensor) is not added twice (#32).
+            device_id = energy_entity.device_id if energy_entity else None
+            if device_id and any(_device_of(ent_reg, b.soc) == device_id for b in inst.batteries):
+                continue
             if soc and all(b.soc != soc for b in inst.batteries):
                 inst.batteries.append(
                     BatterySource(
@@ -533,6 +542,8 @@ def _merge_battery(cfg: BatteryConfig, inst: Installation, all_entity_ids: list[
         battery.charge_positive = cfg.charge_positive
     if cfg.capacity_kwh:
         battery.capacity_kwh = cfg.capacity_kwh
+    if cfg.capacity:
+        battery.capacity_entity = cfg.capacity
     battery.reserve = cfg.reserve
     if cfg.cells:
         battery.cells = sorted(fnmatch.filter(all_entity_ids, cfg.cells), key=_natural)
