@@ -76,6 +76,18 @@ def power_kw(state: State | None) -> float | None:
 _NO_UNIT_WARNED: set[str] = set()
 
 
+def capacity_kwh(state: State | None) -> float | None:
+    """A battery capacity in kWh: Wh and MWh converted, a value without a unit taken as kWh; nothing at zero, and
+    nothing in another unit (a BMS's Ah is a charge, not an energy: read as kWh it would be off by the voltage)."""
+    value = _number(state)
+    if not value or value < 0:
+        return None
+    unit = state.attributes.get("unit_of_measurement")
+    if unit and unit not in ENERGY_FACTORS:
+        return None
+    return value * ENERGY_FACTORS.get(unit, 1.0)
+
+
 def energy_kwh(state: State | None) -> float | None:
     """An energy state in kWh, whatever its unit. Without a unit it is taken as kWh, with a warning once: unlike a
     power, an energy's magnitude does not tell Wh from kWh."""
@@ -257,7 +269,7 @@ class EnergyHubCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     p = abs(charge) - abs(discharge)
             cap = b.capacity_kwh
             if cap is None and b.capacity_entity:
-                cap = _number(get(b.capacity_entity))
+                cap = capacity_kwh(get(b.capacity_entity))
             cells: list[float] = []
             if b.cells_attribute and b.cells:
                 st = get(b.cells[0])

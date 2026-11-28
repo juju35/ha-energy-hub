@@ -16,7 +16,7 @@ energy_hub:
       name: Maison
       soc: sensor.battery_state_of_capacity
       power: sensor.battery_charge_discharge_power
-      capacity_kwh: 15
+      capacity_kwh: 15            # or capacity: sensor.battery_capacity (kWh, Wh)
       reserve: 10
       cells: sensor.jk_bms_cell_*
   ignore:
@@ -144,6 +144,8 @@ BATTERY_SCHEMA = vol.Schema(
         vol.Optional("power"): cv.entity_id,
         vol.Optional("power_sign", default="charge_positive"): vol.In(["charge_positive", "discharge_positive"]),
         vol.Optional("capacity_kwh"): vol.All(vol.Coerce(float), vol.Range(min=0.1)),
+        # The usable capacity read from a sensor (kWh, Wh or MWh), when the battery reports it; capacity_kwh wins.
+        vol.Optional("capacity"): cv.entity_id,
         vol.Optional("reserve", default=10): vol.All(vol.Coerce(float), vol.Range(min=0, max=100)),
         vol.Optional("soh"): cv.entity_id,
         vol.Optional("cycles"): cv.entity_id,
@@ -262,6 +264,7 @@ class BatteryConfig:
     power: str | None = None
     charge_positive: bool = True
     capacity_kwh: float | None = None
+    capacity: str | None = None
     reserve: float = 10.0
     soh: str | None = None
     cycles: str | None = None
@@ -399,6 +402,7 @@ def parse(raw: dict[str, Any] | None, options: dict[str, Any] | None = None) -> 
                 power=b.get("power"),
                 charge_positive=b.get("power_sign", "charge_positive") == "charge_positive",
                 capacity_kwh=b.get("capacity_kwh"),
+                capacity=b.get("capacity"),
                 reserve=b.get("reserve", 10.0),
                 soh=b.get("soh"),
                 cycles=b.get("cycles"),
